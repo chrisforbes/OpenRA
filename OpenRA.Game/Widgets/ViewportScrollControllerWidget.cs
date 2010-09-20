@@ -26,6 +26,7 @@ namespace OpenRA.Widgets
 	class ViewportScrollControllerWidget : Widget
 	{
 		public int EdgeScrollThreshold = 15;
+        public int EdgeScrollSpeed = 25;
 
 		ScrollDirection Keyboard;
 		ScrollDirection Edge;
@@ -140,15 +141,16 @@ namespace OpenRA.Widgets
 			
 			if(Keyboard != ScrollDirection.None || Edge != ScrollDirection.None)
 			{
+                
 				var scroll = new float2(0,0);
 				if (Keyboard.Includes(ScrollDirection.Up) || Edge.Includes(ScrollDirection.Up))
-					scroll += new float2(0, -10);
+                    scroll += new float2(0, -Game.Settings.Game.ScrollSpeed);
 				if (Keyboard.Includes(ScrollDirection.Right) || Edge.Includes(ScrollDirection.Right))
-					scroll += new float2(10, 0);
+                    scroll += new float2(Game.Settings.Game.ScrollSpeed, 0);
 				if (Keyboard.Includes(ScrollDirection.Down) || Edge.Includes(ScrollDirection.Down))
-					scroll += new float2(0, 10);
+                    scroll += new float2(0, Game.Settings.Game.ScrollSpeed);
 				if (Keyboard.Includes(ScrollDirection.Left) || Edge.Includes(ScrollDirection.Left))
-					scroll += new float2(-10, 0);
+                    scroll += new float2(-Game.Settings.Game.ScrollSpeed, 0);
 			
 				Game.viewport.Scroll(scroll);
 			}

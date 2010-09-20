@@ -54,6 +54,35 @@ namespace OpenRA.Widgets.Delegates
                 return true;
             };
 
+       
+
+
+            var edgescrollspeed = general.GetWidget<TextFieldWidget>("SCROLL_SPEED");
+
+            edgescrollspeed.Text = Game.Settings.Game.ScrollSpeed.ToString();
+            edgescrollspeed.OnLoseFocus = () =>
+            {
+                try
+                {
+                    var w = int.Parse(edgescrollspeed.Text);
+                    if (w <= 0)
+                        edgescrollspeed.Text = 1.ToString();
+
+                    Game.Settings.Game.ScrollSpeed = w;
+
+
+                }
+                catch (FormatException)
+                {
+                    edgescrollspeed.Text = Game.Settings.Game.ScrollSpeed.ToString();
+                }
+            };
+            edgescrollspeed.OnEnterKey = () => { edgescrollspeed.LoseFocus(); return true; };
+
+
+
+
+
             var inverseScroll = general.GetWidget<CheckboxWidget>("INVERSE_SCROLL");
             inverseScroll.Checked = () => Game.Settings.Game.InverseDragScroll;
             inverseScroll.OnMouseDown = mi =>

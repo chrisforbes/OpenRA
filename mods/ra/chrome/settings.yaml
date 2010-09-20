@@ -98,6 +98,19 @@ Background@SETTINGS_MENU:
 					Width:200
 					Height:20
 					Text: Invert Mouse Drag Scrolling
+				Label@SCROLL_SPEED_LABEL:
+					Id:SCROLL_SPEED_LABEL
+					X:0
+					Y:100
+					Text: Scroll Speed:
+				TextField@SCROLL_SPEED:
+					Id:SCROLL_SPEED
+					Text:Scroll Speed
+					Width:50
+					Height:25
+					X:90
+					Y:90
+					MaxLength:5
 		Container@AUDIO_PANE:
 			Id:AUDIO_PANE
 			X:37
