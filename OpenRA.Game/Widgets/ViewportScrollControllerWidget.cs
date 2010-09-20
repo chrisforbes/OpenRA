@@ -26,7 +26,6 @@ namespace OpenRA.Widgets
 	class ViewportScrollControllerWidget : Widget
 	{
 		public int EdgeScrollThreshold = 15;
-        public int EdgeScrollSpeed = 25;
 
 		ScrollDirection Keyboard;
 		ScrollDirection Edge;
