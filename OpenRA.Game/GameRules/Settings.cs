@@ -69,6 +69,7 @@ namespace OpenRA.GameRules
 		// Behaviour settings
         public bool ViewportEdgeScroll = true;
         public bool InverseDragScroll = false;
+        public int ScrollSpeed = 20;
 
 		// Internal game settings
 		public int Timestep = 40;
