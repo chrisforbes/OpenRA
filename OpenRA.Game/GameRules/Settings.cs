@@ -70,6 +70,10 @@ namespace OpenRA.GameRules
         public bool ViewportEdgeScroll = true;
         public bool InverseDragScroll = false;
         public int ScrollSpeed = 20;
+        public int ArrowScrollSpeed = 30;
+
+        //can user use keys w, a, s, d to move viewport?
+        public bool WasdAllowed = false;   
 
 		// Internal game settings
 		public int Timestep = 40;

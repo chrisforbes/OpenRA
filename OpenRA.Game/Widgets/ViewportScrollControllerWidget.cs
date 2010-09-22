@@ -111,7 +111,19 @@ namespace OpenRA.Widgets
 		}
 		
 		public override bool HandleKeyPressInner(KeyInput e)
-		{			
+		{
+            //can user use keys w, a, s, d to move viewport? (like counterstrike)
+            if (Game.Settings.Game.WasdAllowed)
+            {
+                switch (e.KeyName)
+                {
+                    case "w": Keyboard = Keyboard.Set(ScrollDirection.Up, (e.Event == KeyInputEvent.Down)); return true;
+                    case "s": Keyboard = Keyboard.Set(ScrollDirection.Down, (e.Event == KeyInputEvent.Down)); return true;
+                    case "a": Keyboard = Keyboard.Set(ScrollDirection.Left, (e.Event == KeyInputEvent.Down)); return true;
+                    case "d": Keyboard = Keyboard.Set(ScrollDirection.Right, (e.Event == KeyInputEvent.Down)); return true;
+                }
+            }
+
 			switch (e.KeyName)
 			{
 				case "up": Keyboard = Keyboard.Set(ScrollDirection.Up, (e.Event == KeyInputEvent.Down)); return true;
@@ -141,14 +153,27 @@ namespace OpenRA.Widgets
 			if(Keyboard != ScrollDirection.None || Edge != ScrollDirection.None)
 			{
                 
+                //compute scrolling (can hold arrows or mouse against edge)
 				var scroll = new float2(0,0);
-				if (Keyboard.Includes(ScrollDirection.Up) || Edge.Includes(ScrollDirection.Up))
+
+                //if user is holding arrow keys
+                if (Keyboard.Includes(ScrollDirection.Up))
+                    scroll += new float2(0, -Game.Settings.Game.ArrowScrollSpeed);
+                if (Keyboard.Includes(ScrollDirection.Right))
+                    scroll += new float2(Game.Settings.Game.ArrowScrollSpeed, 0);
+                if (Keyboard.Includes(ScrollDirection.Down))
+                    scroll += new float2(0, Game.Settings.Game.ArrowScrollSpeed);
+                if (Keyboard.Includes(ScrollDirection.Left))
+                    scroll += new float2(-Game.Settings.Game.ArrowScrollSpeed, 0);
+
+                //if user has mouse against the edge of the screen
+				if (Edge.Includes(ScrollDirection.Up))
                     scroll += new float2(0, -Game.Settings.Game.ScrollSpeed);
-				if (Keyboard.Includes(ScrollDirection.Right) || Edge.Includes(ScrollDirection.Right))
+				if (Edge.Includes(ScrollDirection.Right))
                     scroll += new float2(Game.Settings.Game.ScrollSpeed, 0);
-				if (Keyboard.Includes(ScrollDirection.Down) || Edge.Includes(ScrollDirection.Down))
+				if (Edge.Includes(ScrollDirection.Down))
                     scroll += new float2(0, Game.Settings.Game.ScrollSpeed);
-				if (Keyboard.Includes(ScrollDirection.Left) || Edge.Includes(ScrollDirection.Left))
+				if (Edge.Includes(ScrollDirection.Left))
                     scroll += new float2(-Game.Settings.Game.ScrollSpeed, 0);
 			
 				Game.viewport.Scroll(scroll);
