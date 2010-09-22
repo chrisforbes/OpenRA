@@ -143,7 +143,8 @@ namespace OpenRA.Widgets
 					return true;
 				}
 
-				if (e.KeyChar == '\b')
+                //now allow h key to go to home base (same as backspace)
+                if (e.KeyChar == '\b' || e.KeyChar == 'h')
 				{
 					GotoNextBase();
 					return true;

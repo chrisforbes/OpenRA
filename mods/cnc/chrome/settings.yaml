@@ -130,7 +130,59 @@ Background@SETTINGS_MENU:
 					Y:150
 					Width:200
 					Height:20
-					Text: Allow w,a,s,d instead of arrow keys
+					Text: Use below keys as well as arrow keys 
+				Label@ALTERNATE_UP_KEY_LABEL:
+					Id:ALTERNATE_UP_KEY_LABEL
+					X:0
+					Y:180
+					Text: Up:
+				TextField@ALTERNATE_UP_KEY:
+					Id:ALTERNATE_UP_KEY
+					Text:
+					Width:30
+					Height:25
+					X:25
+					Y:170
+					MaxLength:10
+				Label@ALTERNATE_DOWN_KEY_LABEL:
+					Id:ALTERNATE_DOWN_KEY_LABEL
+					X:60
+					Y:180
+					Text: Down:
+				TextField@ALTERNATE_DOWN_KEY:
+					Id:ALTERNATE_DOWN_KEY
+					Text:
+					Width:30
+					Height:25
+					X:105
+					Y:170
+					MaxLength:10
+				Label@ALTERNATE_LEFT_KEY_LABEL:
+					Id:ALTERNATE_LEFT_KEY_LABEL
+					X:140
+					Y:180
+					Text: Left:
+				TextField@ALTERNATE_LEFT_KEY:
+					Id:ALTERNATE_LEFT_KEY
+					Text:
+					Width:30
+					Height:25
+					X:173
+					Y:170
+					MaxLength:10
+				Label@ALTERNATE_RIGHT_KEY_LABEL:
+					Id:ALTERNATE_RIGHT_KEY_LABEL
+					X:208
+					Y:180
+					Text: Right:
+				TextField@ALTERNATE_RIGHT_KEY:
+					Id:ALTERNATE_RIGHT_KEY
+					Text:
+					Width:30
+					Height:25
+					X:247
+					Y:170
+					MaxLength:10
 		Container@AUDIO_PANE:
 			Id:AUDIO_PANE
 			X:37

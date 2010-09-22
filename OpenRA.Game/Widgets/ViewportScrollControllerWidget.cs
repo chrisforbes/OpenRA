@@ -112,15 +112,28 @@ namespace OpenRA.Widgets
 		
 		public override bool HandleKeyPressInner(KeyInput e)
 		{
-            //can user use keys w, a, s, d to move viewport? (like counterstrike)
+            //can user use specific keys such as w, a, s, d to move viewport? (like counterstrike)
             if (Game.Settings.Game.WasdAllowed)
             {
-                switch (e.KeyName)
+                if (e.KeyName == Game.Settings.Game.AlternateUpKey)
                 {
-                    case "w": Keyboard = Keyboard.Set(ScrollDirection.Up, (e.Event == KeyInputEvent.Down)); return true;
-                    case "s": Keyboard = Keyboard.Set(ScrollDirection.Down, (e.Event == KeyInputEvent.Down)); return true;
-                    case "a": Keyboard = Keyboard.Set(ScrollDirection.Left, (e.Event == KeyInputEvent.Down)); return true;
-                    case "d": Keyboard = Keyboard.Set(ScrollDirection.Right, (e.Event == KeyInputEvent.Down)); return true;
+                    Keyboard = Keyboard.Set(ScrollDirection.Up, (e.Event == KeyInputEvent.Down)); 
+                    return true;
+                }
+                if (e.KeyName == Game.Settings.Game.AlternateDownKey)
+                {
+                    Keyboard = Keyboard.Set(ScrollDirection.Down, (e.Event == KeyInputEvent.Down)); 
+                    return true;
+                }
+                if (e.KeyName == Game.Settings.Game.AlternateLeftKey)
+                {
+                    Keyboard = Keyboard.Set(ScrollDirection.Left, (e.Event == KeyInputEvent.Down)); 
+                    return true;
+                }
+                if (e.KeyName == Game.Settings.Game.AlternateRightKey)
+                {
+                    Keyboard = Keyboard.Set(ScrollDirection.Right, (e.Event == KeyInputEvent.Down)); 
+                    return true;
                 }
             }
 

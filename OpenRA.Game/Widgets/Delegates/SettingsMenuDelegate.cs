@@ -111,6 +111,46 @@ namespace OpenRA.Widgets.Delegates
                 return true;
             };
 
+
+
+            var txtUpKey = general.GetWidget<TextFieldWidget>("ALTERNATE_UP_KEY");
+
+            txtUpKey.Text = Game.Settings.Game.AlternateUpKey;
+            txtUpKey.OnLoseFocus = () =>
+            {
+                Game.Settings.Game.AlternateUpKey = txtUpKey.Text;
+            };
+            txtUpKey.OnEnterKey = () => { txtUpKey.LoseFocus(); return true; };
+
+            var txtDownKey = general.GetWidget<TextFieldWidget>("ALTERNATE_DOWN_KEY");
+
+            txtDownKey.Text = Game.Settings.Game.AlternateDownKey;
+            txtDownKey.OnLoseFocus = () =>
+            {
+                Game.Settings.Game.AlternateDownKey = txtDownKey.Text;
+            };
+            txtDownKey.OnEnterKey = () => { txtDownKey.LoseFocus(); return true; };
+
+            var txtLeftKey = general.GetWidget<TextFieldWidget>("ALTERNATE_LEFT_KEY");
+
+            txtLeftKey.Text = Game.Settings.Game.AlternateLeftKey;
+            txtLeftKey.OnLoseFocus = () =>
+            {
+                Game.Settings.Game.AlternateLeftKey = txtLeftKey.Text;
+            };
+            txtLeftKey.OnEnterKey = () => { txtLeftKey.LoseFocus(); return true; };
+
+            var txtRightKey = general.GetWidget<TextFieldWidget>("ALTERNATE_RIGHT_KEY");
+
+            txtRightKey.Text = Game.Settings.Game.AlternateRightKey;
+            txtRightKey.OnLoseFocus = () =>
+            {
+                  Game.Settings.Game.AlternateRightKey = txtRightKey.Text;
+            };
+            txtRightKey.OnEnterKey = () => { txtRightKey.LoseFocus(); return true; };
+
+
+
             var inverseScroll = general.GetWidget<CheckboxWidget>("INVERSE_SCROLL");
             inverseScroll.Checked = () => Game.Settings.Game.InverseDragScroll;
             inverseScroll.OnMouseDown = mi =>

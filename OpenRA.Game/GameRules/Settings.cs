@@ -71,7 +71,10 @@ namespace OpenRA.GameRules
         public bool InverseDragScroll = false;
         public int ScrollSpeed = 20;
         public int ArrowScrollSpeed = 30;
-
+        public string AlternateUpKey = "";
+        public string AlternateDownKey = "";
+        public string AlternateLeftKey = "";
+        public string AlternateRightKey = "";
         //can user use keys w, a, s, d to move viewport?
         public bool WasdAllowed = false;   
 
