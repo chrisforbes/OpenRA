@@ -75,6 +75,8 @@ namespace OpenRA.GameRules
         public string AlternateDownKey = "";
         public string AlternateLeftKey = "";
         public string AlternateRightKey = "";
+
+        public bool DisableHideBuildPalette = false;
         //can user use keys w, a, s, d to move viewport?
         public bool WasdAllowed = false;   
 

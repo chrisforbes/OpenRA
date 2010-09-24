@@ -307,12 +307,15 @@ namespace OpenRA.Mods.RA.Widgets
 			return mi => {
 				if (mi.Button != MouseButton.Left)
 					return;
-				
+			
+
 				Sound.Play(TabClick);
 				var wasOpen = paletteOpen;
-				paletteOpen = (CurrentQueue == queue && wasOpen) ? false : true;
+
+                paletteOpen = (CurrentQueue == queue && wasOpen) ? false : true;
+                 
 				CurrentQueue = queue;
-				if (wasOpen != paletteOpen)
+				if (wasOpen != paletteOpen && Game.Settings.Game.DisableHideBuildPalette != true)
 					paletteAnimating = true;
 			};
 		}

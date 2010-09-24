@@ -91,6 +91,13 @@ Background@SETTINGS_MENU:
 					Width:200
 					Height:20
 					Text: Enable Edge Scrolling
+				Checkbox@DISABLE_HIDE_BUILD_PALETTE:
+					Id:DISABLE_HIDE_BUILD_PALETTE
+					X:210
+					Y:30
+					Width:200
+					Height:20
+					Text: Do not hide build palette
 				Checkbox@INVERSE_SCROLL:
 					Id:INVERSE_SCROLL
 					X:0

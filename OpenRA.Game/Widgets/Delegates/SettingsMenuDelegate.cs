@@ -103,6 +103,15 @@ namespace OpenRA.Widgets.Delegates
             arrowscrollspeed.OnEnterKey = () => { arrowscrollspeed.LoseFocus(); return true; };
 
 
+            var chkDisableHideBuildPalette = general.GetWidget<CheckboxWidget>("DISABLE_HIDE_BUILD_PALETTE");
+            chkDisableHideBuildPalette.Checked = () => Game.Settings.Game.DisableHideBuildPalette;
+            chkDisableHideBuildPalette.OnMouseDown = mi =>
+            {
+                Game.Settings.Game.DisableHideBuildPalette ^= true;
+                return true;
+            };
+
+
             var chkWasdAllowed = general.GetWidget<CheckboxWidget>("ALLOW_WASD");
             chkWasdAllowed.Checked = () => Game.Settings.Game.WasdAllowed;
             chkWasdAllowed.OnMouseDown = mi =>
