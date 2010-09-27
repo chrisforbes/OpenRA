@@ -179,38 +179,19 @@ namespace OpenRA.Traits
 		}
 		
 
-		public int GetBuildTime(String unitString)
+		public virtual int GetBuildTime(String unitString)
 		{
 			var unit = Rules.Info[unitString];
 			if (unit == null || ! unit.Traits.Contains<BuildableInfo>())
 				return 0;
-
-			var producers = self.World.Queries.OwnedBy[self.Owner]
-				.WithTrait<Production>()
-				.Where(x => x.Trait.Info.Produces.Contains(Info.Type))
-				.OrderByDescending(x => x.Actor.IsPrimaryBuilding() ? 1 : 0 ); // prioritize the primary.
-           
-            int numProducers = 0;
-			foreach (var p in producers)
-			{
-                if (IsDisabledBuilding(p.Actor)) continue;
-                numProducers++;
-            }
-
-            //this should never happen, but do this to avoid divide by 0
-            if (numProducers == 0)
-            {
-                numProducers = 1;
-            }
       
 
 			if (Game.LobbyInfo.GlobalSettings.AllowCheats && self.Owner.PlayerActor.Trait<DeveloperMode>().FastBuild) return 0;
 			var cost = unit.Traits.Contains<ValuedInfo>() ? unit.Traits.Get<ValuedInfo>().Cost : 0;
-			var time = cost / numProducers
-                * (Info.BuildSpeed)
+			var time = cost
+                * Info.BuildSpeed
 				* (25 * 60) /* frames per min */				/* todo: build acceleration, if we do that */
 				 / 1000;
-
 
  			return (int) time;
 		}
