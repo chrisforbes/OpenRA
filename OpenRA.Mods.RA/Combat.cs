@@ -169,7 +169,7 @@ namespace OpenRA.Mods.RA
 				|| (weapon.ValidTargets.Contains("Water") && 
 					Game.world.GetTerrainType(Util.CellContaining(target.CenterLocation)) == "Water"); // even bigger hack!
 
-			var targetable = target.Actor.TraitOrDefault<ITargetable>();
+			var targetable = target.Actor.TraitOrDefault<Targetable>();
 			if (targetable == null || !weapon.ValidTargets.Intersect(targetable.TargetTypes).Any())
 				return false;
 			
