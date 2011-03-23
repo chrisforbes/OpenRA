@@ -424,6 +424,8 @@ namespace OpenRA.Mods.RA
 
 				return true;
 			}
+
+            public bool IsImmediate { get { return false; } }   // it might be interesting to have this actually be immediate...
 		}
 	}
 }

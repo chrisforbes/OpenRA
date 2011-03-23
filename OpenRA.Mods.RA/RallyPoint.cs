@@ -72,6 +72,7 @@ namespace OpenRA.Mods.RA
 			}
 
 			public bool IsQueued { get { return false; } } // unused
+            public bool IsImmediate { get { return false; } }
 		}
 	}
 }
