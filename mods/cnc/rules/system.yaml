@@ -62,6 +62,7 @@ World:
 	CncMenuPaletteEffect:
 	CloakPaletteEffect:
 	ScreenShaker:
+	UpdateOrderPalette:
 	NukePaletteEffect:
 	WaterPaletteRotation:
 		Base: 32
