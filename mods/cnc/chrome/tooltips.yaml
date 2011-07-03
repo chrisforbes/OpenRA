@@ -1,0 +1,14 @@
+Background@PRODUCTION_TOOLTIP:
+	Id:PRODUCTION_TOOLTIP
+	Logic:ProductionTooltipLogic
+	Background:panel-black
+	Width:200
+	Height:50
+	Children:
+		Label@NAME:
+			Id:NAME
+			X:5
+			Y:5
+			Width:PARENT_RIGHT-10
+			Height:PARENT_BOTTOM-10
+			Font:Bold

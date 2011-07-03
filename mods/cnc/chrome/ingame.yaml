@@ -24,7 +24,6 @@ Container@INGAME_ROOT:
 			Width:140
 			Height:35
 			Text:Cheats
-		WorldTooltip:
 		ChatDisplay@CHAT_DISPLAY:
 			Id:CHAT_DISPLAY
 			X:250
@@ -226,6 +225,11 @@ Container@INGAME_ROOT:
 					X:WINDOW_RIGHT - 204
 					Y:287
 					TabClick: button.aud
+					TooltipContainer: TOOLTIP_CONTAINER
+					TooltipTemplate: PRODUCTION_TOOLTIP
+		TooltipContainer:
+			Id:TOOLTIP_CONTAINER
+
 Background@FMVPLAYER:
 	Id:FMVPLAYER
 	Width:WINDOW_RIGHT

@@ -96,6 +96,8 @@
     <Compile Include="Widgets\ProductionPaletteWidget.cs" />
     <Compile Include="ProductionQueueFromSelection.cs" />
     <Compile Include="Widgets\SupportPowersWidget.cs" />
+    <Compile Include="Widgets\TooltipContainerWidget.cs" />
+    <Compile Include="Widgets\Logic\ProductionTooltipLogic.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">

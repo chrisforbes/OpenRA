@@ -33,7 +33,10 @@ namespace OpenRA.Mods.Cnc.Widgets
 	{
 		public readonly int Columns = 3;
 		public readonly string TabClick = "button.aud";
+		public readonly string TooltipContainer;
+		public readonly string TooltipTemplate;
 
+		TooltipContainerWidget tooltipContainer;
 		ProductionQueue currentQueue;
 		public ProductionQueue CurrentQueue
 		{
@@ -83,12 +86,43 @@ namespace OpenRA.Mods.Cnc.Widgets
 			if (CurrentQueue != null)
 				RefreshIcons();
 		}
-		
+
 		public override bool HandleMouseInput(MouseInput mi)
 		{			
+			if (mi.Event == MouseInputEvent.Move)
+			{
+				if (TooltipContainer == null)
+					return false;
+
+				if (tooltipContainer == null)
+					tooltipContainer = Widget.RootWidget
+						.GetWidget<TooltipContainerWidget>(TooltipContainer);
+
+				var hover = Icons.Where(i => i.Key.Contains(mi.Location))
+					.Select(i => i.Value).FirstOrDefault();
+
+				if (hover == null)
+				{
+					if (tooltipContainer.TooltipId != null)
+						tooltipContainer.RemoveTooltip();
+
+					return false;
+				}
+
+				var name = "ProductionPalette_"+hover.Name;
+
+				if (tooltipContainer.TooltipId != name)
+				{
+					var panel = Widget.LoadWidget(TooltipTemplate, null,
+					                              new WidgetArgs() {{ "unit", hover.Name }});
+					tooltipContainer.SetTooltip(panel, name);
+				}
+				return false;
+			}
+
 			if (mi.Event != MouseInputEvent.Down)
 				return false;
-			
+
 			var clicked = Icons.Where(i => i.Key.Contains(mi.Location))
 				.Select(i => i.Value).FirstOrDefault();
 			
