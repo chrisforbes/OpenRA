@@ -50,4 +50,10 @@ namespace OpenRA.FileFormats
 		public IEnumerable<T> Keys { get { return hax.Keys; } }
 		public IEnumerable<U> Values { get { return hax.Values; } }
 	}
+	
+	public static class Cache
+	{
+		public static Cache<T,U> New<T,U>( Func<T,U> f ) { return new Cache<T, U>( f ); }
+		public static Cache<T,U> New<T,U>( Func<T,U> f, IEqualityComparer<T> c ) { return new Cache<T, U>( f, c ); }
+	}
 }
