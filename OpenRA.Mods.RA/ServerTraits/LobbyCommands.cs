@@ -290,6 +290,19 @@ namespace OpenRA.Mods.RA.Server
 						server.SyncLobbyInfo();
 						return true;
 					}},
+				{"invulnerableharvesters", 
+					s =>
+					{
+                       	if (conn.PlayerIndex != 0)
+                       	{
+                         	server.SendChatTo( conn, "Only the host can set that option" );
+                       		return true;
+                      	}
+                       
+                       	bool.TryParse(s, out server.lobbyInfo.GlobalSettings.InvulnerableHarvesters);
+                       	server.SyncLobbyInfo();
+                       	return true;
+               		}},
 				{ "kick",
 					s => 
 					{

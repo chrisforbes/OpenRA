@@ -127,6 +127,14 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 						"allowcheats {0}".F(!orderManager.LobbyInfo.GlobalSettings.AllowCheats)));
 			};
 			
+			var invulnerableHarvesters = lobby.GetWidget<CheckboxWidget> ("INV_HARVESTERS_CHECKBOX");
+			invulnerableHarvesters.IsChecked = () => orderManager.LobbyInfo.GlobalSettings.InvulnerableHarvesters;
+			invulnerableHarvesters.OnClick = () => {
+				if (Game.IsHost)
+					orderManager.IssueOrder (Order.Command (
+						"invulnerableharvesters {0}".F (!orderManager.LobbyInfo.GlobalSettings.InvulnerableHarvesters)));
+			};
+			
 			var startGameButton = lobby.GetWidget<ButtonWidget>("START_GAME_BUTTON");
 			startGameButton.OnClick = () =>
 			{

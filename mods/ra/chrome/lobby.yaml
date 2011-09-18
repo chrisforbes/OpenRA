@@ -424,6 +424,13 @@ Background@SERVER_LOBBY:
 			Width: 80
 			Height: 20
 			Text: Allow Cheats
+		Checkbox@INV_HARVESTERS_CHECKBOX:
+			Id:INV_HARVESTERS_CHECKBOX
+			X: PARENT_RIGHT-154
+			Y: PARENT_BOTTOM-195
+			Width: 80
+			Height: 20
+			Text: Inv. Harvesters
 Background@COLOR_CHOOSER:
 	Id:COLOR_CHOOSER
 	Background:dialog2

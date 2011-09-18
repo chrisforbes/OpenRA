@@ -50,6 +50,10 @@ namespace OpenRA.Mods.RA
 		{
 			Info = info;
 			self.QueueActivity( new CallFunc( () => ChooseNewProc(self, null)));
+			
+			// if the invulnerable harvesters option was set, really make him invulnerable
+            if(self.World.LobbyInfo.GlobalSettings.InvulnerableHarvesters)
+            	self.AddTrait(new InvulnerableInfo().Create(null));
 		}
 		
 		public void ChooseNewProc(Actor self, Actor ignore)
