@@ -53,7 +53,17 @@ namespace OpenRA.Mods.RA.Server
 				{
 					try
 					{
-						var url = "ping.php?port={0}&name={1}&state={2}&players={3}&mods={4}&map={5}&maxplayers={6}";
+						string playerStr = "";
+						var cs = from cli in server.lobbyInfo.Clients select cli;
+						int i = 0;
+						foreach(var c in cs)
+						{
+							playerStr += "&playerName"+i.ToString()+"="+c.Name;
+							playerStr += "&playerFaction"+i.ToString()+"="+c.Country;
+							playerStr += "&playerTeam"+i.ToString()+"="+c.Team.ToString();
+							i++;
+						}
+						var url = "ping.php?port={0}&name={1}&state={2}&players={3}&mods={4}&map={5}&maxplayers={6}&title={7}&description={8}&type={9}&width={10}&height={11}&tileset={12}&author={13}";
 						if (isInitialPing) url += "&new=1";
 
 						using (var wc = new WebClient())
@@ -66,7 +76,14 @@ namespace OpenRA.Mods.RA.Server
 								server.lobbyInfo.Clients.Count,
 								string.Join(",", Game.CurrentMods.Select(f => "{0}@{1}".F(f.Key, f.Value.Version)).ToArray()),
 								server.lobbyInfo.GlobalSettings.Map,
-								server.Map.PlayerCount));
+								server.Map.PlayerCount,
+								server.Map.Title,
+								server.Map.Description,
+								server.Map.Type,
+								server.Map.MapSize.X,
+								server.Map.MapSize.Y,
+								server.Map.Tileset,
+								server.Map.Author) + playerStr);
 
 							if (isInitialPing)
 							{
