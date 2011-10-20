@@ -58,9 +58,7 @@ namespace OpenRA.Mods.RA.Server
 						int i = 0;
 						foreach(var c in cs)
 						{
-							playerStr += "&playerName"+i.ToString()+"="+c.Name;
-							playerStr += "&playerFaction"+i.ToString()+"="+c.Country;
-							playerStr += "&playerTeam"+i.ToString()+"="+c.Team.ToString();
+							playerStr += "&playerName{0}={1}&playerFaction{0}={2}&playerTeam{0}={3}".F(i,c.Name,c.Country,c.Team);
 							i++;
 						}
 						var url = "ping.php?port={0}&name={1}&state={2}&players={3}&mods={4}&map={5}&maxplayers={6}&title={7}&description={8}&type={9}&width={10}&height={11}&tileset={12}&author={13}";
