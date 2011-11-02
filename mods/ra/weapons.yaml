@@ -888,14 +888,28 @@ DogJaw:
 	Report: DOGG5P
 	Warhead:
 		Spread: 5
-		Versus: 
+		Versus:
 			Wood: 0%
 			Light: 0%
 			Heavy: 0%
 			Concrete: 0%
 		InfDeath: 0
 		Damage: 100
-		
+
+Claw:
+	ROF: 30
+	Range: 1
+	Projectile: Bullet
+	Warhead:
+		Spread: 5
+		Versus:
+			Wood: 0%
+			Light: 0%
+			Heavy: 0%
+			Concrete: 0%
+		InfDeath: 0
+		Damage: 33
+
 Heal:
 	ROF: 80
 	Range: 4

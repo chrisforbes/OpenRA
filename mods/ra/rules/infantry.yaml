@@ -1,3 +1,24 @@
+Zombie:
+	Inherits: ^Infantry
+	Valued:
+		Cost: 100
+	Tooltip:
+		Icon: zombieicon
+		Name: Zombie
+		Description: A Regular Zombie. Strong and slow.
+	Selectable:
+		Bounds: 12,17,0,-9
+	Health:
+		HP: 250
+	Mobile:
+		Speed: 3
+	AttackWander:
+	AutoTarget:
+		ScanRadius: 5
+	AttackFrontal:
+		PrimaryWeapon: claw
+
+
 DOG:
 	Inherits: ^Infantry
 	Buildable:
@@ -26,7 +47,6 @@ DOG:
 	RenderInfantry:
 		IdleAnimations: idle1,idle2
 	IgnoresDisguise:
-
 E1:
 	Inherits: ^Infantry
 	Buildable:
