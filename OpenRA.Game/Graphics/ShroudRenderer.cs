@@ -16,16 +16,11 @@ namespace OpenRA.Graphics
 	public class ShroudRenderer
 	{
 		World world;
-		Traits.Shroud shroud {
-			get {
-				return world.RenderedShroud;
-			}
-		}
+		Traits.Shroud shroud { get { return world.RenderedShroud; } }
 		
 		Sprite[] shadowBits = Game.modData.SpriteLoader.LoadAllSprites("shadow");
 		Sprite[,] sprites, fogSprites;
 
-		bool dirty = true;
 		Map map;
 
 		public ShroudRenderer(World world)

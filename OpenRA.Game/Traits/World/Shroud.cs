@@ -30,7 +30,6 @@ namespace OpenRA.Traits
 		public bool[,] exploredCells;
 		Rectangle? exploredBounds;
 		bool disabled = false;
-		bool observing = false;
 		public bool dirty = true;
 		public bool Disabled
 		{
@@ -40,7 +39,7 @@ namespace OpenRA.Traits
 
 		public bool Observing
 		{
-			get { return world.IsShellmap || (world.LocalPlayer == null && Owner == null);; }
+			get { return world.IsShellmap || (world.LocalPlayer == null && Owner == null); }
 		}
 		
 		public Rectangle? Bounds
@@ -88,7 +87,7 @@ namespace OpenRA.Traits
 		{
 			if (!a.HasTrait<RevealsShroud>()) return;
 			if (a.Owner == null || Owner == null) return;
-			if(a.Owner.Stances[Owner] != Stance.Ally) return;
+			if (a.Owner.Stances[Owner] != Stance.Ally) return;
 			
 			ActorVisibility v = a.Sight;
 
@@ -144,7 +143,7 @@ namespace OpenRA.Traits
 		{
 			if (!a.HasTrait<RevealsShroud>())return;
 			if (a.Owner == null || Owner == null) return;
-			if(a.Owner.Stances[Owner] != Stance.Ally) return;
+			if (a.Owner.Stances[Owner] != Stance.Ally) return;
 
 			ActorVisibility v = a.Sight;
 

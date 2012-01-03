@@ -68,7 +68,7 @@ namespace OpenRA
 			else
 			{
 				// Map player
-				ClientIndex = -1; // Owned by the host (todo: fix this)
+				ClientIndex = 0; // Owned by the host (todo: fix this)
 				ColorRamp = pr.ColorRamp;
 				PlayerName = pr.Name;
 				NonCombatant = pr.NonCombatant;
@@ -89,11 +89,6 @@ namespace OpenRA
 				else
 					logic.Activate(this);
 			}
-		}
-
-		public override string ToString()
-		{
-			return PlayerName;
 		}
 
 		public void GiveAdvice(string advice)

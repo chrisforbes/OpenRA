@@ -59,12 +59,9 @@ namespace OpenRA
 		{
 			if (!(orderManager.Connection is ReplayConnection))
 			{
-	 			LocalPlayer = Players.FirstOrDefault(p => p.InternalName == pr);
+				LocalPlayer = Players.FirstOrDefault(p => p.InternalName == pr);
 				RenderedPlayer = LocalPlayer;
-			}else{
-				
-			}
-				
+			}	
 		}
 
 		public readonly Actor WorldActor;
@@ -158,7 +155,6 @@ namespace OpenRA
 			a.IsInWorld = false;
 			actors.Remove(a);
 			ActorRemoved(a);
-			
 		}
 
 		public void Add(IEffect b) { effects.Add(b); }
