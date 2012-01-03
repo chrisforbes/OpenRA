@@ -18,7 +18,7 @@ namespace OpenRA.Mods.RA
 
 	class HiddenUnderFog : IRenderModifier, IVisibilityModifier
 	{
-		public bool IsVisible(Shroud s, Actor self)
+		public bool IsVisible(Actor self, Shroud s)
 		{
 			return Shroud.GetVisOrigins(self).Any(o => s.IsVisible(o));
 		}
@@ -26,7 +26,7 @@ namespace OpenRA.Mods.RA
 		static Renderable[] Nothing = { };
 		public IEnumerable<Renderable> ModifyRender(Actor self, IEnumerable<Renderable> r)
 		{
-			return IsVisible(self.World.RenderedShroud, self) ? r : Nothing;
+			return IsVisible(self, self.World.RenderedShroud) ? r : Nothing;
 		}
 	}
 }

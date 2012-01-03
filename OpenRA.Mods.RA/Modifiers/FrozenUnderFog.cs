@@ -18,7 +18,7 @@ namespace OpenRA.Mods.RA
 
 	class FrozenUnderFog : IRenderModifier, IVisibilityModifier
 	{
-		public bool IsVisible(Shroud s, Actor self)
+		public bool IsVisible(Actor self, Shroud s)
 		{
 			return Shroud.GetVisOrigins(self).Any(o => s.IsVisible(o));
 		}
@@ -26,7 +26,7 @@ namespace OpenRA.Mods.RA
 		Renderable[] cache = { };
 		public IEnumerable<Renderable> ModifyRender(Actor self, IEnumerable<Renderable> r)
 		{
-			if (IsVisible(self.World.RenderedShroud, self))
+			if (IsVisible(self, self.World.RenderedShroud))
 				cache = r.ToArray();
 			return cache;
 		}

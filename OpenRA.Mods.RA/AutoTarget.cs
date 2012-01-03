@@ -111,21 +111,12 @@ namespace OpenRA.Mods.RA
 
 			var inRange = self.World.FindUnitsInCircle(self.CenterLocation, (int)(Game.CellSize * range));
 
-			if (self.Owner.HasFogVisibility()) {
-				return inRange
-					.Where(a => a.AppearsHostileTo(self))
-					.Where(a => !a.HasTrait<AutoTargetIgnore>())
-					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-					.ClosestTo( self.CenterLocation );
-			}
-			else {
-				return inRange
-					.Where(a => a.AppearsHostileTo(self))
-					.Where(a => !a.HasTrait<AutoTargetIgnore>())
-					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-					.Where(a => self.Owner.Shroud.IsTargetable(a))
-					.ClosestTo( self.CenterLocation );
-			}
+			return inRange
+				.Where(a => a.AppearsHostileTo(self))
+				.Where(a => !a.HasTrait<AutoTargetIgnore>())
+				.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
+				.Where(a => self.Owner.HasFogVisibility() || self.Owner.Shroud.IsTargetable(a))
+				.ClosestTo( self.CenterLocation );
 		}
 	}
 

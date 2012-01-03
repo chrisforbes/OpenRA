@@ -49,7 +49,7 @@ namespace OpenRA.Traits
 
 		public event Action Dirty = () => { };
 
-		public void setDirty()
+		public void SetDirty()
 		{
 			Dirty();
 		}
@@ -218,7 +218,7 @@ namespace OpenRA.Traits
 		public bool IsVisible(Actor a)
 		{
 			// I need to pass in the current shroud, otherwise we're just checking that true==true
-			if (a.TraitsImplementing<IVisibilityModifier>().Any(t => !t.IsVisible(this, a)))
+			if (a.TraitsImplementing<IVisibilityModifier>().Any(t => !t.IsVisible(a, this)))
 				return false;
 
 			if(Owner == null) return true;
@@ -227,7 +227,7 @@ namespace OpenRA.Traits
 		}
 		
 		public bool IsTargetable(Actor a) {
-			if (a.TraitsImplementing<IVisibilityModifier>().Any(t => !t.IsVisible(this, a)))
+			if (a.TraitsImplementing<IVisibilityModifier>().Any(t => !t.IsVisible(a, this)))
 				return false;
 
 			return GetVisOrigins(a).Any(o => IsVisible(o));

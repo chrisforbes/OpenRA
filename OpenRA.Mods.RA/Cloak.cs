@@ -84,10 +84,10 @@ namespace OpenRA.Mods.RA
 		
 		public bool IsVisible(Actor self)
 		{
-			return IsVisible(null, self);
+			return IsVisible(self, null);
 		}
 
-		public bool IsVisible(Shroud s, Actor self)
+		public bool IsVisible(Actor self, Shroud s)
 		{
 			if (!Cloaked || self.Owner == self.World.LocalPlayer ||
 				self.Owner.Stances[self.World.LocalPlayer] == Stance.Ally)

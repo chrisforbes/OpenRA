@@ -23,34 +23,26 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		public ObserveAsLogic(World world)
 		{
 			var r = Ui.Root;
-			var gameRoot = r.GetWidget("OBSERVER_ROOT");
-			if(gameRoot == null) { 
-				gameRoot = r.GetWidget("INGAME_ROOT");
-			}
+			var gameRoot = r.GetWidget("OBSERVER_ROOT") ?? r.GetWidget("INGAME_ROOT");
 			var selector = gameRoot.GetWidget<DropDownButtonWidget>("OBSERVEAS_DROPDOWN");
-			
 			selector.OnMouseDown = _ => ShowWindowModeDropdown(selector, world);
 		}
-		
+
 		public static bool ShowWindowModeDropdown(DropDownButtonWidget selector, World world)
 		{
-			/**
-				Select all the 'active' players in this world and push them into a dictionary
-				using their name as a key.
-			**/
 			var options = world.Players.Where(a => !a.NonCombatant).ToDictionary(p => p.PlayerName);
 			options.Add("[Global View]", null);
 			
-			// This Func tells each option how to conduct itself: text & actions
 			Func<string, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>
 			{
-				// params: dropdown id, "selected", "onclick action"
-				var s = (options[o] == null) ? null : options[o];
-				var item = ScrollItemWidget.Setup(itemTemplate, () => world.RenderedPlayer == s, () => { world.RenderedPlayer = s; world.RenderedShroud.setDirty(); } );
+				var item = ScrollItemWidget.Setup(itemTemplate, 
+					() => world.RenderedPlayer == options[o], 
+					() => { world.RenderedPlayer = options[o]; world.RenderedShroud.SetDirty(); } 
+				);
 				item.GetWidget<LabelWidget>("LABEL").GetText = () => o;
 				return item;
 			};
-			
+
 			selector.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options.Keys, setupItem);
 			return true;
 		}
