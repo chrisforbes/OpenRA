@@ -247,7 +247,8 @@ namespace OpenRA
 			Log.AddChannel("sync", "syncreport.log");
 
 			FileSystem.Mount("."); // Needed to access shaders
-			Renderer.Initialize( Game.Settings.Graphics.Mode );
+			bool headless=args.ContainsFlag("headless");
+			Renderer.Initialize( Game.Settings.Graphics.Mode, headless);
 			Renderer = new Renderer();
 
 			Console.WriteLine("Available mods:");
@@ -255,10 +256,10 @@ namespace OpenRA
 				Console.WriteLine("\t{0}: {1} ({2})", mod.Key, mod.Value.Title, mod.Value.Version);
 
 			Sound.Create();
-			InitializeWithMods(Settings.Game.Mods);
+			InitializeWithMods(Settings.Game.Mods, headless);
 		}
 
-		public static void InitializeWithMods(string[] mods)
+		public static void InitializeWithMods(string[] mods, bool headless=false)
 		{
 			// Clear static state if we have switched mods
 			LobbyInfoChanged = () => {};
@@ -295,8 +296,16 @@ namespace OpenRA
 
 			JoinLocal();
 			viewport = new Viewport(new int2(Renderer.Resolution), Rectangle.Empty, Renderer);
-
-			modData.LoadScreen.StartGame();
+			if(headless)
+			{
+				HeadlessConfig.DoHeadlessConfig();
+				Game.CreateServer(new ServerSettings(Game.Settings.Server));
+			}
+			else
+			{
+				modData.LoadScreen.StartGame();
+			}
+			
 		}
 
 		public static void LoadShellMap()
