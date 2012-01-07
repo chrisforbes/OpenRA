@@ -30,20 +30,20 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 		public static bool ShowWindowModeDropdown(DropDownButtonWidget selector, World world)
 		{
-			var options = world.Players.Where(a => !a.NonCombatant).ToDictionary(p => p.PlayerName);
-			options.Add("[Global View]", null);
+			var options = world.Players.Where(a => !a.NonCombatant).ToList();
+			options.Add(null);
 			
-			Func<string, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>
+			Func<Player, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>
 			{
 				var item = ScrollItemWidget.Setup(itemTemplate, 
-					() => world.RenderedPlayer == options[o], 
-					() => { world.RenderedPlayer = options[o]; world.RenderedShroud.SetDirty(); } 
+					() => world.RenderedPlayer == o,
+					() => { world.RenderedPlayer = o; world.RenderedShroud.SetDirty(); }
 				);
-				item.GetWidget<LabelWidget>("LABEL").GetText = () => o;
+				item.GetWidget<LabelWidget>("LABEL").GetText = () => (o != null) ? o.PlayerName : "[Global View]";
 				return item;
 			};
 
-			selector.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options.Keys, setupItem);
+			selector.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options, setupItem);
 			return true;
 		}
 	}
