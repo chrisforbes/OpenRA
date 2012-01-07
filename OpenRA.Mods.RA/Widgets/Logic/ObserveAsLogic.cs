@@ -33,7 +33,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		public static bool ShowWindowModeDropdown(DropDownButtonWidget selector, World world)
 		{
 			var options = world.Players.Where(a => !a.NonCombatant).ToList();
-			options.Add(null);
+			options.Insert(0, null);
 
 			Func<Player, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>
 			{
