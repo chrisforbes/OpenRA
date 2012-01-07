@@ -26,20 +26,22 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			var gameRoot = r.GetWidget("OBSERVER_ROOT") ?? r.GetWidget("INGAME_ROOT");
 			var selector = gameRoot.GetWidget<DropDownButtonWidget>("OBSERVEAS_DROPDOWN");
 			selector.OnMouseDown = _ => ShowWindowModeDropdown(selector, world);
+			selector.GetText = () => world.RenderedPlayer != null
+				? world.RenderedPlayer.PlayerName : "[Global View]";
 		}
 
 		public static bool ShowWindowModeDropdown(DropDownButtonWidget selector, World world)
 		{
 			var options = world.Players.Where(a => !a.NonCombatant).ToList();
 			options.Add(null);
-			
+
 			Func<Player, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>
 			{
 				var item = ScrollItemWidget.Setup(itemTemplate, 
 					() => world.RenderedPlayer == o,
 					() => { world.RenderedPlayer = o; world.RenderedShroud.SetDirty(); }
 				);
-				item.GetWidget<LabelWidget>("LABEL").GetText = () => (o != null) ? o.PlayerName : "[Global View]";
+				item.GetWidget<LabelWidget>("LABEL").GetText = () => o != null ? o.PlayerName : "[Global View]";
 				return item;
 			};
 
