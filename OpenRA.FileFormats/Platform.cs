@@ -44,32 +44,40 @@ namespace OpenRA
 
 				return PlatformType.Unknown;
 		}
-
-		public static string SupportDir
-		{
+		private static string supportDir;
+		public static string SupportDir {
 			get
 			{
-				var dir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-
-				switch (CurrentPlatform)
-				{
-				case PlatformType.Windows:
-					dir += Path.DirectorySeparatorChar + "OpenRA";
-					break;
-				case PlatformType.OSX:
-					dir += "/Library/Application Support/OpenRA";
-					break;
-				case PlatformType.Linux:
-				default:
-					dir += "/.openra";
-					break;
-				}
-
-				if (!Directory.Exists(dir))
-					Directory.CreateDirectory(dir);
-
-				return dir + Path.DirectorySeparatorChar;
+				return supportDir;
+			}
+			set
+			{
+				if (!Directory.Exists(value))
+					Directory.CreateDirectory(value);
+				supportDir=value;
+				if(!supportDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
+					supportDir += Path.DirectorySeparatorChar;
 			}
 		}
+		static  Platform()
+		{
+			var dir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+			switch (CurrentPlatform)
+			{
+			case PlatformType.Windows:
+				dir += Path.DirectorySeparatorChar + "OpenRA";
+				break;
+			case PlatformType.OSX:
+				dir += "/Library/Application Support/OpenRA";
+				break;
+			case PlatformType.Linux:
+			default:
+				dir += "/.openra";
+				break;
+			}
+			SupportDir=dir;
+			
+		}
 	}
+	
 }

@@ -31,7 +31,7 @@ namespace OpenRA
 
 		public static ModData modData;
 		static WorldRenderer worldRenderer;
-
+		public static Arguments arguments;
 		public static Viewport viewport;
 		public static Settings Settings;
 
@@ -239,8 +239,10 @@ namespace OpenRA
 
 		internal static void Initialize(Arguments args)
 		{
+			arguments=args;
 			Console.WriteLine("Platform is {0}", Platform.CurrentPlatform);
-
+			Platform.SupportDir=args.GetValue("SupportDir", Platform.SupportDir);
+				
 			AppDomain.CurrentDomain.AssemblyResolve += FileSystem.ResolveAssembly;
 
 			Settings = new Settings(Platform.SupportDir + "settings.yaml", args);
@@ -252,7 +254,7 @@ namespace OpenRA
 			Log.AddChannel("sync", "syncreport.log");
 
 			FileSystem.Mount("."); // Needed to access shaders
-			Renderer.Initialize( Game.Settings.Graphics.Mode );
+			Renderer.Initialize( Game.Settings.Graphics.Mode);
 			Renderer = new Renderer();
 
 			Console.WriteLine("Available mods:");
@@ -300,8 +302,30 @@ namespace OpenRA
 
 			JoinLocal();
 			viewport = new Viewport(new int2(Renderer.Resolution), Rectangle.Empty, Renderer);
-
-			modData.LoadScreen.StartGame();
+			if(arguments.ContainsFlag("headless"))
+			{
+				if(!arguments.ContainsFlag("headless-no-config"))
+					HeadlessConfig.DoHeadlessConfig();
+				Game.CreateServer(new ServerSettings(Game.Settings.Server));
+				while(true)
+				{
+					System.Threading.Thread.Sleep(100);
+					
+					//Accessing public field and List::Count is thread safe
+					if((server.GameStarted)&&(server.conns.Count<=1))
+					{
+						Console.WriteLine("Noone is playing, shutting down...");
+						server.Shutdown();
+						System.Environment.Exit(0);
+					}
+				}
+				
+			}
+			else
+			{
+				modData.LoadScreen.StartGame();
+			}
+			
 		}
 
 		public static void LoadShellMap()
