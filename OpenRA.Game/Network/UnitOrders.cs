@@ -138,7 +138,7 @@ namespace OpenRA.Network
 						{
 							orderManager.FramesAhead = orderManager.LobbyInfo.GlobalSettings.OrderLatency;
 							Game.Debug(
-								"Order lag is now {0} frames.".F(orderManager.LobbyInfo.GlobalSettings.OrderLatency));
+								"Le lag est de {0} images.".F(orderManager.LobbyInfo.GlobalSettings.OrderLatency));
 						}
 						Game.SyncLobbyInfo();
 						break;
@@ -154,14 +154,14 @@ namespace OpenRA.Network
 
 						SetPlayerStance(world, order.Player, targetPlayer, newStance);
 
-						Game.Debug("{0} has set diplomatic stance vs {1} to {2}".F(
+						Game.Debug("{0} a defini la position diplomatique contre {1} a {2}".F(
 							order.Player.PlayerName, targetPlayer.PlayerName, newStance));
 
 						// automatically declare war reciprocally
 						if (newStance == Stance.Enemy && targetPlayer.Stances[order.Player] == Stance.Ally)
 						{
 							SetPlayerStance(world, targetPlayer, order.Player, newStance);
-							Game.Debug("{0} has reciprocated",targetPlayer.PlayerName);
+							Game.Debug("{0} est d'accord",targetPlayer.PlayerName);
 						}
 
 						break;

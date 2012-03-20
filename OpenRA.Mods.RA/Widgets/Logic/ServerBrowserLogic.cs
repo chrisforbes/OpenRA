@@ -30,9 +30,9 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		{
 			switch (searchStatus)
 			{
-				case SearchStatus.Fetching:	return "Fetching game list...";
-				case SearchStatus.Failed:	return "Failed to contact master server.";
-				case SearchStatus.NoGames:	return "No games found.";
+				case SearchStatus.Fetching:	return "Actualisation liste de Parties...";
+				case SearchStatus.Failed:	return "Erreur connexion au serveur maitre.";
+				case SearchStatus.NoGames:	return "Aucune Partie Trouvee";
 				default:					return "";
 			}
 		}
@@ -98,8 +98,8 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			if (game == null)
 				return "";
 
-			if (game.State == 1) return "Waiting for players";
-			if (game.State == 2) return "Playing";
+			if (game.State == 1) return "En attente de Joueurs";
+			if (game.State == 2) return "En Jeu";
 			else return "Unknown";
 		}
 

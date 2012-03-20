@@ -9,8 +9,8 @@ SS:
 	Valued:
 		Cost: 950
 	Tooltip:
-		Name: Submarine
-		Description: Submerged anti-ship unit armed with \ntorpedoes.\n  Strong vs Ships\n  Weak vs Everything\n  Special Ability: Submerge
+		Name: Sous-marin
+		Description: Unite anti-navires submersible armee de \ntorpilles.\n  Fort contre les Navires\n  Faible contre Tout\n  Abilite Speciale: Submersion
 	Health:
 		HP: 250
 	Armor:
@@ -55,8 +55,8 @@ MSUB:
 	Valued:
 		Cost: 2400
 	Tooltip:
-		Name: Missile Submarine
-		Description: Submerged anti-ground unit armed with \nlong-range ballistic missiles.\n  Strong vs Buildings\n  Weak vs Everything\n  Special Ability: Submerge
+		Name: Sous-marin lance-missiles
+		Description: Unite anti-sol submersible armee de \nmissiles ballistiques longue portee.\n  Fort contre les Batiments\n  Faible contre tout\n  Abilite Speciale: Submersion
 	Health:
 		HP: 400
 	Armor:
@@ -100,8 +100,8 @@ DD:
 	Valued:
 		Cost: 1000
 	Tooltip:
-		Name: Destroyer
-		Description: Fast multi-role ship. \n  Strong vs Submarines, Aircraft\n  Weak vs Infantry, Tanks
+		Name: Contre-torpilleur
+		Description: Navire polyvalent rapide. \n Fort contre les Sous-marins et l'Aviation\n  Faible contre l'Infanterie et les Tanks
 	Health:
 		HP: 400
 	Armor:
@@ -140,8 +140,8 @@ CA:
 	Valued:
 		Cost: 2400
 	Tooltip:
-		Name: Cruiser
-		Description: Very slow long-range ship. \n  Strong vs Buildings\n  Weak vs Ships, Submarines
+		Name: Croiseur
+		Description: Navire longue portee tres lent. \n  Fort contre les Batiments\n  Faible contre les Navires et Sous-marins.
 	Health:
 		HP: 800
 	Armor:
@@ -181,8 +181,8 @@ LST:
 	Valued:
 		Cost: 700
 	Tooltip:
-		Name: Transport
-		Description: General-purpose naval transport.\nCan carry infantry and tanks.\n  Unarmed
+		Name: Transport maritime
+		Description: Transporteur de base.\nPeut emporter les Soldats et les Tanks.\n  |Desarme|
 	Health:
 		HP: 350
 	Armor:
@@ -213,8 +213,8 @@ PT:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Gunboat
-		Description: Light scout & support ship. \n  Strong vs Ships, Submarines\n  Weak vs Aircraft
+		Name: Aviso-torpilleur
+		Description: Navire de support rapide et leger. \n Fort contre les Navires et les Sous-marins\n Faible contre l'Aviation
 	Health:
 		HP: 200
 	Armor:

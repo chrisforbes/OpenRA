@@ -177,10 +177,10 @@ namespace OpenRA.Server
 			{
 				if (GameStarted)
 				{
-					Log.Write("server", "Rejected connection from {0}; game is already started.",
+					Log.Write("serveur", "Connexion rejetee de {0}; la partie a deja commence.",
 						newConn.socket.RemoteEndPoint);
 
-					SendOrderTo(newConn, "ServerError", "The game has already started");
+					SendOrderTo(newConn, "Erreur Serveur", "La partie a deja commence");
 					DropClient(newConn);
 					return;
 				}
@@ -196,10 +196,10 @@ namespace OpenRA.Server
 					 		(kv.Second == "{DEV_VERSION}" || Game.CurrentMods[kv.First].Version == "{DEV_VERSION}" || kv.Second == Game.CurrentMods[kv.First].Version));
 				if (!valid)
 				{
-					Log.Write("server", "Rejected connection from {0}; mods do not match.",
+					Log.Write("serveur", "Connexion rejetee de {0}; son mod ne correspond pas.",
 						newConn.socket.RemoteEndPoint);
 
-					SendOrderTo(newConn, "ServerError", "Your mods don't match the server");
+					SendOrderTo(newConn, "Erreur Serveur", "Votre mod ne correspond pas au serveur");
 					DropClient(newConn);
 					return;
 				}
@@ -220,14 +220,14 @@ namespace OpenRA.Server
 				if(lobbyInfo.Clients.Count==1)
 					client.IsAdmin=true;
 
-				Log.Write("server", "Client {0}: Accepted connection from {1}",
+				Log.Write("serveur", "Client {0}: Accepte la connection de {1}",
 					newConn.PlayerIndex, newConn.socket.RemoteEndPoint);
 
 				foreach (var t in ServerTraits.WithInterface<IClientJoined>())
 					t.ClientJoined(this, newConn);
 
 				SyncLobbyInfo();
-				SendChat(newConn, "has joined the game.");
+				SendChat(newConn, "a rejoint la partie.");
 			}
 			catch (Exception) { DropClient(newConn); }
 		}
@@ -322,7 +322,7 @@ namespace OpenRA.Server
 
 		public void SendDisconnected(Connection asConn)
 		{
-			DispatchOrders(asConn, 0, new ServerOrder("Disconnected", "").Serialize());
+			DispatchOrders(asConn, 0, new ServerOrder("Deconnecte", "").Serialize());
 		}
 
 		void InterpretServerOrder(Connection conn, ServerOrder so)
@@ -368,7 +368,7 @@ namespace OpenRA.Server
 			else
 			{
 				conns.Remove(toDrop);
-				SendChat(toDrop, "Connection Dropped");
+				SendChat(toDrop, "Connexion Interrompue");
 
 				if (GameStarted)
 					SendDisconnected(toDrop); /* Report disconnection */

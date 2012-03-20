@@ -35,7 +35,7 @@ namespace OpenRA.Mods.RA.Widgets
 
 			if (world.LocalPlayer != null && !world.LocalPlayer.Shroud.IsExplored(cell))
 			{
-				var utext = "Unexplored Terrain";
+				var utext = "Terrain Inexplore";
 				var usz = Game.Renderer.Fonts["Bold"].Measure(utext) + new int2(20, 24);
 
 				WidgetUtils.DrawPanel("dialog4", Rectangle.FromLTRB(

@@ -47,7 +47,7 @@ namespace OpenRA.Mods.RA
 
 		public void ResolveOrder(Actor self, Order order)
 		{
-			if (order.OrderString == "Surrender")
+			if (order.OrderString == "Abandonne")
 				Lose(self);
 		}
 
@@ -56,7 +56,7 @@ namespace OpenRA.Mods.RA
 			if (self.Owner.WinState == WinState.Lost) return;
 			self.Owner.WinState = WinState.Lost;
 
-			Game.Debug("{0} is defeated.".F(self.Owner.PlayerName));
+			Game.Debug("{0} a perdu.".F(self.Owner.PlayerName));
 
 			foreach (var a in self.World.Actors.Where(a => a.Owner == self.Owner))
 				a.Kill(a);
@@ -77,7 +77,7 @@ namespace OpenRA.Mods.RA
 			if (self.Owner.WinState == WinState.Won) return;
 			self.Owner.WinState = WinState.Won;
 
-			Game.Debug("{0} is victorious.".F(self.Owner.PlayerName));
+			Game.Debug("{0} a gagne.".F(self.Owner.PlayerName));
 			if (self.Owner == self.World.LocalPlayer)
 			{
 				self.World.LocalShroud.Disabled = true;

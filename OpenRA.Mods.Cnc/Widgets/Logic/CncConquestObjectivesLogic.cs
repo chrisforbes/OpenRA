@@ -20,7 +20,7 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 		public CncConquestObjectivesLogic(Widget widget, World world)
 		{
 			var panel = widget.GetWidget("CONQUEST_OBJECTIVES");
-			panel.GetWidget<LabelWidget>("TITLE").GetText = () => "Conquest: " + world.Map.Title;
+			panel.GetWidget<LabelWidget>("TITLE").GetText = () => "Conquete: " + world.Map.Title;
 
 			var objectiveCheckbox = panel.GetWidget<CheckboxWidget>("OBJECTIVE_CHECKBOX");
 			objectiveCheckbox.IsDisabled = () => true;

@@ -56,8 +56,8 @@ namespace OpenRA.Mods.Cnc.Widgets
 			clock = new Animation("clock");
 
 			overlayFont = Game.Renderer.Fonts["TinyBold"];
-			holdOffset = new float2(32,24) - overlayFont.Measure("On Hold") / 2;
-			readyOffset = new float2(32,24) - overlayFont.Measure("Ready") / 2;
+			holdOffset = new float2(32,24) - overlayFont.Measure("En Attente") / 2;
+			readyOffset = new float2(32,24) - overlayFont.Measure("Pret") / 2;
 			timeOffset = new float2(32,24) - overlayFont.Measure(WidgetUtils.FormatTime(0)) / 2;
 		}
 

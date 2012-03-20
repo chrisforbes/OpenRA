@@ -87,7 +87,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			var windowModeDropdown = display.GetWidget<DropDownButtonWidget>("MODE_DROPDOWN");
 			windowModeDropdown.OnMouseDown = _ => ShowWindowModeDropdown(windowModeDropdown, gs);
 			windowModeDropdown.GetText = () => gs.Mode == WindowMode.Windowed ?
-				"Windowed" : gs.Mode == WindowMode.Fullscreen ? "Fullscreen" : "Pseudo-Fullscreen";
+				"Fenetre" : gs.Mode == WindowMode.Fullscreen ? "Plein Ecran" : "Pseudo-Plein Ecran";
 
 			display.GetWidget("WINDOW_RESOLUTION").IsVisible = () => gs.Mode == WindowMode.Windowed;
 			var windowWidth = display.GetWidget<TextFieldWidget>("WINDOW_WIDTH");
@@ -142,9 +142,9 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		{
 			var options = new Dictionary<string, WindowMode>()
 			{
-				{ "Pseudo-Fullscreen", WindowMode.PseudoFullscreen },
-				{ "Fullscreen", WindowMode.Fullscreen },
-				{ "Windowed", WindowMode.Windowed },
+				{ "Pseudo-Plein Ecran", WindowMode.PseudoFullscreen },
+				{ "Plein Ecran", WindowMode.Fullscreen },
+				{ "Fenetre", WindowMode.Windowed },
 			};
 
 			Func<string, ScrollItemWidget, ScrollItemWidget> setupItem = (o, itemTemplate) =>

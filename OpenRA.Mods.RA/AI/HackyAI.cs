@@ -34,7 +34,7 @@ namespace OpenRA.Mods.RA.AI
 		public readonly int SquadSize = 8;
 		public readonly int AssignRolesInterval = 20;
 		public readonly string RallypointTestBuilding = "fact";		// temporary hack to maintain previous rallypoint behavior.
-		public readonly string[] UnitQueues = { "Vehicle", "Infantry", "Plane" };
+		public readonly string[] UnitQueues = { "Vehicules", "Infanterie", "Aviation" };
 		public readonly bool ShouldRepairBuildings = true;
 
 		string IBotInfo.Name { get { return this.Name; } }
@@ -102,8 +102,8 @@ namespace OpenRA.Mods.RA.AI
 			enabled = true;
 			playerPower = p.PlayerActor.Trait<PowerManager>();
 			builders = new BaseBuilder[] {
-				new BaseBuilder( this, "Building", q => ChooseBuildingToBuild(q, true) ),
-				new BaseBuilder( this, "Defense", q => ChooseBuildingToBuild(q, false) ) };
+				new BaseBuilder( this, "Batiments", q => ChooseBuildingToBuild(q, true) ),
+				new BaseBuilder( this, "Defenses", q => ChooseBuildingToBuild(q, false) ) };
 		}
 
 		int GetPowerProvidedBy(ActorInfo building)

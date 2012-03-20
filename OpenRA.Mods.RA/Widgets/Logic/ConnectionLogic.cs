@@ -62,7 +62,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			panel.GetWidget<ButtonWidget>("ABORT_BUTTON").OnClick = () => { CloseWindow(); onAbort(); };
 
 			widget.GetWidget<LabelWidget>("CONNECTING_DESC").GetText = () =>
-				"Connecting to {0}:{1}...".F(host, port);
+				"Connexion a {0}:{1}...".F(host, port);
 		}
 
 		public static void Connect(string host, int port, Action onConnect, Action onAbort)
@@ -89,7 +89,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			panel.GetWidget<ButtonWidget>("RETRY_BUTTON").OnClick = () => { Ui.CloseWindow(); onRetry(); };
 
 			widget.GetWidget<LabelWidget>("CONNECTING_DESC").GetText = () =>
-				"Could not connect to {0}:{1}".F(host, port);
+				"Impossible de se connecter a {0}:{1}".F(host, port);
 		}
 	}
 }

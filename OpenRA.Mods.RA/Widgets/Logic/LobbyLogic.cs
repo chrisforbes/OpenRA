@@ -268,7 +268,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				if (client == null)
 				{
 					template = EmptySlotTemplate.Clone();
-					Func<string> getText = () => slot.Closed ? "Closed" : "Open";
+					Func<string> getText = () => slot.Closed ? "Ferme" : "Ouvert";
 					var ready = orderManager.LocalClient.IsReady;
 
 					if (Game.IsHost)

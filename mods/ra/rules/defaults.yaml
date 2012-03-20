@@ -246,7 +246,7 @@
 	Armor:
 		Type: Wood
 	Tooltip:
-		Name: Civilian Building
+		Name: Batiment Civil
 	ProximityCaptor:
 		Types:CivilianBuilding
 	-AcceptsSupplies:
@@ -258,14 +258,14 @@
 	Inherits: ^CivBuilding
 	-Selectable:
 	Tooltip:
-		Name: Field
+		Name: Champ
 	-ProximityCaptor:
 	ProximityCaptor:
 		Types:CivilianField
 
 ^Tree:
 	Tooltip:
-		Name: Tree
+		Name: Arbre
 	RenderBuilding:
 		Palette: terrain
 	Building:
@@ -294,7 +294,7 @@
 
 ^Bridge:
 	Tooltip:
-		Name: Bridge
+		Name: Pont
 	BelowUnits:
 	TargetableBuilding:
 		TargetTypes: Ground, Water

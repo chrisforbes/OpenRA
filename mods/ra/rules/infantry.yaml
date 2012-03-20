@@ -8,8 +8,8 @@ DOG:
 	Valued:
 		Cost: 200
 	Tooltip:
-		Name: Attack Dog
-		Description: Anti-infantry unit. Not fooled by the \nSpy's disguise.\n  Strong vs Infantry\n  Weak vs Vehicles
+		Name: Chien d'attaque
+		Description: Unite Anti-Infanterie. Detecte les \n Espions deguises.\n  Fort contre l'Infanterie\n  Faible contre les Vehicules
 	Selectable:
 		Voice: DogVoice
 		Bounds: 12,17,-1,-4
@@ -36,8 +36,8 @@ E1:
 	Valued:
 		Cost: 100
 	Tooltip:
-		Name: Rifle Infantry
-		Description: General-purpose infantry.\n  Strong vs Infantry\n  Weak vs Vehicles
+		Name: Mitrailleurs
+		Description: Unite principale de base.\n  Fort contre l'Infanterie\n  Faible contre les Vehicules
 	Selectable:
 		Bounds: 12,17,0,-9
 	Health:
@@ -62,7 +62,7 @@ E2:
 		Cost: 160
 	Tooltip:
 		Name: Grenadier
-		Description: Infantry armed with grenades. \n  Strong vs Buildings, Infantry\n  Weak vs Vehicles
+		Description: Infanterie armee de grenades. \n  Fort contre les Batiments et l'Infanterie\n Faible contre les Vehicules
 	Selectable:
 		Bounds: 12,17,0,-9
 	Health:
@@ -90,8 +90,8 @@ E3:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Rocket Soldier
-		Description: Anti-tank/Anti-aircraft infantry.\n  Strong vs Tanks, Aircraft\n  Weak vs Infantry
+		Name: Bazookas
+		Description: Infanterie Anti-tanks/Anti-aviation.\n  Fort contre les Tanks et l'Aviation\n  Faible contre l'Infanterie
 	Selectable:
 		Bounds: 12,17,0,-9
 	Health:
@@ -117,8 +117,8 @@ E4:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Flamethrower
-		Description: Advanced Anti-infantry unit.\n  Strong vs Infantry, Buildings\n  Weak vs Vehicles
+		Name: Infanterie lance-flammes
+		Description: Unite avancee anti-infanterie.\n  Fort contre l'Infanterie et les Batiments\n  Faible contre les Vehicules
 	Selectable:
 		Bounds: 12,17,0,-9
 	Health:
@@ -143,8 +143,8 @@ E6:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Engineer
-		Description: Infiltrates and captures enemy structures.\n  Strong vs Nothing\n  Weak vs Everything
+		Name: Ingenieurs
+		Description: Infiltre et capture les Batiments.\n  Fort contre Rien\n Faible contre Tout.
 	Selectable:
 		Voice: EngineerVoice
 		Bounds: 12,17,0,-9
@@ -174,8 +174,8 @@ SPY:
 	Valued:
 		Cost: 500
 	SpyToolTip:
-		Name: Spy
-		Description: Infiltrates enemy structures to gather \nintelligence. Exact effect depends on the \nbuilding infiltrated.\n  Strong vs Nothing\n  Weak vs Everything\n  Special Ability: Disguised
+		Name: Espion
+		Description: Infiltre les Batiments ennemis pour \ns'informer. L'effet exact depend du \nBatiment infiltre.\n Fort contre Rien\n  Faible contre Tout\n  Abilite Speciale: Deguisement
 	Selectable:
 		Voice: SpyVoice
 		Bounds: 12,17,0,-9
@@ -207,7 +207,7 @@ E7:
 		Cost: 1200
 	Tooltip:
 		Name: Tanya
-		Description: Elite commando infantry, armed with \ndual pistols and C4.\n  Strong vs Infantry, Buildings\n  Weak vs Vehicles\n  Special Ability: Destroy Building with C4
+		Description: Commando d'Elite, armee de \ndeux pistolets et de C4.\n  Forte contre l'Infanterie et les Batiments\n  Faible contre les Vehicules\n  Abilite Speciale: Detruit les Batiments au C4
 	Selectable:
 		Voice: TanyaVoice
 		Bounds: 12,17,0,-9
@@ -239,8 +239,8 @@ MEDI:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Medic
-		Description: Heals nearby infantry.\n  Strong vs Nothing\n  Weak vs Everything
+		Name: Medecin
+		Description: Soigne les unites proches.\n  Fort contre Rien\n  Faible contre Tout
 	Selectable:
 		Voice: MedicVoice
 		Bounds: 12,17,0,-9
@@ -271,7 +271,7 @@ C1:
 	Valued:
 		Cost: 70
 	Tooltip:
-		Name: Civilian
+		Name: Homme Civil
 	Health:
 		HP: 20
 	Mobile:
@@ -291,7 +291,7 @@ C2:
 	Valued:
 		Cost: 70
 	Tooltip:
-		Name: Civilian
+		Name: Femme Civile
 	Health:
 		HP: 20
 	Mobile:
@@ -312,8 +312,8 @@ SHOK:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Tesla Trooper
-		Description: Infantry with tesla coils\n Strong vs Infantry\n Weak vs Vehicles
+		Name: Soldat Tesla
+		Description: Infanterie avec des Bobines Tesla\n Fort contre l'Infanterie\n Faible contre les Vehicules
 	Selectable:
 		Voice: ShokVoice
 		Bounds: 12,17,0,-9

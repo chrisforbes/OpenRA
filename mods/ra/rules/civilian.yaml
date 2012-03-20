@@ -18,7 +18,7 @@ V01:
 		Footprint: xx xx
 		Dimensions: 2,2
 	Tooltip:
-		Name: Church
+		Name: Eglise
 V02:
 	Inherits: ^CivBuilding
 	Building:
@@ -98,7 +98,7 @@ BARL:
 		HP: 10
 	Explodes:
 	Tooltip:
-		Name: Explosive Barrel
+		Name: Barril Explosif
 
 BRL3:
 	Inherits: ^Building
@@ -110,7 +110,7 @@ BRL3:
 		HP: 10
 	Explodes:
 	Tooltip:
-		Name: Explosive Barrel
+		Name: Barril Explosif
 
 MISS:
 	Inherits: ^CivBuilding
@@ -145,7 +145,7 @@ OILB:
 		Period: 250
 		Amount: 50
 	Tooltip:
-		Name: Oil Derrick
+		Name: Derrick Petrolier
 
 BR1:
 	Inherits: ^Bridge

@@ -61,15 +61,15 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		{
 			var options = new List<SlotDropDownOption>()
 			{
-				new SlotDropDownOption("Open", "slot_open "+slot.PlayerReference, () => (!slot.Closed && client == null)),
-				new SlotDropDownOption("Closed", "slot_close "+slot.PlayerReference, () => slot.Closed)
+				new SlotDropDownOption("Ouvert", "slot_open "+slot.PlayerReference, () => (!slot.Closed && client == null)),
+				new SlotDropDownOption("Ferme", "slot_close "+slot.PlayerReference, () => slot.Closed)
 			};
 
 			if (slot.AllowBots)
 				foreach (var b in Rules.Info["player"].Traits.WithInterface<IBotInfo>().Select(t => t.Name))
 				{
 					var bot = b;
-					options.Add(new SlotDropDownOption("Bot: {0}".F(bot),
+					options.Add(new SlotDropDownOption("IA: {0}".F(bot),
 						"slot_bot {0} {1}".F(slot.PlayerReference, bot),
 						() => client != null && client.Bot == bot));
 				}

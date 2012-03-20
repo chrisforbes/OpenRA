@@ -45,7 +45,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				gameModes.Insert( 0, Pair.New( null as string, selectableMaps.Count() ) );
 
 				Func<Pair<string,int>, string> showItem =
-					x => "{0} ({1})".F( x.First ?? "All Game Types", x.Second );
+					x => "{0} ({1})".F( x.First ?? "Tout Mode de Jeu", x.Second );
 
 				Func<Pair<string,int>, ScrollItemWidget, ScrollItemWidget> setupItem = (ii, template) =>
 				{

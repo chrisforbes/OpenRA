@@ -18,7 +18,7 @@ BADR:
 	-Selectable:
 	-GainsExperience:
 	Tooltip:
-		Name: Badger
+		Name: Bombardier Blaireau
 	Contrail@1:
 		ContrailOffset: 11, -11
 	Contrail@2:
@@ -57,7 +57,7 @@ BADR.bomber:
 	-Selectable:
 	-GainsExperience:
 	Tooltip:
-		Name: Badger
+		Name: Bombardier Blaireau
 	Contrail@1:
 		ContrailOffset: 11, -11
 	Contrail@2:
@@ -86,8 +86,8 @@ MIG:
 	Valued:
 		Cost: 2000
 	Tooltip:
-		Name: Mig Attack Plane
-		Description: Fast Ground-Attack Plane.\n  Strong vs Buildings\n  Weak vs Infantry, Light Vehicles
+		Name: Mig
+		Description: Avion d'attaque au sol rapide.\n  Fort contre les Batiments\n  Faible contre l'Infanterie et les Vehicules Legers
 	Health:
 		HP: 70
 	Armor:
@@ -134,8 +134,8 @@ YAK:
 	Valued:
 		Cost: 1000
 	Tooltip:
-		Name: Yak Attack Plane
-		Description: Anti-Tanks & Anti-Infantry Plane.\n  Strong vs Infantry, Tanks\n  Weak vs Buildings
+		Name: Yak
+		Description: Avion Anti-Tanks et Anti-Infanterie.\n  Fort contre l'Infanterie et les Tanks\n Faible contre les Batiments
 	Health:
 		HP: 60
 	Armor:
@@ -184,8 +184,8 @@ TRAN:
 	Valued:
 		Cost: 1200
 	Tooltip:
-		Name: Transport Helicopter
-		Description: Fast Infantry Transport Helicopter.\n  Unarmed
+		Name: Helicoptere Chinook
+		Description: Transporteur d'Infanterie rapide.\n  |Desarme|
 	Health:
 		HP: 90
 	Armor: 
@@ -224,8 +224,8 @@ HELI:
 	Valued:
 		Cost: 2000
 	Tooltip:
-		Name: Longbow
-		Description: Helicopter Gunship with AG Missiles.\n  Strong vs Tanks\n  Weak vs Infantry
+		Name: Helicoptere d'attaque Apache Longbow
+		Description: Helicoptere arme de Missiles.\n  Fort contre les Tanks\n  Faible contre l'Infanterie
 	Health:
 		HP: 120
 	Armor:
@@ -268,7 +268,7 @@ HIND:
 		Cost: 1000
 	Tooltip:
 		Name: Hind
-		Description: Helicopter Gunship with Chainguns.\n  Strong vs Infantry, Light Vehicles.\n  Weak vs Tanks
+		Description: Helicoptere arme de Mitrailleuses.\n  Fort contre l'Infanterie et les Vehicules Legers.\n  Faible contre les Tanks
 	Health:
 		HP: 150
 	Armor:

@@ -40,7 +40,7 @@ Player:
 	ActorGroupProxy:
 	DeveloperMode:
 	HackyAI@EasyAI:
-		Name:Easy AI
+		Name:IA Facile
 		BuildingFractions:
 			proc: 30%
 			powr: 35%
@@ -70,7 +70,7 @@ Player:
 			3tnk: 50%
 		SquadSize: 20
 	HackyAI@NormalAI:
-		Name:Normal AI
+		Name:IA Normale
 		BuildingFractions:
 			proc: 30%
 			powr: 35%
@@ -100,7 +100,7 @@ Player:
 			3tnk: 50%
 		SquadSize: 15
 	HackyAI@HardAI:
-		Name:Hard AI
+		Name:IA Difficile
 		BuildingFractions:
 			proc: 30%
 			powr: 35%
@@ -195,7 +195,7 @@ World:
 		Name: Allies
 		Race: allies
 	Country@1:
-		Name: Soviet
+		Name: Soviets
 		Race: soviet
 	BibLayer:
 	ResourceLayer:
@@ -249,7 +249,7 @@ MINP:
 	BelowUnits:
 	InvisibleToEnemy:
 	Tooltip:
-		Name: Anti-Personnel Mine
+		Name: Mine Anti-Personnel
 	ProximityCaptor:
 		Types:Mine
 
@@ -265,13 +265,13 @@ MINV:
 	BelowUnits:
 	InvisibleToEnemy:
 	Tooltip:
-		Name: Anti-Tank Mine
+		Name: Mine Anti-Tanks
 	ProximityCaptor:
 		Types:Mine
 
 CRATE:
 	Tooltip:
-		Name: Crate
+		Name: Caisse
 	Crate:
 		Lifetime: 120
 		TerrainTypes: Clear, Rough, Road, Water, Ore, Beach
@@ -356,8 +356,8 @@ FLARE:
 powerproxy.parabombs:
 	AirstrikePower:
 		Image: pbmbicon
-		Description: Parabombs (Single Use)
-		LongDesc: A Badger drops a load of parachuted\nbombs on your target.
+		Description: Parabombes (Utilisation Unique)
+		LongDesc: Un avion droppe un chargement parachute de \nbombes sur la cible.
 		OneShot: yes
 		AllowMultiple: yes
 		UnitType: badr.bomber
@@ -367,8 +367,8 @@ powerproxy.parabombs:
 powerproxy.sonarpulse:
 	SonarPulsePower:
 		Image: sonricon
-		Description: Sonar Pulse (Single Use)
-		LongDesc: Reveals all submarines on the map for a \nshort time.
+		Description: Sonar (Utilisation Unique)
+		LongDesc: Revele tout les sous-marins sur la carte pour \nun court moment.
 		AllowMultiple: yes
 		OneShot: yes
 		EndChargeSound: pulse1.aud

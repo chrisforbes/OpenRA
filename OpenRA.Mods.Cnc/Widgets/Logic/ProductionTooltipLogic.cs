@@ -27,11 +27,11 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 			var pr = palette.world.LocalPlayer.PlayerActor.Trait<PlayerResources>();
 
 			widget.IsVisible = () => palette.TooltipActor != null;
-			var nameLabel = widget.GetWidget<LabelWidget>("NAME");
-			var requiresLabel = widget.GetWidget<LabelWidget>("REQUIRES");
-			var powerLabel = widget.GetWidget<LabelWidget>("POWER");
-			var timeLabel = widget.GetWidget<LabelWidget>("TIME");
-			var costLabel = widget.GetWidget<LabelWidget>("COST");
+			var nameLabel = widget.GetWidget<LabelWidget>("NOM");
+			var requiresLabel = widget.GetWidget<LabelWidget>("REQUIERT");
+			var powerLabel = widget.GetWidget<LabelWidget>("ELECTRICITE");
+			var timeLabel = widget.GetWidget<LabelWidget>("TEMPS");
+			var costLabel = widget.GetWidget<LabelWidget>("COUT");
 
 			var font = Game.Renderer.Fonts[nameLabel.Font];
 			var requiresFont = Game.Renderer.Fonts[requiresLabel.Font];
@@ -52,7 +52,7 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				nameLabel.GetText = () => tooltip.Name;
 
 				var prereqs = buildable.Prerequisites.Select(a => ActorName(a));
-				var requiresString = prereqs.Any() ? "Requires {0}".F(prereqs.JoinWith(", ")) : "";
+				var requiresString = prereqs.Any() ? "Requiert {0}".F(prereqs.JoinWith(", ")) : "";
 				requiresLabel.GetText = () => requiresString;
 
 				var power = bi != null ? bi.Power : 0;

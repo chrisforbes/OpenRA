@@ -3,8 +3,8 @@ MSLO:
 	Valued:
 		Cost: 2500
 	Tooltip:
-		Name: Missile Silo
-		Description: Launches a devastating nuclear strike.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks\n  Special Ability: Nuclear Missile
+		Name: Silo de Missiles
+		Description: Lance un missile nucleaire devastateur.\n  Fort contre l'Infanterie, les Batiments\n  Faible contre les Tanks\n  Abilite speciale: Missile Nucleaire
 		Icon: msloicon2
 	Buildable:
 		Queue: Defense
@@ -25,8 +25,8 @@ MSLO:
 	NukePower:
 		Image: atomicon
 		ChargeTime: 540
-		Description: Atom Bomb
-		LongDesc: Launches a nuclear missile at a target location.
+		Description: Bombe Atomique
+		LongDesc: Lance un missile nucleaire a l'endroit designe.
 		BeginChargeSound: aprep1.aud
 		EndChargeSound: aready1.aud
 		SelectTargetSound: slcttgt1.aud
@@ -44,8 +44,8 @@ GAP:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Gap Generator
-		Description: Regenerates the Fog of War nearby, \nobscuring the area.\n  Unarmed
+		Name: Generateur d'Ombre
+		Description: Regenere le brouillard de guerre a proximite, \nobscurcit la zone.\n  |Desarme|
 #	Buildable:
 #		BuildPaletteOrder: 100
 #		Prerequisites: atek
@@ -70,8 +70,8 @@ SPEN:
 	Valued:
 		Cost: 800
 	Tooltip:
-		Name: Sub Pen
-		Description: Produces and repairs submarines and \ntransports
+		Name: Port sous-marin
+		Description: Produit et repare les sous-marins et les \ntransports
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 30
@@ -131,8 +131,8 @@ SYRD:
 	Valued:
 		Cost: 1000
 	Tooltip:
-		Name: Shipyard
-		Description: Produces and repairs ships
+		Name: Chantier naval
+		Description: Produit et repare les bateaux
 	TargetableBuilding:
 		TargetTypes: Ground, Water
 	Building:
@@ -186,8 +186,8 @@ IRON:
 	Valued:
 		Cost: 1500
 	Tooltip:
-		Name: Iron Curtain
-		Description: Makes a group of units invulnerable for a \nshort time.\n  Special Ability: Invulnerability
+		Name: Rideau de fer
+		Description: Rend un groupe d'unites invulnerables pour \nun court instant.\n  Abilite Speciale: Invulnerabilite
 	Building:
 		Power: -200
 		Footprint: xx xx
@@ -203,8 +203,8 @@ IRON:
 	IronCurtainPower:
 		Image: infxicon
 		ChargeTime: 120
-		Description: Invulnerability
-		LongDesc: Makes a group of units invulnerable\nfor 10 seconds.
+		Description: Invulnerabilite
+		LongDesc: Rend un groupe d'unites invulnerables\npour 10 secondes.
 		Duration: 10
 		SelectTargetSound: slcttgt1.aud
 		BeginChargeSound: ironchg1.aud
@@ -225,7 +225,7 @@ PDOX:
 		Cost: 1500
 	Tooltip:
 		Name: Chronosphere
-		Description: Teleports a unit from one place \nto another, for a limited time.\n  Special Ability: Chronoshift
+		Description: Teleporte une unite d'un endroit a un autre,\n pour une duree limitee.\n  Abilite Speciale: Chronotransfert
 	Building:
 		Power: -200
 		Footprint: xx xx
@@ -241,8 +241,8 @@ PDOX:
 	ChronoshiftPower:
 		Image: warpicon
 		ChargeTime: 120
-		Description: Chronoshift
-		LongDesc: Teleport a group of vehicles across\nthe map for 30 seconds.
+		Description: Chronotransfert
+		LongDesc: Teleporte un groupe de vehicules sur\nla carte pour 30 secondes.
 		SelectTargetSound: slcttgt1.aud
 		BeginChargeSound: chrochr1.aud
 		EndChargeSound: chrordy1.aud
@@ -264,8 +264,8 @@ TSLA:
 	Valued:
 		Cost: 1500
 	Tooltip:
-		Name: Tesla Coil
-		Description: Advanced base defense. Requires power\nto operate.\n  Strong vs Tanks, Infantry\n  Weak vs Aircraft
+		Name: Bobine de Tesla
+		Description: Defense de base avancee. Requiert de \nl'electricite pour fonctionner.\n  Fort contre les Tanks, l'Infanterie\n  Faible contre l'Aviation
 	Building:
 		Power: -150
 		Footprint: _ x
@@ -302,7 +302,7 @@ AGUN:
 		Cost: 600
 	Tooltip:
 		Name: AA Gun
-		Description: Anti-Air base defense.\n  Strong vs Aircraft\n  Weak vs Infantry, Tanks
+		Description: Canon anti-aerien.\n  Fort contre l'Aviation\n  Faible contre l'Infanterie et les Tanks
 	Building:
 		Power: -50
 		Footprint: _ x
@@ -341,8 +341,8 @@ DOME:
 	Valued:
 		Cost: 1400
 	Tooltip:
-		Name: Radar Dome
-		Description: Provides an overview of the battlefield.\n  Requires power to operate.
+		Name: Dome Radar
+		Description: Donne une vue aerienne du champ de \nbataille.\n  Requiert de l'electicite pour fonctionner.
 	Building:
 		Power: -40
 		Footprint: xx xx
@@ -368,8 +368,8 @@ PBOX:
 	Valued:
 		Cost: 400
 	Tooltip:
-		Name: Pillbox
-		Description: Basic defensive structure.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
+		Name: Bunker
+		Description: Structure defensive basique.\n  Fort contre l'Infanterie et les Vehicules \nLegers\n  Faible contre les Tanks et l'Aviation
 	Building:
 		Power: -15
 	-GivesBuildableArea:
@@ -401,8 +401,8 @@ HBOX:
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Camo Pillbox
-		Description: Hidden defensive structure.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
+		Name: Bunker Camoufle
+		Description: Structure defensive invisible.\n  Fort contre l'Infanterie et les Vehicules \nLegers\n  Faible contre les Tanks et l'Aviation
 	Building:
 		Power: -15
 	-GivesBuildableArea:
@@ -434,8 +434,8 @@ GUN:
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Turret
-		Description: Anti-Armor base defense.\n  Strong vs Tanks\n  Weak vs Infantry, Aircraft
+		Name: Tourelle
+		Description: Defense de base anti-blindes.\n  Fort contre les Tanks\n  Faible contre l'Infanterie et l'Aviation
 	Building:
 		Power: -40
 	-GivesBuildableArea:
@@ -468,8 +468,8 @@ FTUR:
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Flame Turret
-		Description: Anti-Infantry base defense.\n  Strong vs Infantry\n  Weak vs Aircraft
+		Name: Tour lance-flammes
+		Description: Defense de base anti-infanterie.\n  Fort contre l'Infanterie\n  Faible contre l'Aviation
 	Building:
 		Power: -20
 	-GivesBuildableArea:
@@ -501,8 +501,8 @@ SAM:
 	Valued:
 		Cost: 750
 	Tooltip:
-		Name: SAM Site
-		Description: Anti-Air base defense.\n  Strong vs Aircraft\n  Weak vs Infantry, Tanks
+		Name: Missiles SAM
+		Description: Defense de base anti-aviation.\n  Fort contre l'Aviation\n  Faible contre l'Infanterie et les Tanks
 	Building:
 		Power: -20
 		Footprint: xx
@@ -541,8 +541,8 @@ ATEK:
 	Valued:
 		Cost: 1500
 	Tooltip:
-		Name: Allied Tech Center
-		Description: Provides Allied advanced technologies.\n  Special Ability: GPS Satellite
+		Name: Centre Technique Allie
+		Description: Permet la production d'unites avancees \nalliees.\n  Abilite Speciale: Satellite GPS 
 	ProvidesCustomPrerequisite:
 		Prerequisite: techcenter
 	Building:
@@ -561,8 +561,8 @@ ATEK:
 		Image: gpssicon
 		OneShot: yes
 		ChargeTime: 480
-		Description: GPS Satellite
-		LongDesc: Reveals the entire map
+		Description: Satellite GPS
+		LongDesc: Revele la carte entiere
 		RevealDelay: 15
 		LaunchSound: satlnch1.aud
 	SupportPowerChargeBar:
@@ -578,8 +578,8 @@ WEAP:
 	Valued:
 		Cost: 2000
 	Tooltip:
-		Name: War Factory
-		Description: Produces tanks & light vehicles.
+		Name: Usine d'Armement
+		Description: Produit les tanks et vehicules legers.
 	Building:
 		Power: -30
 		Footprint: xxx xxx
@@ -622,7 +622,7 @@ FACT:
 	Valued:
 		Cost: 2500
 	Tooltip:
-		Name: Construction Yard
+		Name: Chantier de construction
 	CustomSellValue:
 		Value: 2500
 	BaseBuilding:
@@ -643,8 +643,8 @@ PROC:
 	Valued:
 		Cost: 1400
 	Tooltip:
-		Name: Ore Refinery
-		Description: Converts Ore and Gems into money
+		Name: Raffinerie de minerai
+		Description: Convertit l'Or et les Gemmes en argent
 	Building:
 		Power: -30
 		Footprint: _x_ xxx x==
@@ -680,8 +680,8 @@ SILO:
 	Valued:
 		Cost: 150
 	Tooltip:
-		Name: Silo
-		Description: Stores excess harvested Ore
+		Name: Silo de minerai
+		Description: Stocke le minerai recolte
 	Building:
 		Power: -10
 	-GivesBuildableArea:
@@ -710,8 +710,8 @@ HPAD:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Helipad
-		Description: Produces and reloads helicopters
+		Name: Heliport
+		Description: Produit et recharge les helicopteres
 	Building:
 		Power: -10
 		Footprint: xx xx
@@ -744,8 +744,8 @@ AFLD:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Airstrip
-		Description: Provides radar and off-map support\n  Special Ability: Paratroopers\n  Special Ability: Spy Plane
+		Name: Piste d'atterissage
+		Description: Permet la construction d'avions et le \nsupport aerien\n  Abilite Speciale: Parachutistes\n  Abilite Speciale: Avion Espion
 	Building:
 		Power: -20
 		Footprint: xxx xxx
@@ -768,15 +768,15 @@ AFLD:
 	SpyPlanePower:
 		Image: smigicon
 		ChargeTime: 180
-		Description: Spy Plane
-		LongDesc: Reveals an area of the map.
+		Description: Avion Espion
+		LongDesc: Revele une zone de la carte.
 		SelectTargetSound: slcttgt1.aud
 		EndChargeSound: spypln1.aud
 	ParatroopersPower:
 		Image: pinficon
 		ChargeTime: 360
-		Description: Paratroopers
-		LongDesc: A Badger drops a squad of Riflemen \nanywhere on the map
+		Description: Parachutistes
+		LongDesc: Un avion parachute une escouade de mitrailleurs \nn'importe ou sur la carte
 		Prerequisites: AFLD
 		DropItems: E1,E1,E1,E3,E3
 		SelectTargetSound: slcttgt1.aud
@@ -793,8 +793,8 @@ POWR:
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Power Plant
-		Description: Provides power for other structures
+		Name: Centrale electrique
+		Description: Procure de l'electricite aux autres structures
 	ProvidesCustomPrerequisite:
 		Prerequisite: anypower
 	Building:
@@ -821,8 +821,8 @@ APWR:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Advanced Power Plant
-		Description: Provides more power, cheaper than the \nstandard Power Plant
+		Name: Centrale electrique avancee
+		Description: Procure plus d'electricite, moins chere que les\n centrales electriques standards
 	ProvidesCustomPrerequisite:
 		Prerequisite: anypower
 	Building:
@@ -849,8 +849,8 @@ STEK:
 	Valued:
 		Cost: 1500
 	Tooltip:
-		Name: Soviet Tech Center
-		Description: Provides Soviet advanced technologies
+		Name: Centre Technique Soviet
+		Description: Permet la production d'unites avancees \nsoviets.
 	ProvidesCustomPrerequisite:
 		Prerequisite: techcenter
 	Building:
@@ -877,8 +877,8 @@ BARR:
 	Valued:
 		Cost: 400
 	Tooltip:
-		Name: Soviet Barracks
-		Description: Produces infantry
+		Name: Caserne Soviet
+		Description: Produit l'infanterie Sovietique
 	Building:
 		Power: -20
 		Footprint: xx xx
@@ -914,8 +914,8 @@ TENT:
 	Valued:
 		Cost: 400
 	Tooltip:
-		Name: Allied Barracks
-		Description: Produces infantry
+		Name: Caserne Alliee
+		Description: Produit l'infanterie Alliee
 	Building:
 		Power: -20
 		Footprint: xx xx
@@ -951,8 +951,8 @@ FIX:
 	Valued:
 		Cost: 1000
 	Tooltip:
-		Name: Service Depot
-		Description: Repairs vehicles, reloads minelayers, and \nallows the construction of additional bases.
+		Name: Centre de service
+		Description: Repare les vehicules, recharge les poseurs \nde mines AT/AP, et permet la construction\n de bases additionnelles.
 	Building:
 		Power: -30
 		Footprint: _x_ xxx _x_
@@ -976,8 +976,8 @@ FACF:
 #		BuildPaletteOrder: 900
 #		Owner: allies
 #		Cost: 50
-#		Description: Fake Construction Yard
-#		LongDesc: Looks like a Construction Yard.
+#		Description: Chantier de construction leurre
+#		LongDesc: Ressemble a un Chantier de construction.
 #		Hotkey: c
 	Building:
 		Power: -2
@@ -1002,8 +1002,8 @@ WEAF:
 #		Prerequisites: proc
 #		Owner: allies
 #		Cost: 50
-#		Description: Fake War Factory
-#		LongDesc: Looks like a War Factory.
+#		Description: Usine d'armement leurre
+#		LongDesc: Ressemble a une Usine d'armement.
 #		Hotkey: x
 	Building:
 		Power: -2
@@ -1027,14 +1027,14 @@ SYRF:
 	Valued:
 		Cost: 50
 	Tooltip:
-		Name: Fake Shipyard
+		Name: Chantier naval leurre
 #	Buildable:
 #		BuildPaletteOrder: 900
 #		Prerequisites: anypower
 #		Owner: allies
 #		Cost: 50
-#		Description: Fake Shipyard
-#		LongDesc: Looks like a Shipyard
+#		Description: Chantier naval leurre
+#		LongDesc: Ressemble a un Chantier naval.
 #		Hotkey: z
 	TargetableBuilding:
 		TargetTypes: Ground, Water
@@ -1079,14 +1079,14 @@ DOMF:
 	Valued:
 		Cost: 50
 	Tooltip:
-		Name: Fake Radar Dome
+		Name: Dome radar leurre
 #	Buildable:
 #		BuildPaletteOrder: 900
 #		Prerequisites: proc
 #		Owner: allies
 #		Cost: 50
-#		Description: Fake Radar Dome
-#		LongDesc: Looks like a Radar Dome
+#		Description: Dome radar leurre
+#		LongDesc: Ressemble a un Dome radar
 #		Hotkey: v
 	Building:
 		Power: -2
@@ -1116,8 +1116,8 @@ SBAG:
 	CustomSellValue:
 		Value: 0
 	Tooltip:
-		Name: Sandbag Wall
-		Description: Stops infantry and blocks enemy fire.\nCan be crushed by tanks.
+		Name: Barriere de sacs de sable
+		Description: Stoppe l'infanterie et bloque les tirs ennemis.\nPeut etre ecrase par les tanks
 	Health:
 		HP: 300
 	Armor:
@@ -1136,8 +1136,8 @@ FENC:
 	CustomSellValue:
 		Value: 0
 	Tooltip:
-		Name: Wire Fence
-		Description: Stops infantry and blocks enemy fire.\nCan be crushed by tanks.
+		Name: Cloture barbelee
+		Description: Stoppe l'infanterie et bloque les tirs ennemis.\nPeut etre ecrase par les tanks
 	Health:
 		HP: 300
 	Armor:
@@ -1156,8 +1156,8 @@ BRIK:
 	CustomSellValue:
 		Value: 0
 	Tooltip:
-		Name: Concrete Wall
-		Description: Stop units and blocks enemy fire.
+		Name: Mur en beton
+		Description: Stoppe les unites et bloque les tirs ennemis.
 	SoundOnDamageTransition:
 		DamagedSound: crmble2.aud
 		DestroyedSound: kaboom30.aud

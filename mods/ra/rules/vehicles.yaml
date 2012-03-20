@@ -8,8 +8,8 @@ V2RL:
 	Valued:
 		Cost: 700
 	Tooltip:
-		Name: V2 Rocket
-		Description: Long-range rocket artillery.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks, Aircraft
+		Name: Lance-roquettes V2
+		Description: Artillerie Rocket longue portee.\n  Fort contre l'Infanterie et les Batiments\n  Faible contre les Tanks et l'Aviation
 	Health:
 		HP: 150
 	Armor:
@@ -35,8 +35,8 @@ V2RL:
 	Valued:
 		Cost: 700
 	Tooltip:
-		Name: Light Tank
-		Description: Light Tank, good for scouting.\n  Strong vs Light Vehicles\n  Weak vs Tanks, Aircraft
+		Name: Tank leger
+		Description: Tank leger, bon pour explorer.\n  Fort contre les Vehicules Legers\n  Faible contre les Tanks et l'Aviation
 	Health:
 		HP: 220
 	Armor:
@@ -69,8 +69,8 @@ V2RL:
 	Valued:
 		Cost: 850
 	Tooltip:
-		Name: Medium Tank
-		Description: Allied Main Battle Tank.\n  Strong vs Tanks, Light Vehicles\n  Weak vs Infantry, Aircraft
+		Name: Tank moyen
+		Description: Tank principal Allie.\n  Fort contre les Tanks et Vehicules Legers\n  Faible contre l'Infanterie et l'Aviation
 	Health:
 		HP: 450
 	Armor:
@@ -106,8 +106,8 @@ V2RL:
 	Valued:
 		Cost: 1150
 	Tooltip:
-		Name: Heavy Tank
-		Description: Soviet Main Battle Tank, with dual cannons\n  Strong vs Tanks, Light Vehicles\n  Weak vs Infantry, Aircraft
+		Name: Tank lourd
+		Description: Tank principal Soviet, arme de canon double\n  Fort contre les Tanks et Vehicules Legers\n Faible contre l'Infanterie et l'Aviation
 	Health:
 		HP: 550
 	Armor:
@@ -144,8 +144,8 @@ V2RL:
 	Valued:
 		Cost: 1800
 	Tooltip:
-		Name: Mammoth Tank
-		Description: Big and slow tank, with anti-air capability.\n  Strong vs Tanks, Aircraft\n  Weak vs Infantry
+		Name: Tank Mammouth
+		Description: Tank lourd et lent, avec missiles anti-aeriens.\n  Fort contre les Tanks et l'Aviation\n  Faible contre l'Infanterie
 	Health:
 		HP: 900
 	Armor:
@@ -190,8 +190,8 @@ ARTY:
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Artillery
-		Description: Long-range artillery.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks, Aircraft
+		Name: Artillerie
+		Description: Artillerie longue portee.\n  Fort contre l'Infanterie et les Batiments\n  Faible contre les Tanks et l'Aviation
 	Health:
 		HP: 75
 	Armor:
@@ -217,8 +217,8 @@ HARV:
 	Valued:
 		Cost: 1100
 	Tooltip:
-		Name: Ore Truck
-		Description: Collects Ore and Gems for processing.\n  Unarmed
+		Name: Collecteur
+		Description: Collecte l'Or et les Gemmes.\n  |Desarme|
 	Selectable:
 		Priority: 7
 		Bounds: 42,42
@@ -255,8 +255,8 @@ MCV:
 	Valued:
 		Cost: 2000
 	Tooltip:
-		Name: Mobile Construction Vehicle
-		Description: Deploys into another Construction Yard.\n  Unarmed
+		Name: VCM
+		Description: Se deploie en Chantier de Construction.\n  |Desarme|
 	Selectable:
 		Priority: 3
 		Bounds: 42,42
@@ -292,7 +292,7 @@ JEEP:
 		Cost: 500
 	Tooltip:
 		Name: Ranger
-		Description: Fast scout & anti-infantry vehicle.\n  Strong vs Infantry\n  Weak vs Tanks, Aircraft
+		Description: Vehicule Anti-infanterie rapide.\n  Fort contre l'Infanterie\n  Faible contre les Tanks et l'Aviation
 	Health:
 		HP: 150
 	Armor:
@@ -325,8 +325,8 @@ APC:
 	Valued:
 		Cost: 850
 	Tooltip:
-		Name: Armored Personnel Carrier
-		Description: Tough infantry transport.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
+		Name: VBT
+		Description: Vehicule de transport d'Infanterie.\n  Fort contre l'Infanterie et Vehicules legers\n  Faible contre les Tanks et l'Aviation
 	Health:
 		HP: 300
 	Armor:
@@ -357,9 +357,9 @@ MNLY.AP:
 	Valued:
 		Cost: 800
 	Tooltip:
-		Name: Minelayer (Anti-Personnel)
+		Name: Poseur de mines AP
 		Icon: MNLYICON
-		Description: Lays mines to destroy unwary enemy units.\n  Unarmed
+		Description: Pose des mines pour tuer l'Infanterie \nennemie.\n  |Desarme|
 	Health:
 		HP: 100
 	Armor:
@@ -388,9 +388,9 @@ MNLY.AT:
 	Valued:
 		Cost: 800
 	Tooltip:
-		Name: Minelayer (Anti-Tank)
+		Name: Poseur de mines AT (Anti-Tank)
 		Icon: MNLYICON
-		Description: Lays mines to destroy unwary enemy units.\n  Unarmed
+		Description: Pose des mines pour detruire les Tanks ennemis.\n  |Desarme|
 	Health:
 		HP: 100
 	Armor:
@@ -419,8 +419,8 @@ TRUK:
 	Valued:
 		Cost: 500
 	Tooltip:
-		Name: Supply Truck
-		Description: Transports cash to other players.\n  Unarmed
+		Name: Camion de Marchandise
+		Description: Transporte l'argent aux autres joueurs.\n  |Desarme|
 	Health:
 		HP: 110
 	Armor:
@@ -513,8 +513,8 @@ TTNK:
 	Valued:
 		Cost: 1500
 	Tooltip:
-		Name: Tesla Tank
-		Description: Tank with mounted tesla coil.\n Strong vs Infantry.\n Weak vs Tanks
+		Name: Tank Tesla
+		Description: Tank avec une Bobine Tesla.\n Fort contre l'Infanterie.\n Faible contre les Tanks
 	Health:
 		HP: 150
 	Armor:
@@ -541,8 +541,8 @@ FTRK:
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Flak Truck
-		Description: Flak Truck, good for scouting.\n  Strong vs Light Vehicles\nand Aircraft, Weak vs Tanks 
+		Name: Camion Flak
+		Description: Camion Flak, bon pour explorer.\n  Fort contre les Vehicules legers\net l'Aviation, Faible contre les Tanks 
 	Health:
 		HP: 120
 	Armor: 

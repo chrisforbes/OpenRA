@@ -7,7 +7,7 @@ Background@MODS_PANEL:
 	Y:(WINDOW_BOTTOM - HEIGHT)/2
 	Children:
 		Label@TITLE:
-			Text:Select Mod
+			Text:Selection du Mod
 			Width:PARENT_RIGHT
 			Y:20
 			Font:Bold
@@ -55,7 +55,7 @@ Background@MODS_PANEL:
 					Height:25
 					X:0
 					Y:0
-					Text:Title
+					Text:Titre
 					Align:Center
 					Font:Bold
 				Label@AUTHOR:
@@ -63,7 +63,7 @@ Background@MODS_PANEL:
 					Align:Center
 					Width:50
 					Height:25
-					Text:Author
+					Text:Auteur
 					Font:Bold
 				Label@VERSION:
 					Width:140
@@ -80,7 +80,7 @@ Background@MODS_PANEL:
 			Width:160
 			Height:25
 			Font:Bold
-			Text:Cancel
+			Text:Annuler
 		Button@LOAD_BUTTON:
 			Id:LOAD_BUTTON
 			Key:return
@@ -89,4 +89,4 @@ Background@MODS_PANEL:
 			Width:160
 			Height:25
 			Font:Bold
-			Text:Load Mod
+			Text:Charger Mod

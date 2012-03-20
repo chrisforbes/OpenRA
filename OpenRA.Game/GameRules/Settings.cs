@@ -21,7 +21,7 @@ namespace OpenRA.GameRules
 {
 	public class ServerSettings
 	{
-		public string Name = "OpenRA Game";
+		public string Name = "Partie OpenRA";
 		public int ListenPort = 1234;
 		public int ExternalPort = 1234;
 		public bool AdvertiseOnline = true;

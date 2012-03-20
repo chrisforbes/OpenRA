@@ -296,8 +296,8 @@ namespace OpenRA.Mods.RA.Widgets
 
 		string GetOverlayForItem(ProductionItem item)
 		{
-			if (item.Paused) return "ON HOLD";
-			if (item.Done) return "READY";
+			if (item.Paused) return "EN ATTENTE";
+			if (item.Done) return "PRET";
 			return WidgetUtils.FormatTime(item.RemainingTimeActual);
 		}
 

@@ -12,7 +12,7 @@ Background@SETTINGS_MENU:
 			Y:20
 			Width:450
 			Height:25
-			Text:Settings
+			Text:Parametres
 			Align:Center
 			Font:Bold
 		Button@BUTTON_CLOSE:
@@ -21,7 +21,7 @@ Background@SETTINGS_MENU:
 			Y:PARENT_BOTTOM - 45
 			Width:160
 			Height:25
-			Text:Close
+			Text:Fermer
 			Font:Bold
 			Key:escape
 		Container@TAB_CONTAINER:
@@ -53,7 +53,7 @@ Background@SETTINGS_MENU:
 					Y:0
 					Width:90
 					Height:25
-					Text:Display
+					Text:Affichage
 					Font:Bold
 				Button@DEBUG:
 					Id:DEBUG
@@ -75,10 +75,10 @@ Background@SETTINGS_MENU:
 					Id:SETTINGS_PLAYER_NAME
 					X:0
 					Y:10
-					Text: Player Name:
+					Text: Pseudo:
 				TextField@NAME:
 					Id:NAME
-					Text:Name
+					Text:Nom
 					Width:139
 					Height:25
 					X:90
@@ -90,12 +90,12 @@ Background@SETTINGS_MENU:
 					Y:30
 					Width:200
 					Height:20
-					Text: Enable Edge Scrolling
+					Text: Activer Defilement au Bord
 				Label@EDGE_SCROLL_AMOUNT_LABEL:
 					Id:EDGE_SCROLL_AMOUNT_LABEL
 					X:0
 					Y:70
-					Text: Scroll Speed
+					Text: Vitesse Defilement
 				Slider@EDGE_SCROLL_AMOUNT:
 					Id:EDGE_SCROLL_AMOUNT
 					X:130
@@ -111,21 +111,21 @@ Background@SETTINGS_MENU:
 					Y:90
 					Width:200
 					Height:20
-					Text: Invert Mouse Drag Scrolling
+					Text: Inverser Defilement Souris
 				Checkbox@TEAMCHAT_TOGGLE:
 					Id:TEAMCHAT_TOGGLE
 					X:0
 					Y:120
 					Width:200
 					Height:20
-					Text: Shift-Enter Toggles Team Chat
-				Checkbox@SHOW_SHELLMAP:
+					Text: Shift-Entree pour Chat en Equipe
+				Checkbox@SHOW_SHELL:
 					Id:SHOW_SHELLMAP
 					X:0
 					Y:150
 					Width:200
 					Height:20
-					Text: Show Shellmap
+					Text: Montrer le Shellmap
 		Container@AUDIO_PANE:
 			Id:AUDIO_PANE
 			X:37
@@ -138,7 +138,7 @@ Background@SETTINGS_MENU:
 					Id:SOUND_VOLUME_LABEL
 					X:0
 					Y:10
-					Text: Sound Volume		
+					Text: Vol. Son
 				Slider@SOUND_VOLUME:
 					Id:SOUND_VOLUME
 					X:100
@@ -150,7 +150,7 @@ Background@SETTINGS_MENU:
 					Id:MUSIC_VOLUME_LABEL
 					X:0
 					Y:40
-					Text: Music Volume
+					Text: Vol. Musique
 				Slider@MUSIC_VOLUME:
 					Id:MUSIC_VOLUME
 					X:100
@@ -179,7 +179,7 @@ Background@SETTINGS_MENU:
 					Width:170
 					Height:25
 					Font:Regular
-					Text:Windowed
+					Text:Fenetre
 				Container@WINDOWRES:
 					Id:WINDOW_RESOLUTION
 					X:220
@@ -218,14 +218,14 @@ Background@SETTINGS_MENU:
 					Height:25
 					Font:Tiny
 					Align:Center
-					Text:Mode/Resolution changes will be applied after the game is restarted
+					Text:Changement de Mode/Resolution sera applique au redemarrage du jeu
 				Checkbox@PIXELDOUBLE_CHECKBOX:
 					Id:PIXELDOUBLE_CHECKBOX
 					Y:50
 					Width:200
 					Height:20
 					Font:Regular
-					Text:Enable Pixel Doubling
+					Text:Activer Doublage Pixels/Zoom
 		Container@DEBUG_PANE:
 			Id:DEBUG_PANE
 			X:37
@@ -240,11 +240,11 @@ Background@SETTINGS_MENU:
 					Y:0
 					Width:300
 					Height:20
-					Text:Show Performance Information
+					Text:Montre les infos de Performances
 				Checkbox@CHECKUNSYNCED_CHECKBOX:
 					Id:CHECKUNSYNCED_CHECKBOX
 					X:0
 					Y:30
 					Width:300
 					Height:20
-					Text:Check Sync around Unsynced Code
+					Text:Verifie la synchronisation du code

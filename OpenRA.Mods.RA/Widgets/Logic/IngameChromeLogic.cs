@@ -65,7 +65,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				var state = world.LocalPlayer.WinState;
 				return state == WinState.Undefined ? "" :
-								(state == WinState.Lost ? "YOU ARE DEFEATED" : "YOU ARE VICTORIOUS");
+								(state == WinState.Lost ? "VOUS AVEZ PERDU" : "VOUS AVEZ GAGNE");
 			};
 		}
 

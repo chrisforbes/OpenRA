@@ -11,7 +11,7 @@ Background@INSTALL_PANEL:
 			Y:20
 			Width:PARENT_RIGHT
 			Height:25
-			Text:Install Required
+			Text:Installation Requise
 			Align:Center
 			Font:Bold
 		Label@DESC1:
@@ -19,14 +19,14 @@ Background@INSTALL_PANEL:
 			Y:50
 			Width:PARENT_RIGHT
 			Height:25
-			Text:OpenRA requires the original Red Alert game content.
+			Text:OpenRA requiert les fichiers originaux d'Alerte Rouge.
 			Align:Center
 		Label@DESC2:
 			X:0
 			Y:70
 			Width:PARENT_RIGHT
 			Height:25
-			Text:Content can be downloaded, or copied from the install CD.
+			Text:Ce contenu peut etre telecharge, ou copie a partir du CD original.
 			Align:Center
 		Button@DOWNLOAD_BUTTON:
 			Id:DOWNLOAD_BUTTON
@@ -34,7 +34,7 @@ Background@INSTALL_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Download
+			Text:Telecharger
 			Font:Bold
 		Button@INSTALL_BUTTON:
 			Id:INSTALL_BUTTON
@@ -42,7 +42,7 @@ Background@INSTALL_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Use CD
+			Text:Utiliser le CD
 			Font:Bold
 		Button@QUIT_BUTTON:
 			Id:QUIT_BUTTON
@@ -50,7 +50,7 @@ Background@INSTALL_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Quit
+			Text:Quitter
 			Font:Bold
 
 Background@INSTALL_DOWNLOAD_PANEL:
@@ -66,7 +66,7 @@ Background@INSTALL_DOWNLOAD_PANEL:
 			Y:20
 			Width:PARENT_RIGHT
 			Height:25
-			Text:Downloading Red Alert Content
+			Text:Telechargement du contenu d'Alerte Rouge
 			Align:Center
 			Font:Bold
 		ProgressBar@PROGRESS_BAR:
@@ -89,7 +89,7 @@ Background@INSTALL_DOWNLOAD_PANEL:
 			Width:120
 			Height:25
 			Visible: false
-			Text:Retry
+			Text:Reessayer
 			Font:Bold
 			Key:return
 		Button@CANCEL_BUTTON:
@@ -98,7 +98,7 @@ Background@INSTALL_DOWNLOAD_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Cancel
+			Text:Annuler
 			Font:Bold
 			Key:escape
 Background@INSTALL_FROMCD_PANEL:
@@ -114,7 +114,7 @@ Background@INSTALL_FROMCD_PANEL:
 			Y:20
 			Width:PARENT_RIGHT
 			Height:25
-			Text:Installing from CD
+			Text:Installation à partir du CD
 			Align:Center
 			Font:Bold
 		Container@INSTALLING:
@@ -146,13 +146,13 @@ Background@INSTALL_FROMCD_PANEL:
 					Y:50
 					Width:PARENT_RIGHT
 					Height:25
-					Text:Disk not found.
+					Text:Disque non trouve.
 					Align:Center
 				Label@INFO2:
 					Y:70
 					Width:PARENT_RIGHT
 					Height:25
-					Text:Please insert one of the Red Alert install CDs then click Retry.
+					Text:Veuillez inserer un des CD's d'Alerte Rouge puis cliquez sur Reessayer.
 					Align:Center
 		Button@RETRY_BUTTON:
 			Id:RETRY_BUTTON
@@ -160,7 +160,7 @@ Background@INSTALL_FROMCD_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Retry
+			Text:Reessayer
 			Font:Bold
 			Key:return
 		Button@BACK_BUTTON:
@@ -169,6 +169,6 @@ Background@INSTALL_FROMCD_PANEL:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Cancel
+			Text:Annuler
 			Font:Bold
 			Key:escape

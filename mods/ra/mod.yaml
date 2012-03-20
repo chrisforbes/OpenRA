@@ -1,8 +1,8 @@
 Metadata:
-	Title: Red Alert
-	Description: OpenRA Reimagining of the classic game
-	Version: {DEV_VERSION}
-	Author: The OpenRA Developers
+	Title: Alerte Rouge
+	Description: La version OpenRA du jeu classique
+	Version: release-20120315
+	Author: Les Developpeurs d'OpenRA
 
 Folders:
 	.

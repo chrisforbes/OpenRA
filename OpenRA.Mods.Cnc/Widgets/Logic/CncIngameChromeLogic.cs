@@ -123,11 +123,11 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 			world.ActorRemoved += queueTabs.ActorChanged;
 
 			var queueTypes = sidebarRoot.GetWidget("PRODUCTION_TYPES");
-			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("BUILDING"), "Building");
-			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("DEFENSE"), "Defense");
-			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("INFANTRY"), "Infantry");
-			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("VEHICLE"), "Vehicle");
-			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("AIRCRAFT"), "Aircraft");
+			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("BATIMENTS"), "Batiments");
+			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("DEFENSES"), "Defenses");
+			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("INFANTERIE"), "Infanterie");
+			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("VEHICULES"), "Vehicules");
+			SetupProductionGroupButton(queueTypes.GetWidget<ToggleButtonWidget>("AVIATION"), "Aviation");
 
 			playerWidgets.GetWidget<ButtonWidget>("OPTIONS_BUTTON").OnClick = OptionsClicked;
 

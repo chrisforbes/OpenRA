@@ -21,10 +21,10 @@ namespace OpenRA.Mods.RA
 	public class RALoadScreen : ILoadScreen
 	{
 		Dictionary<string, string> Info;
-		static string[] Comments = new[] {	"Filling Crates...", "Charging Capacitors...", "Reticulating Splines...",
-												"Planting Trees...", "Building Bridges...", "Aging Empires...",
-												"Compiling EVA...", "Constructing Pylons...", "Activating Skynet...",
-												"Splitting Atoms..."
+		static string[] Comments = new[] {	"Lancement de caisses...", "Chargement des Accumulateurs...", "Alignement du Reticule...",
+												"Plantation des Arbres...", "Construction des Ponts...", "TimeOfWar vous aime...",
+												"Activation d'EVA...", "Construction des Pylones...", "Activation de Skynet...",
+												"Separation des Atomes..."
 		};
 
 		Stopwatch lastLoadScreen = new Stopwatch();

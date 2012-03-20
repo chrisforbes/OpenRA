@@ -24,13 +24,13 @@ namespace OpenRA.Mods.RA.Server
 		{
 			if (!server.lobbyInfo.Slots.ContainsKey(arg))
 			{
-				Log.Write("server", "Invalid slot: {0}", arg );
+				Log.Write("serveur", "Slot invalide: {0}", arg );
 				return false;
 			}
 			
 			if (requiresHost && !client.IsAdmin)
 			{
-				server.SendChatTo( conn, "Only the host can do that" );
+				server.SendChatTo( conn, "Seul l'hote peut faire ca" );
 				return false;
 			}
 
@@ -41,12 +41,12 @@ namespace OpenRA.Mods.RA.Server
 		{
 			if (server.GameStarted)
 			{
-				server.SendChatTo(conn, "Cannot change state when game started. ({0})".F(cmd));
+				server.SendChatTo(conn, "Etat inchangeable car la partie a commence. ({0})".F(cmd));
 				return false;
 			}
 			else if (client.State == Session.ClientState.Ready && !(cmd == "ready" || cmd == "startgame"))
 			{
-				server.SendChatTo(conn, "Cannot change state when marked as ready.");
+				server.SendChatTo(conn, "Etat inchangeable si tu es pret.");
 				return false;
 			}
 
@@ -141,7 +141,7 @@ namespace OpenRA.Mods.RA.Server
 								var occupantConn = server.conns.FirstOrDefault( c => c.PlayerIndex == occupant.Index );
 								if (occupantConn != null)
 								{
-									server.SendOrderTo(occupantConn, "ServerError", "Your slot was closed by the host");
+									server.SendOrderTo(occupantConn, "Erreur Serveur", "Votre Slot a ete ferme par l'hote");
 									server.DropClient(occupantConn);
 								}
 							}

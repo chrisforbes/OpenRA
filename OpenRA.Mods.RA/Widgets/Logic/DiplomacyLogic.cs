@@ -58,7 +58,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				Font = "Bold",
 				Bounds = new Rectangle(margin + labelWidth + 10, y, labelWidth, 25),
-				Text = "Their Stance",
+				Text = "Leur Statut",
 				Align = TextAlign.Left,
 			};
 
@@ -69,7 +69,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				Font = "Bold",
 				Bounds = new Rectangle(margin + 2 * labelWidth + 20, y, labelWidth, 25),
-				Text = "My Stance",
+				Text = "Mon Statut",
 				Align = TextAlign.Left,
 			};
 

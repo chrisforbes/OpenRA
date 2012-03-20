@@ -12,7 +12,7 @@ Background@CREATESERVER_BG:
 			Y:20
 			Width:400
 			Height:25
-			Text:Create Server
+			Text:Creer un Serveur
 			Align:Center
 			Font:Bold
 		Label@SERVER_NAME_LABEL:
@@ -22,7 +22,7 @@ Background@CREATESERVER_BG:
 			Width:95
 			Height:25
 			Align: Right
-			Text:Game Title:
+			Text:Nom de la Partie:
 		TextField@SERVER_NAME:
 			Id:SERVER_NAME
 			X:150
@@ -30,7 +30,7 @@ Background@CREATESERVER_BG:
 			Width:210
 			MaxLength:50
 			Height:25
-			Text:OpenRA Game
+			Text:Partie OpenRA
 		Label@EXTERNAL_PORT_LABEL:
 			Id:EXTERNAL_PORT_LABEL
 			X:50
@@ -38,7 +38,7 @@ Background@CREATESERVER_BG:
 			Width:95
 			Height:25
 			Align: Right
-			Text:External Port:
+			Text:Port Externe:
 		TextField@EXTERNAL_PORT:
 			Id:EXTERNAL_PORT
 			X:150
@@ -46,7 +46,7 @@ Background@CREATESERVER_BG:
 			Width:50
 			MaxLength:5
 			Height:25
-			Text:OpenRA Game
+			Text:Partie OpenRA
 		Label@LISTEN_PORT_LABEL:
 			Id:LISTEN_PORT_LABEL
 			X:210
@@ -54,7 +54,7 @@ Background@CREATESERVER_BG:
 			Width:95
 			Height:25
 			Align: Right
-			Text:Listen Port:
+			Text:Port d'ecoute:
 		TextField@LISTEN_PORT:
 			Id:LISTEN_PORT
 			X:310
@@ -68,14 +68,14 @@ Background@CREATESERVER_BG:
 			Y:130
 			Width:300
 			Height:20
-			Text:Advertise game Online
+			Text:Partie en Ligne
 		Button@CREATE_BUTTON:
 			Id:CREATE_BUTTON
 			X:130
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Create
+			Text:Creer
 			Font:Bold
 			Key:return
 		Button@BACK_BUTTON:
@@ -84,6 +84,6 @@ Background@CREATESERVER_BG:
 			Y:PARENT_BOTTOM - 45
 			Width:120
 			Height:25
-			Text:Cancel
+			Text:Annuler
 			Font:Bold
 			Key:escape

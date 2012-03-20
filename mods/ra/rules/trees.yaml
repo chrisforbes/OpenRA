@@ -123,7 +123,7 @@ TC05:
 MINE:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Ore Mine
+		Name: Mine d'Or
 	SeedsResource:
 	RadarColorFromTerrain:
 		Terrain: Ore
