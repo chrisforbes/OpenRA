@@ -203,12 +203,19 @@ namespace OpenRA.Utility
 
 			var fullIndexRange = Exts.MakeArray<int>(256, x => x);
 
-			for( var i = 0; i < 256; i++ )
-				if (!remap.ContainsKey(i))
-					remap[i] = fullIndexRange
-						.Where(a => !remap.ContainsValue(a))
-						.OrderBy(a => ColorDistance(destPalette.Values[a], srcPalette.Values[i]))
-						.First();
+			for( var max = 0; max < 768; max++ )
+				for( var i = 0; i < 256; i++ )
+					if (!remap.ContainsKey(i))
+					{
+						var x = fullIndexRange
+							.Where(a => !remap.ContainsValue(a) &&
+								ColorDistance(destPalette.Values[a], srcPalette.Values[i]) < max)
+							.Select(a => (int?)a)
+							.FirstOrDefault();
+
+						if (x != null)
+							remap[i] = (int)x;
+					}
 
 			var srcImage = ShpReader.Load(args[3]);
 
