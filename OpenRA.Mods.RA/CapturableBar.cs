@@ -20,12 +20,10 @@ namespace OpenRA.Mods.RA
 	}
 	class CapturableBar : ISelectionBar
 	{
-		Actor self;
 		Capturable cap;
 
 		public CapturableBar(Actor self)
 		{
-			this.self = self;
 			this.cap = self.Trait<Capturable>();
 		}
 

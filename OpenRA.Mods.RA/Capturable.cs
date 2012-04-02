@@ -22,20 +22,18 @@ namespace OpenRA.Mods.RA
 		public readonly bool AllowEnemies = true;
 		public readonly int CaptureCompleteTime = 10; // seconds
 
-		public object Create(ActorInitializer init) { return new Capturable(init.self, this); }
+		public object Create(ActorInitializer init) { return new Capturable(this); }
 	}
 
 	public class Capturable : ITick
 	{
-		readonly Actor self;
 		[Sync] Actor captor = null;
 		[Sync] public int CaptureProgressTime = 0;
 		public bool CaptureInProgress { get { return captor != null; } }
 		public CapturableInfo Info;
 
-		public Capturable(Actor self, CapturableInfo info)
+		public Capturable(CapturableInfo info)
 		{
-			this.self = self;
 			this.Info = info;
 		}
 
