@@ -69,6 +69,7 @@ namespace OpenRA.Mods.RA
 	class CaptureOrderTargeter : UnitTraitOrderTargeter<Capturable>
 	{
 		readonly string[] captureTypes;
+
 		public CaptureOrderTargeter(string[] captureTypes)
 			: base( "CaptureActor", 6, "enter", true, true )
 		{
@@ -86,7 +87,6 @@ namespace OpenRA.Mods.RA
 			if( playerRelationship == Stance.Enemy && !ci.AllowEnemies ) return false;
 			if( playerRelationship == Stance.Neutral && !ci.AllowNeutral ) return false;
 
-			IsQueued = forceQueued;
 			if (captureTypes.Contains(ci.Type))
 			{
 				cursor = "enter";

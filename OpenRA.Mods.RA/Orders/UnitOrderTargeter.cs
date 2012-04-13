@@ -69,8 +69,6 @@ namespace OpenRA.Mods.RA.Orders
 			if( !base.CanTargetActor( self, target, forceAttack, forceQueued, ref cursor ) ) return false;
 			if( !target.HasTrait<T>() ) return false;
 
-			IsQueued = forceQueued;
-
 			return true;
 		}
 	}

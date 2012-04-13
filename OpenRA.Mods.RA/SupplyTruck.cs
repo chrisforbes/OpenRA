@@ -73,8 +73,6 @@ namespace OpenRA.Mods.RA
 				if (!base.CanTargetActor(self, target, forceAttack, forceQueued, ref cursor)) return false;
 				if (target.AppearsHostileTo(self)) return false;
 				if (!target.HasTrait<AcceptsSupplies>()) return false;
-
-				IsQueued = forceQueued;
 				return true;
 			}
 		}

@@ -67,8 +67,6 @@ namespace OpenRA.Mods.RA
 				if (self.Owner.Stances[ target.Owner ] != Stance.Ally)
 					return false;
 
-				IsQueued = forceQueued;
-
 				if( target.GetDamageState() == DamageState.Undamaged )
 					cursor = "goldwrench-blocked";
 				return true;

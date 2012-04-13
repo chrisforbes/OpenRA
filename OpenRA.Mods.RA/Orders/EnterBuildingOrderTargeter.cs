@@ -30,7 +30,6 @@ namespace OpenRA.Mods.RA.Orders
 			if( !base.CanTargetActor( self, target, forceAttack, forceQueued, ref cursor ) ) return false;
 			if( !canTarget( target ) ) return false;
 			cursor = useEnterCursor(target) ? "enter" : "enter-blocked";
-			IsQueued = forceQueued;
 			return true;
 		}
 	}
