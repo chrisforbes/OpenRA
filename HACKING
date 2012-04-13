@@ -23,7 +23,7 @@ which are automatically loaded into the corresponding fields on the trait's ITra
 - For more complex things that require modal UI (like special abilities, 
   RA-style sell/repair buttons, etc) we have IOrderGenerator implementations. This can 
   completely replace the normal actors-provide-orders model temporarily. IOGs wiring is 
-  provided through OpenRa.Game/Controller.cs (ToggleInputMode<T>, CancelInputMode)
+  provided through OpenRA.Game/Controller.cs (ToggleInputMode<T>, CancelInputMode)
 
 - Things that don't affect gameplay, or (increasingly) are just transient are implemented as 
   IEffect, rather than real Actors. This is similar to the temp ents mechanism in many other 
@@ -74,7 +74,7 @@ Other things we probably want to put in here:
     - A guide on how to add a generic unit via yaml using existing traits
         - and then introduce some element that requires a simple trait change.
     - how to set up a new mod (TC-style or mutator-style)
-    - VFS (OpenRa.FileFormats.FileSystem, Package, Folder classes)
+    - VFS (OpenRA.FileFormats.FileSystem, Package, Folder classes)
     - Trait inheritance (and the magicness of ^ActorType)
     - Removing inherited traits (prepend `-` to the trait name)
     - Multiple instances of a trait (`@` and all subsequent characters are ignored for 
