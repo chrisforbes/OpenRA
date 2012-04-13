@@ -203,5 +203,22 @@ namespace OpenRA.Mods.RA
 			if (northNeighbour != null) northNeighbour.UpdateState();
 			if (southNeighbour != null) southNeighbour.UpdateState();
 		}
+
+		public void Repair()
+		{
+			var br = this;
+
+			while(br.northNeighbour != null) br = br.northNeighbour;
+
+			for (var b = br; b != null; b = b.southNeighbour) {
+				var h = b.self.Trait<Health>();
+				h.HP = h.MaxHP;
+				dead = false;
+			}
+
+			for (var b = br; b != null; b = b.southNeighbour) {
+				b.UpdateState();
+			}
+		}
 	}
 }

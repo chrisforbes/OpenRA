@@ -27,7 +27,7 @@ namespace OpenRA.Traits
 	{
 		public readonly HealthInfo Info;
 
-		[Sync] int hp;
+		[Sync] public int HP;
 
 		public int DisplayHp { get; private set; }
 
@@ -36,33 +36,32 @@ namespace OpenRA.Traits
 			Info = info;
 			MaxHP = info.HP;
 
-			hp = init.Contains<HealthInit>() ? (int)(init.Get<HealthInit, float>() * MaxHP) : MaxHP;
-			DisplayHp = hp;
+			HP = init.Contains<HealthInit>() ? (int)(init.Get<HealthInit, float>() * MaxHP) : MaxHP;
+			DisplayHp = HP;
 		}
 
-		public int HP { get { return hp; } }
 		public readonly int MaxHP;
 
-		public bool IsDead { get { return hp <= 0; } }
+		public bool IsDead { get { return HP <= 0; } }
 		public bool RemoveOnDeath = true;
 
 		public DamageState DamageState
 		{
 			get
 			{
-				if (hp <= 0)
+				if (HP <= 0)
 					return DamageState.Dead;
 
-				if (hp < MaxHP * 0.25f)
+				if (HP < MaxHP * 0.25f)
 					return DamageState.Critical;
 
-				if (hp < MaxHP * 0.5f)
+				if (HP < MaxHP * 0.5f)
 					return DamageState.Heavy;
 
-				if (hp < MaxHP * 0.75f)
+				if (HP < MaxHP * 0.75f)
 					return DamageState.Medium;
 
-				if (hp == MaxHP)
+				if (HP == MaxHP)
 					return DamageState.Undamaged;
 
 				return DamageState.Light;
@@ -71,18 +70,20 @@ namespace OpenRA.Traits
 
 		public void InflictDamage(Actor self, Actor attacker, int damage, WarheadInfo warhead, bool ignoreModifiers)
 		{
-			if (IsDead) return;		/* overkill! don't count extra hits as more kills! */
+			if (IsDead) return;	/* overkill! don't count extra hits as more kills! */
 
 			var oldState = this.DamageState;
-			/* apply the damage modifiers, if we have any. */
-			var modifier = (float)self.TraitsImplementing<IDamageModifier>()
-				.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
-				.Select(t => t.GetDamageModifier(attacker, warhead)).Product();
 
-			if (!ignoreModifiers)
+			if (!ignoreModifiers) {
+				/* apply the damage modifiers, if we have any. */
+				var modifier = (float)self.TraitsImplementing<IDamageModifier>()
+					.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
+					.Select(t => t.GetDamageModifier(attacker, warhead)).Product();
+
 				damage = damage > 0 ? (int)(damage * modifier) : damage;
+			}
 
-			hp = Exts.Clamp(hp - damage, 0, MaxHP);
+			HP = Exts.Clamp(HP - damage, 0, MaxHP);
 
 			var ai = new AttackInfo
 			{
@@ -106,7 +107,7 @@ namespace OpenRA.Traits
 					 .Concat(attacker.Owner.PlayerActor.TraitsImplementing<INotifyAppliedDamage>()))
 				nd.AppliedDamage(attacker, self, ai);
 
-			if (hp == 0)
+			if (HP == 0)
 			{
 				attacker.Owner.Kills++;
 				self.Owner.Deaths++;
@@ -124,11 +125,11 @@ namespace OpenRA.Traits
 
 		public void Tick(Actor self)
 		{
-			if (hp > DisplayHp)
-				DisplayHp = hp;
+			if (HP > DisplayHp)
+				DisplayHp = HP;
 
-			if (DisplayHp > hp)
-				DisplayHp = (2 * DisplayHp + hp) / 3;
+			if (DisplayHp > HP)
+				DisplayHp = (2 * DisplayHp + HP) / 3;
 		}
 	}
 
