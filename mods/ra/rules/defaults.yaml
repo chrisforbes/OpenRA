@@ -183,7 +183,7 @@
 		Dimensions: 1,1
 		Footprint: x
 		TerrainTypes: Clear,Road
-                Adjacent: 10
+		Adjacent: 10
 #	GivesBuildableArea:
 	Capturable:
 	CapturableBar:
