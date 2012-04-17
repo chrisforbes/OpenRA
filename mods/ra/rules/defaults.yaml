@@ -183,7 +183,8 @@
 		Dimensions: 1,1
 		Footprint: x
 		TerrainTypes: Clear,Road
-	GivesBuildableArea:
+                Adjacent: 10
+#	GivesBuildableArea:
 	Capturable:
 	CapturableBar:
 	SoundOnDamageTransition:
@@ -214,7 +215,7 @@
 		Dimensions: 1,1
 		Footprint: x
 		BuildSounds: placbldg.aud
-		Adjacent: 7
+		Adjacent: 13
 		TerrainTypes: Clear,Road
 	SoundOnDamageTransition:
 		DamagedSound: sandbag2.aud
@@ -251,7 +252,6 @@
 	ProximityCaptor:
 		Types:CivilianBuilding
 	-AcceptsSupplies:
-	-GivesBuildableArea:
 	-Sellable:
 	-Capturable:
 	-CapturableBar:

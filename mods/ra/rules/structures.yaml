@@ -89,7 +89,6 @@ SPEN:
 		Dimensions: 3,3
 		Adjacent: 8
 		TerrainTypes: Water
-	-GivesBuildableArea:
 	Health:
 		HP: 1000
 	Armor:
@@ -144,7 +143,6 @@ SYRD:
 		Dimensions: 3,3
 		Adjacent: 8
 		TerrainTypes: Water
-	-GivesBuildableArea:
 	Health:
 		HP: 1000
 	Armor:
@@ -273,7 +271,6 @@ TSLA:
 		Power: -150
 		Footprint: _ x
 		Dimensions: 1,2
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -310,7 +307,6 @@ AGUN:
 		Power: -50
 		Footprint: _ x
 		Dimensions: 1,2
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -376,7 +372,6 @@ PBOX:
 		Description: Basic defensive structure.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
 	Building:
 		Power: -15
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -409,7 +404,6 @@ HBOX:
 		Description: Hidden defensive structure.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
 	Building:
 		Power: -15
-	-GivesBuildableArea:
 	Health:
 		HP: 600
 	Armor:
@@ -442,7 +436,6 @@ GUN:
 		Description: Anti-Armor base defense.\n  Strong vs Tanks\n  Weak vs Infantry, Aircraft
 	Building:
 		Power: -40
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -476,7 +469,6 @@ FTUR:
 		Description: Anti-Infantry base defense.\n  Strong vs Infantry\n  Weak vs Aircraft
 	Building:
 		Power: -20
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -511,7 +503,6 @@ SAM:
 		Power: -20
 		Footprint: xx
 		Dimensions: 2,1
-	-GivesBuildableArea:
 	Health:
 		HP: 400
 	Armor:
@@ -635,6 +626,7 @@ FACT:
 		Offset:1,1
 		Facing: 96
 	ProductionBar:
+	GivesBuildableArea:
 		
 PROC:
 	Inherits: ^Building
@@ -692,7 +684,6 @@ SILO:
 		Description: Stores excess harvested Ore
 	Building:
 		Power: -10
-	-GivesBuildableArea:
 	Health:
 		HP: 300
 	Armor:
@@ -991,7 +982,6 @@ FACF:
 		Power: -2
 		Footprint: xxx xxx xxx
 		Dimensions: 3,3
-	-GivesBuildableArea:
 	Health:
 		HP: 30
 	RevealsShroud:
@@ -1017,7 +1007,6 @@ WEAF:
 		Power: -2
 		Footprint: xxx xxx
 		Dimensions: 3,2
-	-GivesBuildableArea:
 	Health:
 		HP: 30
 	RevealsShroud:
@@ -1052,7 +1041,6 @@ SYRF:
 		Dimensions: 3,3
 		Adjacent: 8
 		TerrainTypes: Water
-	-GivesBuildableArea:
 	Health:
 		HP: 30
 	RevealsShroud:
@@ -1072,7 +1060,6 @@ SPEF:
 		Dimensions: 3,3
 		Adjacent: 8
 		TerrainTypes: Water
-	-GivesBuildableArea:
 	Health:
 		HP: 30
 	RevealsShroud:
@@ -1100,7 +1087,6 @@ DOMF:
 		Power: -2
 		Footprint: xx xx
 		Dimensions: 2,2
-	-GivesBuildableArea:
 	Health:
 		HP: 30
 	RevealsShroud:
