@@ -113,15 +113,21 @@ Actors:
 	Actor21: mpspawn
 		Location: 24,18
 		Owner: Multi0
-	DropPoint: waypoint
+	tran_drop: waypoint
 		Location: 23,19
 		Owner: Neutral
 	Actor22: mpspawn
 		Location: 22,18
 		Owner: Neutral
-	SpawnVehicle: tran
-		Location: 23,15
+	tran: tran
+		Location: 23,2
 		Owner: Friendlies
+	flare: flare
+		Location: 23,19
+		Owner: Multi0
+	tran_exit: waypoint
+		Location: 23,2
+		Owner: Neutral
 
 Smudges:
 
