@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using OpenRA.FileFormats;
 using OpenRA.Mods.RA.Air;
 using OpenRA.Mods.RA.Activities;
@@ -23,7 +24,7 @@ namespace OpenRA.Mods.RA
 	public class ZombiesScript : IWorldLoaded, ITick
 	{
 		Dictionary<string, Actor> actors;
-		string[] InitialUnits = { "e1", "e1", "e1" };
+		string[] InitialUnits = { "e1", "e1", "e2", "e2" };
 		List<Actor> SpawnedDudes = new List<Actor>();
 		
 		string[] briefing = {
@@ -66,14 +67,17 @@ namespace OpenRA.Mods.RA
 			// do other things
 			actors = w.WorldActor.Trait<SpawnMapActors>().Actors;
 			var spawnHeli = actors["tran"];
-			
+
 			// todo: split infantry setup for 2p
-			var p = w.LocalPlayer;		/* FIXME, this will desync in multi */
-			
+			var multi0 = w.Players.Single(p => p.InternalName == "Multi0");
+			var multi1 = w.Players.SingleOrDefault(p => p.InternalName == "Multi1") ?? multi0;
+
+			var i = 0;
+
 			foreach( var u in InitialUnits )
 			{	// load up the heli with the player's starting units.
 				var actor = w.CreateActor(false, u,
-					new TypeDictionary { new OwnerInit(p) });
+					new TypeDictionary { new OwnerInit(i++ >= 2 ? multi1 : multi0) });
 				spawnHeli.Trait<Cargo>().Load(spawnHeli, actor);
 				SpawnedDudes.Add(actor);
 			}
