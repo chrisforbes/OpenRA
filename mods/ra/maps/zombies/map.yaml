@@ -1,0 +1,137 @@
+Selectable: True
+
+MapFormat: 5
+
+Title: Zombies
+
+Description: Zombies!
+
+Author: Chris Forbes
+
+Tileset: SNOW
+
+MapSize: 96,96
+
+Bounds: 16,16,64,64
+
+UseAsShellmap: False
+
+Type: Conquest
+
+Players:
+	PlayerReference@Neutral:
+		Name: Neutral
+		OwnsWorld: True
+		NonCombatant: True
+		Race: allies
+	PlayerReference@Multi0:
+		Name: Multi0
+		Playable: True
+		Race: Random
+		Enemies: Creeps
+	PlayerReference@Multi1:
+		Name: Multi1
+		Playable: True
+		Race: Random
+		Enemies: Creeps
+	PlayerReference@Creeps:
+		Name: Creeps
+		NonCombatant: True
+		Race: allies
+		Enemies: Multi0,Multi1
+	PlayerReference@Friendlies:
+		Name: Friendlies
+		NonCombatant: True
+		Race: allies
+		Allies: Multi0,Multi1
+
+Actors:
+	Actor0: zombie
+		Location: 35,30
+		Owner: Creeps
+	Actor1: zombie
+		Location: 34,31
+		Owner: Creeps
+	Actor2: zombie
+		Location: 35,32
+		Owner: Creeps
+	Actor3: c1
+		Location: 22,26
+		Owner: Neutral
+	Actor4: c2
+		Location: 24,24
+		Owner: Neutral
+	Actor5: wood
+		Location: 33,24
+		Owner: Neutral
+	Actor6: wood
+		Location: 32,24
+		Owner: Neutral
+	Actor7: wood
+		Location: 31,24
+		Owner: Neutral
+	Actor8: wood
+		Location: 31,25
+		Owner: Neutral
+	Actor9: wood
+		Location: 31,26
+		Owner: Neutral
+	Actor10: wood
+		Location: 31,27
+		Owner: Neutral
+	Actor11: wood
+		Location: 31,28
+		Owner: Neutral
+	Actor12: wood
+		Location: 31,29
+		Owner: Neutral
+	Actor13: wood
+		Location: 21,21
+		Owner: Neutral
+	Actor14: wood
+		Location: 20,21
+		Owner: Neutral
+	Actor15: wood
+		Location: 24,21
+		Owner: Neutral
+	Actor16: wood
+		Location: 25,21
+		Owner: Neutral
+	Actor17: wood
+		Location: 24,22
+		Owner: Neutral
+	Actor18: v01
+		Location: 23,25
+		Owner: Neutral
+	Actor19: v02
+		Location: 20,22
+		Owner: Neutral
+	Actor20: v05
+		Location: 20,24
+		Owner: Neutral
+	Actor21: mpspawn
+		Location: 24,18
+		Owner: Multi0
+	DropPoint: waypoint
+		Location: 23,19
+		Owner: Neutral
+	Actor22: mpspawn
+		Location: 22,18
+		Owner: Neutral
+	SpawnVehicle: tran
+		Location: 23,15
+		Owner: Friendlies
+
+Smudges:
+
+Rules:
+	Player:
+		-ConquestVictoryConditions:
+	World:
+		ZombiesScript:
+
+Sequences:
+
+Weapons:
+
+Voices:
