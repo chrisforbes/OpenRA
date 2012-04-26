@@ -44,6 +44,7 @@ Players:
 		NonCombatant: True
 		Race: allies
 		Allies: Multi0,Multi1
+		ColorRamp: 153,255,67,10
 
 Actors:
 	Actor0: zombie
