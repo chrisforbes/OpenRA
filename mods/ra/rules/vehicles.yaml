@@ -59,6 +59,43 @@ V2RL:
 	LeavesHusk:
 		HuskActor: 1TNK.Husk
 
+HOVERTANK:
+	Inherits: ^Tank
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 40
+		Owner: allies
+	Valued:
+		Cost: 900
+	Tooltip:
+		Name: Hover Tank
+		Description: Tank that can cross water.\n  Strong vs Light Vehicles\n  Weak vs Tanks, Aircraft
+		Icon: 1tnkicon
+	Health:
+		HP: 220
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 9
+		Altitude: 6
+	RevealsShroud:
+		Range: 4
+	Turreted:
+		ROT: 5
+	AttackTurreted:
+		PrimaryWeapon: 25mm
+		PrimaryRecoil: 2
+		PrimaryRecoilRecovery: 0.5
+	RenderUnitTurreted:
+		Image: 1tnk
+	WithShadow:
+	AutoTarget:
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
+	LeavesHusk:
+		HuskActor: 1TNK.Husk
+
 2TNK:
 	Inherits: ^Tank
 	Buildable:
