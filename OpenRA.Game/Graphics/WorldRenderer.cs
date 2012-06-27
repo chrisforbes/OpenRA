@@ -113,7 +113,7 @@ namespace OpenRA.Graphics
 			Game.Renderer.Flush();
 		}
 
-		public void DrawSelectionBox(Actor selectedUnit, Color c)
+		public void DrawSelectionBox(Actor selectedUnit, Color sc)
 		{
 			var bounds = selectedUnit.Bounds.Value;
 
@@ -121,6 +121,9 @@ namespace OpenRA.Graphics
 			var Xy = new float2(bounds.Right, bounds.Top);
 			var xY = new float2(bounds.Left, bounds.Bottom);
 			var XY = new float2(bounds.Right, bounds.Bottom);
+
+			// Use a transparent color:
+			var c = Color.FromArgb(64, sc);
 
 			var wlr = Game.Renderer.WorldLineRenderer;
 			wlr.DrawLine(xy, xy + new float2(4, 0), c, c);
