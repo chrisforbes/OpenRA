@@ -33,3 +33,4 @@
 # infantry-only areas (Rough) do not show the dark-green mouse cursor
 # put TilesetBuilder.Export into OpenRA.Utility to call the functions directly when extracting game-files (instead of opening a GUI)
 # group number metrics are off
+# add bibs
