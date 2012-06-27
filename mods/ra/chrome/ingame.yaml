@@ -118,6 +118,13 @@ Container@INGAME_ROOT:
 					Description:Repair
 					LongDesc:Repair damaged buildings
 		WorldTooltip:
+		OrdersPalette@ORDERS_PALETTE:
+			X:(WINDOW_RIGHT - WIDTH) / 2
+			Y:WINDOW_BOTTOM - HEIGHT - 20
+			Width: 34 * 8
+			Height: 28
+			Background:dialog4
+			Visible: true
 		Background@INGAME_OPTIONS_BG:
 			X:(WINDOW_RIGHT - WIDTH)/2
 			Y:(WINDOW_BOTTOM - HEIGHT)/2

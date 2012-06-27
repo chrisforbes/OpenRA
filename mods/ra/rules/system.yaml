@@ -192,11 +192,12 @@ Player:
 	GpsWatcher:
 	BaseAttackNotifier:
 
-World:	
+World:
 	OpenWidgetAtGameStart:
 		Widget: INGAME_ROOT
 		ObserverWidget: OBSERVER_ROOT
 	ScreenShaker:
+	UpdateOrderPalette:
 	WaterPaletteRotation:
 	ChronoshiftPaletteEffect:
 	NukePaletteEffect:
