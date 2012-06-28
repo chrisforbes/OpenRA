@@ -264,6 +264,32 @@ namespace OpenRA
 			Play(prefix + clip + variantExt);
 			return true;
 		}
+
+		public static bool PlayNotification(Player p, string type, string notification, string variant)
+		{
+			if (type == null) return false;
+			if (notification == null) return false;
+			if (variant == null) variant = "none";
+
+			var ni = Rules.Notifications[type.ToLowerInvariant()];
+
+			if (!ni.Pools.Value.ContainsKey(notification))
+				return false;
+
+			var clip = ni.Pools.Value[notification].GetNext();
+			if (clip == null)
+				return false;
+
+			var variantExt = (ni.Variants.ContainsKey(variant) && !ni.DisableVariants.Contains(notification)) ?
+				  ni.Variants[variant][0] : ni.DefaultVariant;
+			var prefix = (ni.Prefixes.ContainsKey(variant) && !ni.DisablePrefixes.Contains(notification)) ?
+				ni.Prefixes[variant][0] : ni.DefaultPrefix;
+			if (p == null)
+				Play(prefix + clip + variantExt);
+			else
+				PlayToPlayer(p, prefix + clip + variantExt);
+			return true;
+		}
 	}
 
 	interface ISoundEngine

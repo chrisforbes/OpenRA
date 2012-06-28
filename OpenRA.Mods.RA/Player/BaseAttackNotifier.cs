@@ -17,8 +17,7 @@ namespace OpenRA.Mods.RA
 {
 	public class BaseAttackNotifierInfo : ITraitInfo
 	{
-		public readonly int NotifyInterval = 30;	/* seconds */
-		public readonly string Audio = "baseatk1.aud";
+		public readonly int NotifyInterval = 30;	// seconds
 		public readonly string Race = null;
 
 		public object Create(ActorInitializer init) { return new BaseAttackNotifier(this); }
@@ -35,17 +34,16 @@ namespace OpenRA.Mods.RA
 
 		public void Damaged(Actor self, AttackInfo e)
 		{
-			if (info.Race != null && info.Race != self.Owner.Country.Race) return;
-			/* only track last hit against our base */
+			// only track last hit against our base
 			if (!self.HasTrait<Building>())
 				return;
 
-			/* don't track self-damage */
+			// don't track self-damage
 			if (e.Attacker != null && e.Attacker.Owner == self.Owner)
 				return;
 
 			if (self.World.FrameNumber - lastAttackTime > info.NotifyInterval * 25)
-				Sound.PlayToPlayer(self.Owner, info.Audio);
+				Sound.PlayNotification(self.Owner, "Speech", "BaseAttack", self.Owner.Country.Race);
 
 			lastAttackLocation = self.CenterLocation.ToCPos();
 			lastAttackTime = self.World.FrameNumber;
