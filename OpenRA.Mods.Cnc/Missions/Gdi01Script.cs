@@ -34,12 +34,12 @@ namespace OpenRA.Mods.Cnc
 			var b = w.Map.Bounds;
 			Game.MoveViewport(new CPos(b.Left + b.Width/2, b.Top + b.Height/2).ToFloat2());
 
-			Scripting.Media.PlayFMVFullscreen(w, "gdi1.vqa",
-				() => Scripting.Media.PlayFMVFullscreen(w, "landing.vqa", () =>
-				{
-					Sound.PlayMusic(Rules.Music["aoi"]);
+//			Scripting.Media.PlayFMVFullscreen(w, "gdi1.vqa",
+//				() => Scripting.Media.PlayFMVFullscreen(w, "landing.vqa", () =>
+//				{
+//					Sound.PlayMusic(Rules.Music["aoi"]);
 					started = true;
-				}));
+//				}));
 		}
 
 		public void OnVictory(World w)
@@ -48,14 +48,14 @@ namespace OpenRA.Mods.Cnc
 			Sound.PlayToPlayer(Players["GoodGuy"], "accom1.aud");
 			Players["GoodGuy"].WinState = WinState.Won;
 
-			Action afterFMV = () =>
-			{
+//			Action afterFMV = () =>
+//			{
 				Sound.StopMusic();
 				Game.Disconnect();
 				Ui.ResetAll();
 				Game.LoadShellMap();
-			};
-			Game.RunAfterDelay(5000, () => Scripting.Media.PlayFMVFullscreen(w, "consyard.vqa", afterFMV));
+//			};
+//			Game.RunAfterDelay(5000, () => Scripting.Media.PlayFMVFullscreen(w, "consyard.vqa", afterFMV));
 		}
 
 		public void OnLose(World w)
@@ -64,14 +64,14 @@ namespace OpenRA.Mods.Cnc
 			Sound.PlayToPlayer(Players["GoodGuy"], "fail1.aud");
 			Players["GoodGuy"].WinState = WinState.Lost;
 
-			Action afterFMV = () =>
-			{
+//			Action afterFMV = () =>
+//			{
 				Sound.StopMusic();
 				Game.Disconnect();
 				Ui.ResetAll();
 				Game.LoadShellMap();
-			};
-			Game.RunAfterDelay(5000, () => Scripting.Media.PlayFMVFullscreen(w, "gameover.vqa", afterFMV));
+//			};
+//			Game.RunAfterDelay(5000, () => Scripting.Media.PlayFMVFullscreen(w, "gameover.vqa", afterFMV));
 		}
 
 		int ticks = 0;
@@ -172,8 +172,9 @@ namespace OpenRA.Mods.Cnc
 		{
 			var self = Actors[ "Gunboat" ];
 			var mobile = self.Trait<Mobile>();
-			self.QueueActivity(mobile.ScriptedMove( Actors["gunboatLeft"].Location ));
-			self.QueueActivity(mobile.ScriptedMove( Actors["gunboatRight"].Location ));
+			//TODO: make this an AttackMove
+			self.QueueActivity( mobile.MoveTo( Actors["gunboatLeft"].Location, 3 ));
+			self.QueueActivity( mobile.MoveTo( Actors["gunboatRight"].Location, 3 ));
 			self.QueueActivity(new CallFunc(() => SetGunboatPath()));
 		}
 

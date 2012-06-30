@@ -1,4 +1,4 @@
-Selectable: False
+Selectable: True
 
 MapFormat: 5
 
@@ -450,6 +450,8 @@ Rules:
 		Gdi01Script:
 	Player:
 		-ConquestVictoryConditions:
+	PROC:
+		-Buildable:
 	SILO:
 		-Buildable:
 	WEAP:
@@ -464,9 +466,7 @@ Rules:
 		-Buildable:
 	EYE:
 		-Buildable:
-	SBAG:
-		-Buildable:
-	BRIK:
+	GUN:
 		-Buildable:
 	GTWR:
 		-Buildable:
