@@ -70,7 +70,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				{
 					var bot = b;
 					options.Add(new SlotDropDownOption("Bot: {0}".F(bot),
-						"slot_bot {0} {1}".F(slot.PlayerReference, bot),
+						"slot_bot {0} {1} {2}".F(slot.PlayerReference, 0, bot),
 						() => client != null && client.Bot == bot));
 				}
 

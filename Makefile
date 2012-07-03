@@ -197,9 +197,9 @@ $(foreach prog,$(PROGRAMS),$(eval $(call BUILD_ASSEMBLY,$(prog))))
 prefix ?= /usr/local
 datarootdir ?= $(prefix)/share
 datadir ?= $(datarootdir)
-bindir ?= $(prefix)/bin
+bindir ?= /usr/bin
 BIN_INSTALL_DIR = $(DESTDIR)$(bindir)
-INSTALL_DIR = $(DESTDIR)$(datadir)/openra
+INSTALL_DIR = $(DESTDIR)$(datadir)/openraGIT
 INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 CORE = fileformats rcg rgl rsdl rnull game editor utility tsbuild

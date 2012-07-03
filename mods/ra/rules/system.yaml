@@ -173,6 +173,7 @@ Player:
 			atek: 1%
 			stek: 1%
 		UnitsToBuild:
+		UnitsToBuild:
 			e1: 5%
 			e3: 10%
 			3tnk: 75%
