@@ -421,10 +421,17 @@ Background@SERVER_LOBBY:
 			Font:Bold
 		Button@DISCONNECT_BUTTON:
 			X:PARENT_RIGHT-154
-			Y:PARENT_BOTTOM-189+25
+			Y:PARENT_BOTTOM-189+50
 			Width:120
 			Height:25
 			Text:Disconnect
+			Font:Bold
+		Button@CHALLENGE_BUTTON:
+			X:PARENT_RIGHT-154
+			Y:PARENT_BOTTOM-189
+			Width:120
+			Height:25
+			Text:Challenge
 			Font:Bold
 		Checkbox@ALLOWCHEATS_CHECKBOX:
 			X: PARENT_RIGHT-154

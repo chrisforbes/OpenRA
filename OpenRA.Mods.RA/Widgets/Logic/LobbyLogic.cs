@@ -145,6 +145,18 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 			var disconnectButton = lobby.Get<ButtonWidget>("DISCONNECT_BUTTON");
 			disconnectButton.OnClick = () => { CloseWindow(); onExit(); };
+			
+			var challengeButton = lobby.Get<ButtonWidget>("CHALLENGE_BUTTON");
+			challengeButton.OnClick = () => {
+				var AIModes = Rules.Info["player"].Traits.WithInterface<IBotInfo>().Select(t => t.Name);
+				for (var p = 1; p < Map.PlayerCount; p++)
+				{
+					var slot = "Multi" + p;
+					var bot = AIModes.ElementAt(AIModes.Count() - (p % 2 == 0 ? 2 : 1)); // last (hardest) 2 AI
+					if (slot != null && bot != null)
+						orderManager.IssueOrder(Order.Command("slot_bot {0} {1} {2}".F(slot, 2, bot)));
+				}
+			};
 
 			var gameStarting = false;
 
@@ -201,7 +213,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 					var slot = orderManager.LobbyInfo.FirstEmptySlot();
 					var bot = Rules.Info["player"].Traits.WithInterface<IBotInfo>().Select(t => t.Name).FirstOrDefault();
 					if (slot != null && bot != null)
-						orderManager.IssueOrder(Order.Command("slot_bot {0} {1}".F(slot, bot)));
+						orderManager.IssueOrder(Order.Command("slot_bot {0} {1} {2}".F(slot, 0, bot)));
 				});
 		}
 

@@ -173,7 +173,7 @@ namespace OpenRA.Mods.RA.Server
 					{
 						var parts = s.Split(' ');
 
-						if (parts.Length < 2)
+						if (parts.Length < 3)
 						{
 							server.SendChatTo( conn, "Malformed slot_bot command" );
 							return true;
@@ -184,7 +184,8 @@ namespace OpenRA.Mods.RA.Server
 
 						var slot = server.lobbyInfo.Slots[parts[0]];
 						var bot = server.lobbyInfo.ClientInSlot(parts[0]);
-						var botType = parts.Skip(1).JoinWith(" ");
+						var team = Convert.ToInt32(parts[1]);
+						var botType = parts.Skip(2).JoinWith(" ");
 
 						// Invalid slot
 						if (bot != null && bot.Bot == null)
@@ -205,7 +206,7 @@ namespace OpenRA.Mods.RA.Server
 								Slot = parts[0],
 								Country = "random",
 								SpawnPoint = 0,
-								Team = 0,
+								Team = team,
 								State = Session.ClientState.NotReady
 							};
 
@@ -222,6 +223,7 @@ namespace OpenRA.Mods.RA.Server
 							// Change the type of the existing bot
 							bot.Name = botType;
 							bot.Bot = botType;
+							bot.Team = team;
 						}
 
 						S.SyncClientToPlayerReference(bot, server.Map.Players[parts[0]]);
