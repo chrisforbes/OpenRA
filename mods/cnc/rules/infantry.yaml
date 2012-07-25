@@ -126,7 +126,7 @@ E5:
 		PrimaryOffset: 0,-2,2,-9
 		FireDelay: 3
 	WithMuzzleFlash:
-	-PoisonedByTiberium:
+	-DamagedByTerrain:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
 
