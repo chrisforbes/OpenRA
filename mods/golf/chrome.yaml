@@ -1,0 +1,13 @@
+Container@INGAME_ROOT:
+	Logic:IngameChromeLogic
+	Children:
+		WorldInteractionController@INTERACTION_CONTROLLER:
+			X:0
+			Y:0
+			Width:WINDOW_RIGHT
+			Height:WINDOW_BOTTOM
+		ViewportScrollController:
+			X:0
+			Y:0
+			Width:WINDOW_RIGHT
+			Height:WINDOW_BOTTOM

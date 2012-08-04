@@ -13,34 +13,35 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.Cnc
 {
-	class PoisonedByTiberiumInfo : ITraitInfo
+	class DamagedByTerrainInfo : ITraitInfo
 	{
-		[WeaponReference] public readonly string Weapon = "Tiberium";
-		public readonly string[] Resources = { "Tiberium", "BlueTiberium" };
+		[WeaponReference] public readonly string Weapon = null;
+		public readonly string[] Resources = { };
 
-		public object Create(ActorInitializer init) { return new PoisonedByTiberium(this); }
+		public object Create(ActorInitializer init) { return new DamagedByTerrain(this); }
 	}
 
-	class PoisonedByTiberium : ITick, ISync
+	class DamagedByTerrain : ITick, ISync
 	{
-		PoisonedByTiberiumInfo info;
-		[Sync] int poisonTicks;
+        DamagedByTerrainInfo info;
+		[Sync] int weaponTicks;
 
-		public PoisonedByTiberium(PoisonedByTiberiumInfo info) { this.info = info; }
+        public DamagedByTerrain(DamagedByTerrainInfo info) { this.info = info; }
 
 		public void Tick(Actor self)
 		{
-			if (--poisonTicks > 0) return;
+            if (--weaponTicks > 0) return;
 
 			var rl = self.World.WorldActor.Trait<ResourceLayer>();
 			var r = rl.GetResource(self.Location);
 			if( r == null ) return;
 			if( !info.Resources.Contains(r.info.Name) ) return;
+            if (info.Weapon == null) return;
 
 			var weapon = Rules.Weapons[info.Weapon.ToLowerInvariant()];
 
 			self.InflictDamage( self.World.WorldActor, weapon.Warheads[ 0 ].Damage, weapon.Warheads[ 0 ] );
-			poisonTicks = weapon.ROF;
+            weaponTicks = weapon.ROF;
 		}
 	}
 }

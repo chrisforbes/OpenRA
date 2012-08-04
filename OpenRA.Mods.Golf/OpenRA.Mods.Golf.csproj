@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2881135D-4D62-493E-8F83-5EEE92CCC6BE}</ProjectGuid>
+    <ProjectGuid>{6899E00B-9F66-4952-AF5B-0C3AB9AFFC74}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OpenRA.Mods.Cnc</RootNamespace>
-    <AssemblyName>OpenRA.Mods.Cnc</AssemblyName>
+    <RootNamespace>OpenRA.Mods.Golf</RootNamespace>
+    <AssemblyName>OpenRA.Mods.Golf</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
@@ -36,14 +36,14 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>bin\Debug\</OutputPath>
     <CustomCommands>
       <CustomCommands>
-        <Command type="AfterBuild" command="cp ${TargetFile} ../mods/cnc" workingdir="${ProjectDir}" />
-        <Command type="AfterBuild" command="mono RALint.exe cnc" workingdir="${ProjectDir}/../" />
+        <Command type="AfterBuild" command="cp ${TargetFile} ../mods/ra" workingdir="${ProjectDir}" />
+        <Command type="AfterBuild" command="mono RALint.exe ra" workingdir="${ProjectDir}/../" />
       </CustomCommands>
     </CustomCommands>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -51,70 +51,28 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <OutputPath>bin\Release\</OutputPath>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
+    <Reference Include="ICSharpCode.SharpZipLib">
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Activities\HarvesterDockSequence.cs" />
-    <Compile Include="CncLoadScreen.cs" />
-    <Compile Include="CncMenuPaletteEffect.cs" />
-    <Compile Include="DeadBuildingState.cs" />
-    <Compile Include="Effects\IonCannon.cs" />
-    <Compile Include="IonCannonPower.cs" />
-    <Compile Include="Missions\CncShellmapScript.cs" />
-    <Compile Include="Missions\Gdi01Script.cs" />
-    <Compile Include="ProductionAirdrop.cs" />
-    <Compile Include="ProductionQueueFromSelection.cs" />
+    <Compile Include="GolfLoadScreen.cs" />
+    <Compile Include="MasterServerPinger.cs" />
+    <Compile Include="OpenWidgetAtGameStart.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RenderBuildingRefinery.cs" />
-    <Compile Include="RenderCargo.cs" />
-    <Compile Include="RenderGunboat.cs" />
-    <Compile Include="SpawnViceroid.cs" />
-    <Compile Include="TiberiumRefinery.cs" />
-    <Compile Include="Widgets\CncWidgetUtils.cs" />
-    <Compile Include="Widgets\CncWorldInteractionControllerWidget.cs" />
-    <Compile Include="Widgets\LogicTickerWidget.cs" />
-    <Compile Include="Widgets\Logic\ButtonTooltipLogic.cs" />
-    <Compile Include="Widgets\Logic\CncConquestObjectivesLogic.cs" />
-    <Compile Include="Widgets\Logic\CncIngameChromeLogic.cs" />
-    <Compile Include="Widgets\Logic\CncIngameMenuLogic.cs" />
-    <Compile Include="Widgets\Logic\CncInstallFromCDLogic.cs" />
-    <Compile Include="Widgets\Logic\CncInstallLogic.cs" />
-    <Compile Include="Widgets\Logic\CncMenuLogic.cs" />
-    <Compile Include="Widgets\Logic\CncMusicPlayerLogic.cs" />
-    <Compile Include="Widgets\Logic\CncPerfDebugLogic.cs" />
-    <Compile Include="Widgets\Logic\CncSettingsLogic.cs" />
-    <Compile Include="Widgets\Logic\ProductionTooltipLogic.cs" />
-    <Compile Include="Widgets\Logic\SimpleTooltipLogic.cs" />
-    <Compile Include="Widgets\Logic\SupportPowerTooltipLogic.cs" />
-    <Compile Include="Widgets\Logic\WorldTooltipLogic.cs" />
-    <Compile Include="Widgets\PowerBarWidget.cs" />
-    <Compile Include="Widgets\ProductionPaletteWidget.cs" />
-    <Compile Include="Widgets\ProductionTabsWidget.cs" />
-    <Compile Include="Widgets\SiloBarWidget.cs" />
-    <Compile Include="Widgets\SupportPowersWidget.cs" />
-    <Compile Include="Widgets\ToggleButtonWidget.cs" />
-    <Compile Include="Widgets\TooltipContainerWidget.cs" />
-    <Compile Include="WithFire.cs" />
-    <Compile Include="WithRoof.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">
@@ -125,11 +83,6 @@
     <ProjectReference Include="..\OpenRA.Game\OpenRA.Game.csproj">
       <Project>{0DFB103F-2962-400F-8C6D-E2C28CCBA633}</Project>
       <Name>OpenRA.Game</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\OpenRA.Mods.RA\OpenRA.Mods.RA.csproj">
-      <Project>{4A8A43B5-A9EF-4ED0-99DD-4BAB10A0DB6E}</Project>
-      <Name>OpenRA.Mods.RA</Name>
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
@@ -159,8 +112,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>mkdir "$(SolutionDir)mods/cnc/"
-copy "$(TargetPath)" "$(SolutionDir)mods/cnc/"
+    <PostBuildEvent>mkdir "$(SolutionDir)mods/golf/"
+copy "$(TargetPath)" "$(SolutionDir)mods/golf/"
 cd "$(SolutionDir)"</PostBuildEvent>
   </PropertyGroup>
 </Project>
