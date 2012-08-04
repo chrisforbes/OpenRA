@@ -1,0 +1,71 @@
+Metadata:
+	Title: Golf
+	Description: Play golf
+	Version: {DEV_VERSION}
+	Author: Holloweye
+
+Folders:
+	.
+	./mods/golf
+	./mods/golf/bits
+	./mods/golf/uibits
+	~^/Content/ra
+Packages:
+	
+Rules:
+	mods/golf/rules/system.yaml
+Sequences:
+	
+Cursors:
+	mods/golf/cursors.yaml
+Chrome:
+	
+Assemblies:
+	mods/golf/OpenRA.Mods.Golf.dll
+ChromeLayout:
+	
+Weapons:
+	
+Voices:
+	
+Notifications:
+	
+TileSets:
+	mods/golf/tilesets/snow.yaml
+	mods/golf/tilesets/interior.yaml
+	mods/golf/tilesets/temperat.yaml
+Music:
+	
+Movies:
+	
+
+LoadScreen: GolfLoadScreen
+	InstallerMenuWidget: INSTALL_PANEL
+	TestFile: redalert.mix
+	PackageURL: http://open-ra.org/get-dependency.php?file=ra-packages
+
+ServerTraits:
+	MasterServerPinger
+
+ChromeMetrics:
+	mods/golf/metrics.yaml
+
+Fonts:
+	Regular:
+		Font:FreeSans.ttf
+		Size:14
+	Bold:
+		Font:FreeSansBold.ttf
+		Size:14
+	Title:
+		Font:titles.ttf
+		Size:48
+	BigBold:
+		Font:FreeSansBold.ttf
+		Size:24
+	Tiny:
+		Font:FreeSans.ttf
+		Size:10
+	TinyBold:
+		Font:FreeSansBold.ttf
+		Size:10
