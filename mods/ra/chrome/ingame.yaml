@@ -16,6 +16,16 @@ Container@INGAME_ROOT:
 			Y:0
 			Width:WINDOW_RIGHT
 			Height:WINDOW_BOTTOM
+		Background@TOPBAR:
+			X: 0-24
+			Y: 0-20
+			Width: WINDOW_RIGHT + 48
+			Height: 36
+		Background@BOTTOMBAR:
+			X: 0-24
+			Y: WINDOW_BOTTOM - 40
+			Width: WINDOW_RIGHT + 48
+			Height: 64
 		Timer@GAME_TIMER:
 			X: WINDOW_RIGHT/2
 			Y: 0-10
