@@ -5,7 +5,7 @@ GenericVoice:
 	Voices:
 		Select: await1,ready,report1,yessir1
 		Move: ackno,affirm1,noprob,ritaway,roger,ugotit
-		Die: nuyell1,nuyell3,nuyell4,nuyell5
+		Die: nuyell1,nuyell3,nuyell4,nuyell5,nuyell6,nuyell7,nuyell10,nuyell11,nuyell12,yell1
 	DisableVariants: Die
 
 VehicleVoice: 
@@ -20,13 +20,13 @@ CivilianMaleVoice:
 	Voices:
 		Select: guyyeah1
 		Move: guyokay1
-		Die: nuyell1,nuyell3,nuyell4,nuyell5
+		Die: nuyell1,nuyell3,nuyell4,nuyell5,nuyell6,nuyell7,nuyell10,nuyell11,nuyell12,yell1
 
 CivilianFemaleVoice: 
 	Voices:
 		Select: girlyeah
 		Move: girlokay
-		Die: nuyell1,nuyell3,nuyell4,nuyell5
+		Die: nuyell1,nuyell3,nuyell4,nuyell5,nuyell6,nuyell7,nuyell10,nuyell11,nuyell12,yell1
 
 CommandoVoice: 
 	Voices:
@@ -34,7 +34,7 @@ CommandoVoice:
 		Move: cmon1,onit1,gotit1
 		Attack: onit1,gotit1
 		Demolish: bombit1
-		Die: ramyell1
+		Die: ramyell1,yell1
 		Build: rokroll1
 		Kill: keepem1,laugh1,lefty1
 
