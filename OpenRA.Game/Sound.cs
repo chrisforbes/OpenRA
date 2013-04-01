@@ -71,7 +71,7 @@ namespace OpenRA
 
 		public static void SetListenerPosition(float2 position) { soundEngine.SetListenerPosition(position); }
 
-		static ISound Play(Player player, string name, bool headRelative, PPos pos, float volumeModifier)
+		static ISound Play(Player player, string name, bool headRelative, PPos pos, float volumeModifier, bool loop)
 		{
 			if (String.IsNullOrEmpty(name))
 				return null;
@@ -79,16 +79,18 @@ namespace OpenRA
 				return null;
 
 			return soundEngine.Play2D(sounds[name],
-				false, headRelative, pos.ToFloat2(),
+				loop, headRelative, pos.ToFloat2(),
 				InternalSoundVolume * volumeModifier, true);
 		}
 
-		public static ISound Play(string name) { return Play(null, name, true, PPos.Zero, 1); }
-		public static ISound Play(string name, PPos pos) { return Play(null, name, false, pos, 1); }
-		public static ISound Play(string name, float volumeModifier) { return Play(null, name, true, PPos.Zero, volumeModifier); }
-		public static ISound Play(string name, PPos pos, float volumeModifier) { return Play(null, name, false, pos, volumeModifier); }
-		public static ISound PlayToPlayer(Player player, string name) { return Play(player, name, true, PPos.Zero, 1); }
-		public static ISound PlayToPlayer(Player player, string name, PPos pos) { return Play(player, name, false, pos, 1); }
+		public static ISound PlayLooped(string name) { return Play(null, name, true, PPos.Zero, 1, true); }
+
+		public static ISound Play(string name) { return Play(null, name, true, PPos.Zero, 1, false); }
+		public static ISound Play(string name, PPos pos) { return Play(null, name, false, pos, 1, false); }
+		public static ISound Play(string name, float volumeModifier) { return Play(null, name, true, PPos.Zero, volumeModifier, false); }
+		public static ISound Play(string name, PPos pos, float volumeModifier) { return Play(null, name, false, pos, volumeModifier, false); }
+		public static ISound PlayToPlayer(Player player, string name) { return Play(player, name, true, PPos.Zero, 1, false); }
+		public static ISound PlayToPlayer(Player player, string name, PPos pos) { return Play(player, name, false, pos, 1, false); }
 
 		public static void PlayVideo(byte[] raw)
 		{

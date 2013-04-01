@@ -1,0 +1,70 @@
+Selectable: True
+
+MapFormat: 5
+
+Title: Night Infiltration
+
+Description: Test thing
+
+Author: Chris Forbes
+
+Tileset: TEMPERAT
+
+Difficulties: Easy
+
+MapSize: 128,128
+
+Bounds: 16,16,96,96
+
+UseAsShellmap: False
+
+Type: Campaign
+
+Players:
+	PlayerReference@Neutral:
+		Name: Neutral
+		OwnsWorld: True
+		NonCombatant: True
+		Race: allies
+	PlayerReference@Creeps:
+		Name: Creeps
+		NonCombatant: True
+		Race: allies
+	PlayerReference@Allies1:
+		Name: Allies1
+		Playable: True
+		AllowBots: False
+		LockRace: True
+		Race: allies
+		LockColor: True
+		ColorRamp: 161,134,200,30
+		LockSpawn: True
+		LockTeam: True
+		Enemies: Soviets
+
+Actors:
+	StartPoint: waypoint
+		Location: 22,107
+		Owner: Allies1
+
+Smudges:
+
+Rules:
+	Player:
+		-ConquestVictoryConditions:
+	World:
+		-CrateDrop:
+		-SpawnMPUnits:
+		-MPStartLocations:
+		Allies07Script:
+		NightPaletteEffect:
+		MissionObjectivesPanel:
+			ObjectivesPanel: MISSION_OBJECTIVES
+
+Sequences:
+
+Weapons:
+
+Voices:
+
+Notifications:
