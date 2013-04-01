@@ -117,12 +117,12 @@ Rules:
 		NightPaletteEffect:
 		MissionObjectivesPanel:
 			ObjectivesPanel: MISSION_OBJECTIVES
-	TRAN.Husk1:
-		Burns:
-			Damage: 0
 	TRAN.Husk2:
 		Burns:
 			Damage: 0
+		Tooltip:
+			Name: Crash Site
+		-HiddenUnderFog:
 
 Sequences:
 
