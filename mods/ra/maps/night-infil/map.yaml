@@ -46,6 +46,63 @@ Actors:
 	StartPoint: waypoint
 		Location: 22,107
 		Owner: Allies1
+	Actor0: tc04
+		Location: 20,103
+		Owner: Neutral
+	Actor1: tc02
+		Location: 18,103
+		Owner: Neutral
+	Actor2: tc01
+		Location: 16,103
+		Owner: Neutral
+	Actor3: t02
+		Location: 18,101
+		Owner: Neutral
+	Actor4: wood
+		Location: 19,102
+		Owner: Neutral
+	Actor5: wood
+		Location: 20,102
+		Owner: Neutral
+	Actor6: wood
+		Location: 21,102
+		Owner: Neutral
+	Actor7: wood
+		Location: 22,102
+		Owner: Neutral
+	Actor8: wood
+		Location: 23,102
+		Owner: Neutral
+	Actor9: wood
+		Location: 24,102
+		Owner: Neutral
+	Actor10: wood
+		Location: 25,102
+		Owner: Neutral
+	Actor11: wood
+		Location: 25,103
+		Owner: Neutral
+	Actor12: wood
+		Location: 25,105
+		Owner: Neutral
+	Actor13: wood
+		Location: 25,106
+		Owner: Neutral
+	Actor14: wood
+		Location: 25,108
+		Owner: Neutral
+	Actor15: wood
+		Location: 25,109
+		Owner: Neutral
+	Actor16: wood
+		Location: 25,110
+		Owner: Neutral
+	Actor17: wood
+		Location: 25,111
+		Owner: Neutral
+	Actor18: tran.husk2
+		Location: 20,108
+		Owner: Neutral
 
 Smudges:
 
@@ -60,6 +117,12 @@ Rules:
 		NightPaletteEffect:
 		MissionObjectivesPanel:
 			ObjectivesPanel: MISSION_OBJECTIVES
+	TRAN.Husk1:
+		Burns:
+			Damage: 0
+	TRAN.Husk2:
+		Burns:
+			Damage: 0
 
 Sequences:
 
