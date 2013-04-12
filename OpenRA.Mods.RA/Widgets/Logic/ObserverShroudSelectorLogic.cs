@@ -38,18 +38,18 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		[ObjectCreator.UseCtor]
 		public ObserverShroudSelectorLogic(Widget widget, World world)
 		{
-			var views = world.Players.Where(p => !p.NonCombatant).ToDictionary(p => p.PlayerName,
+			var views = world.Players.Where(p => !p.NonCombatant).ToDictionary(p => p,
 				p => new CameraOption("{0}'s view".F(p.PlayerName),
 				      () => world.RenderPlayer == p,
 				      () => world.RenderPlayer = p
 			));
-			views.Add("", new CameraOption("World view",
+			views.Add(null, new CameraOption("World view",
 				() => world.RenderPlayer == null,
 				() => world.RenderPlayer = null
 			));
 
 			var shroudSelector = widget.Get<DropDownButtonWidget>("SHROUD_SELECTOR");
-			shroudSelector.GetText = () => views[world.RenderPlayer == null ? "" : world.RenderPlayer.PlayerName].Label;
+			shroudSelector.GetText = () => views[world.RenderPlayer].Label;
 			shroudSelector.OnMouseDown = _ =>
 			{
 				Func<CameraOption, ScrollItemWidget, ScrollItemWidget> setupItem = (option, template) =>
