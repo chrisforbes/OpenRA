@@ -29,13 +29,19 @@ namespace OpenRA.GameRules
 		public int ExternalPort = 1234;
 		public bool AdvertiseOnline = true;
 		public string MasterServer = "http://master.open-ra.org/";
-		public bool AllowUPnP = false;
+		public bool DiscoverNatDevices = false; // Allow users to disable NAT discovery if problems occur
+		public bool AllowPortForward = true; // let the user disable it even if compatible devices are found
+		public bool NatDeviceAvailable = false; // internal check if discovery succeeded
+		public int NatDiscoveryTimeout = 1000; // ms to search for UPnP enabled NATs
+		public bool VerboseNatDiscovery = false; // print very detailed logs for debugging
 		public bool AllowCheats = false;
 		public string Map = null;
 		public string[] Ban = null;
 		public int TimeOut = 0;
 		public bool Dedicated = false;
 		public bool DedicatedLoop = true;
+		public bool LockBots = false;
+		public bool AllowVersionMismatch = false;
 
 		public ServerSettings() { }
 
@@ -46,13 +52,19 @@ namespace OpenRA.GameRules
 			ExternalPort = other.ExternalPort;
 			AdvertiseOnline = other.AdvertiseOnline;
 			MasterServer = other.MasterServer;
-			AllowUPnP = other.AllowUPnP;
+			DiscoverNatDevices = other.DiscoverNatDevices;
+			AllowPortForward = other.AllowPortForward;
+			NatDeviceAvailable = other.NatDeviceAvailable;
+			NatDiscoveryTimeout = other.NatDiscoveryTimeout;
+			VerboseNatDiscovery = other.VerboseNatDiscovery;
 			AllowCheats = other.AllowCheats;
 			Map = other.Map;
 			Ban = other.Ban;
 			TimeOut = other.TimeOut;
 			Dedicated = other.Dedicated;
 			DedicatedLoop = other.DedicatedLoop;
+			LockBots = other.LockBots;
+			AllowVersionMismatch = other.AllowVersionMismatch;
 		}
 	}
 
@@ -64,6 +76,7 @@ namespace OpenRA.GameRules
 		public float LongTickThreshold = 0.001f;
 		public bool SanityCheckUnsyncedCode = false;
 		public int Samples = 25;
+		public bool IgnoreVersionMismatch = false;
 	}
 
 	public class GraphicSettings
@@ -118,24 +131,26 @@ namespace OpenRA.GameRules
 		public int Timestep = 40;
 
 		public string ConnectTo = "";
+		public bool AllowDownloading = true;
+		public string MapRepository = "http://content.open-ra.org/map/";
 	}
 
 	public class KeySettings
 	{
-		public string PauseKey = "f3";
-
 		public string CycleBaseKey = "backspace";
 		public string ToLastEventKey = "space";
 		public string ToSelectionKey = "home";
-		public string SellKey = "v";
-		public string PowerDownKey = "b";
-		public string RepairKey = "n";
+
+		public string PauseKey = "f9";
+		public string SellKey = "f10";
+		public string PowerDownKey = "f11";
+		public string RepairKey = "f12";
 
 		public string AttackMoveKey = "a";
 		public string StopKey = "s";
 		public string ScatterKey = "x";
-		public string StanceCycleKey = "z";
 		public string DeployKey = "f";
+		public string StanceCycleKey = "z";
 
 		public string CycleTabsKey = "tab";
 	}

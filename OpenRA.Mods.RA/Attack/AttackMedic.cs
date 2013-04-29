@@ -10,9 +10,13 @@
 
 using System;
 using OpenRA.Traits;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Give the unit a \"heal-weapon\" that attacks friendly targets if they are damaged.",
+		"It conflicts with any other weapon or Attack*: trait because it will hurt friendlies during the",
+		"heal process then. It also won't work with buildings (use RepairsUnits: for them)")]
 	public class AttackMedicInfo : AttackFrontalInfo
 	{
 		public override object Create( ActorInitializer init ) { return new AttackMedic( init.self, this ); }
@@ -25,10 +29,10 @@ namespace OpenRA.Mods.RA
 
 		public override Activity GetAttackActivity(Actor self, Target newTarget, bool allowMove)
 		{
-			var weapon = ChooseWeaponForTarget(newTarget);
-			if( weapon == null )
+			var weapon = ChooseArmamentForTarget(newTarget);
+			if (weapon == null)
 				return null;
-			return new Activities.Heal(newTarget, Math.Max(0, (int)weapon.Info.Range), allowMove);
+			return new Activities.Heal(newTarget, Math.Max(0, (int)weapon.Weapon.Range), allowMove);
 		}
 	}
 }

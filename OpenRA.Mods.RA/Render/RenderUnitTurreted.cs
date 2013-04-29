@@ -8,6 +8,8 @@
  */
 #endregion
 
+using System;
+using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Traits;
 
@@ -24,20 +26,33 @@ namespace OpenRA.Mods.RA.Render
 			: base(self)
 		{
 			var facing = self.Trait<IFacing>();
-			var turreted = self.Trait<Turreted>();
-			var attack = self.Trait<AttackBase>();
+			var turreted = self.TraitsImplementing<Turreted>();
 
-			var turretAnim = new Animation(GetImage(self), () => turreted.turretFacing );
-			turretAnim.Play( "turret" );
-
-			for( var i = 0; i < attack.Turrets.Count; i++ )
+			var i = 0;
+			foreach (var t in turreted)
 			{
-				var turret = attack.Turrets[i];
-				anims.Add( "turret_{0}".F(i),
-					new AnimationWithOffset( turretAnim,
-						() => Combat.GetTurretPosition( self, facing, turret ).ToFloat2(),
-						null));
+				var turret = t;
+
+				var anim = new Animation(GetImage(self), () => turret.turretFacing);
+				anim.Play("turret");
+
+				anims.Add("turret_{0}".F(i++), new AnimationWithOffset(anim,
+					wr => TurretPosition(self, wr, turret, facing), null));
 			}
+		}
+
+		float2 TurretPosition(Actor self, WorldRenderer wr, Turreted t, IFacing facing)
+		{
+			var recoil = self.TraitsImplementing<Armament>()
+				.Where(w => w.Info.Turret == t.Name)
+				.Aggregate(WRange.Zero, (a,b) => a + b.Recoil);
+
+			var localOffset = new WVec(-recoil, WRange.Zero, WRange.Zero);
+			var bodyOrientation = QuantizeOrientation(self, self.Orientation);
+			var turretOrientation = QuantizeOrientation(self, t.LocalOrientation(self));
+			var worldPos = t.Position(self) + LocalToWorld(localOffset.Rotate(turretOrientation).Rotate(bodyOrientation));
+
+			return wr.ScreenPxOffset(worldPos);
 		}
 	}
 }

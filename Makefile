@@ -1,18 +1,30 @@
 CSC         = gmcs
 CSFLAGS     = -nologo -warn:4 -debug:full -optimize- -codepage:utf8 -unsafe -warnaserror
 DEFINE      = DEBUG;TRACE
-COMMON_LIBS = System.dll System.Core.dll System.Drawing.dll System.Xml.dll thirdparty/ICSharpCode.SharpZipLib.dll thirdparty/FuzzyLogicLibrary.dll
-PHONY       = core tools package all mods clean distclean
+COMMON_LIBS = System.dll System.Core.dll System.Drawing.dll System.Xml.dll thirdparty/ICSharpCode.SharpZipLib.dll thirdparty/FuzzyLogicLibrary.dll thirdparty/Mono.Nat.dll
+PHONY       = core tools package all mods clean distclean dependencies version
+VERSION     = $(shell git name-rev --name-only --tags --no-undefined HEAD 2>/dev/null || echo git-`git rev-parse --short HEAD`)
 
 .SUFFIXES:
 core: game renderers mods utility tsbuild
 tools: editor ralint tsbuild
-package: core editor
+package: dependencies core editor docs version
 mods: mod_ra mod_cnc mod_d2k
-all: core tools
-clean: 
+all: dependencies core tools
+clean:
 	@-rm -f *.exe *.dll *.mdb mods/**/*.dll mods/**/*.mdb *.resources
 distclean: clean
+dependencies:
+	@ cp -r thirdparty/*.dl* .
+	@ cp -r thirdparty/Tao/* .
+version: mods/ra/mod.yaml mods/cnc/mod.yaml mods/d2k/mod.yaml
+	@for i in $? ; do \
+		awk '{sub("Version:.*$$","Version: $(VERSION)"); print $0}' $${i} > $${i}.tmp && \
+		mv -f $${i}.tmp $${i} ; \
+	done
+default: dependencies core
+
+.DEFAULT_GOAL := default
 
 #
 # Core binaries
@@ -29,7 +41,7 @@ game_TARGET			= OpenRA.Game.exe
 game_KIND			= winexe
 game_DEPS			= $(fileformats_TARGET) 
 game_LIBS			= $(COMMON_LIBS) System.Windows.Forms.dll $(game_DEPS) \
-						thirdparty/Tao/Tao.OpenAl.dll thirdparty/Tao/Tao.FreeType.dll
+					thirdparty/Tao/Tao.OpenAl.dll thirdparty/SharpFont.dll
 game_FLAGS			= -win32icon:OpenRA.Game/OpenRA.ico
 PROGRAMS 			+= game
 game: $(game_TARGET)
@@ -132,7 +144,6 @@ ralint_TARGET			= RALint.exe
 ralint_KIND			= exe
 ralint_DEPS			= $(fileformats_TARGET) $(game_TARGET)
 ralint_LIBS			= $(COMMON_LIBS) $(ralint_DEPS)
-ralint_EXTRA_CMDS		= cp thirdparty/FuzzyLogicLibrary.dll .
 PROGRAMS 			+= ralint
 ralint: $(ralint_TARGET)
 
@@ -205,6 +216,10 @@ INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 CORE = fileformats rcg rgl rsdl rnull game editor utility tsbuild
 
+# Documentation (d2k depends on all mod libraries)
+docs:
+	@mono --debug OpenRA.Utility.exe --docs d2k > DOCUMENTATION.md
+
 install: all
 	@-echo "Installing OpenRA to $(INSTALL_DIR)"
 	@$(INSTALL_PROGRAM) -d $(INSTALL_DIR)
@@ -247,6 +262,9 @@ install: all
 	@cp thirdparty/Tao/* $(INSTALL_DIR)
 	@$(INSTALL_PROGRAM) thirdparty/ICSharpCode.SharpZipLib.dll $(INSTALL_DIR)
 	@$(INSTALL_PROGRAM) thirdparty/FuzzyLogicLibrary.dll $(INSTALL_DIR)
+	@$(INSTALL_PROGRAM) thirdparty/SharpFont.dll $(INSTALL_DIR)
+	@cp thirdparty/SharpFont.dll.config $(INSTALL_DIR)
+	@$(INSTALL_PROGRAM) thirdparty/Mono.Nat.dll $(INSTALL_DIR)
 
 	@echo "#!/bin/sh" 				>  openra
 	@echo 'BINDIR=$$(dirname $$(readlink -f $$0))'	>> openra
@@ -265,6 +283,9 @@ install: all
 	@$(INSTALL_PROGRAM) -d $(BIN_INSTALL_DIR)
 	@$(INSTALL_PROGRAM) -m +rx openra $(BIN_INSTALL_DIR)
 	@$(INSTALL_PROGRAM) -m +rx openra-editor $(BIN_INSTALL_DIR)
+
+	@-rm openra
+	@-rm openra-editor
 
 uninstall:
 	@-rm -r $(INSTALL_DIR)

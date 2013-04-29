@@ -175,13 +175,7 @@ namespace OpenRA.Widgets
 					return true;
 				}
 				else if (e.KeyName == Game.Settings.Keys.PauseKey)
-				{
-					world.IssueOrder(Order.PauseRequest());
-				}
-
-				bool handled = false;
-
-				if (handled) return true;
+					world.IssueOrder(Order.PauseGame(!world.Paused));
 			}
 			return false;
 		}
@@ -190,7 +184,7 @@ namespace OpenRA.Widgets
 		IEnumerable<Actor> SelectActorsInBox(World world, PPos a, PPos b, Func<Actor, bool> cond)
 		{
 			return world.FindUnits(a, b)
-				.Where(x => x.HasTrait<Selectable>() && world.RenderedShroud.IsVisible(x) && cond(x))
+				.Where(x => x.HasTrait<Selectable>() && x.Trait<Selectable>().Info.Selectable && !world.FogObscures(x) && cond(x))
 				.GroupBy(x => x.GetSelectionPriority())
 				.OrderByDescending(g => g.Key)
 				.Select(g => g.AsEnumerable())

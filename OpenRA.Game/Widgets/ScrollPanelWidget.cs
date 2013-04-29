@@ -10,11 +10,12 @@
 
 using System;
 using System.Drawing;
+using System.Linq;
 using OpenRA.Graphics;
 
 namespace OpenRA.Widgets
 {
-	public interface ILayout { void AdjustChild(Widget w); }
+	public interface ILayout { void AdjustChild(Widget w); void AdjustChildren(); }
 
 	public class ScrollPanelWidget : Widget
 	{
@@ -49,6 +50,25 @@ namespace OpenRA.Widgets
 			Layout.AdjustChild(child);
 			base.AddChild(child);
 		}
+
+		public override void RemoveChild(Widget child)
+		{
+			base.RemoveChild(child);
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
+		public void ReplaceChild(Widget oldChild, Widget newChild)
+		{
+
+			oldChild.Removed();
+			newChild.Parent = this;
+			Children[Children.IndexOf(oldChild)] = newChild;
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
+
 
 		public override void DrawOuter()
 		{
@@ -122,6 +142,25 @@ namespace OpenRA.Widgets
 		public void ScrollToTop()
 		{
 			ListOffset = 0;
+		}
+
+		public void ScrollToItem(string itemKey)
+		{
+			var item = Children.FirstOrDefault(c =>
+			{
+				var si = c as ScrollItemWidget;
+				return si != null && si.ItemKey == itemKey;
+			});
+
+			if (item == null)
+				return;
+
+			// Scroll the item to be visible
+			if (item.Bounds.Top + ListOffset < 0)
+				ListOffset = ItemSpacing - item.Bounds.Top;
+
+			if (item.Bounds.Bottom + ListOffset > RenderBounds.Height)
+				ListOffset = RenderBounds.Height - item.Bounds.Bottom - ItemSpacing;
 		}
 
 		public override void Tick ()

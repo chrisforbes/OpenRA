@@ -84,19 +84,21 @@ Section "Client" Client
 	File "${SRCDIR}\OpenRA.Renderer.Null.dll"
 	File "${SRCDIR}\ICSharpCode.SharpZipLib.dll"
 	File "${SRCDIR}\FuzzyLogicLibrary.dll"
+	File "${SRCDIR}\Mono.Nat.dll"
 	File "${SRCDIR}\COPYING"
 	File "${SRCDIR}\HACKING"
 	File "${SRCDIR}\INSTALL"
 	File "${SRCDIR}\*.ttf"
 	File "${SRCDIR}\OpenRA.ico"
 	File "${SRCDIR}\Tao.*.dll"
-		
+	File "${SRCDIR}\SharpFont.dll"
+
 	!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 		CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 		CreateShortCut "$SMPROGRAMS\$StartMenuFolder\OpenRA.lnk" $OUTDIR\OpenRA.Game.exe "" \
 			"$OUTDIR\OpenRA.Game.exe" "" "" "" ""
 	!insertmacro MUI_STARTMENU_WRITE_END
-	
+
 	SetOutPath "$INSTDIR\cg"
 	File "${SRCDIR}\cg\*.fx"
 	SetOutPath "$INSTDIR\glsl"
@@ -149,6 +151,7 @@ SectionGroup /e "Mods"
 		File /r "${SRCDIR}\mods\d2k\rules"
 		File /r "${SRCDIR}\mods\d2k\tilesets"
 		File /r "${SRCDIR}\mods\d2k\uibits"
+		File /r "${SRCDIR}\mods\d2k\weapons"
 	SectionEnd
 SectionGroupEnd
 
@@ -262,7 +265,9 @@ Function ${UN}Clean
 	Delete $INSTDIR\OpenRA.Renderer.SdlCommon.dll
 	Delete $INSTDIR\ICSharpCode.SharpZipLib.dll
 	Delete $INSTDIR\FuzzyLogicLibrary.dll
+	Delete $INSTDIR\Mono.Nat.dll
 	Delete $INSTDIR\Tao.*.dll
+	Delete $INSTDIR\SharpFont.dll
 	Delete $INSTDIR\COPYING
 	Delete $INSTDIR\HACKING
 	Delete $INSTDIR\INSTALL

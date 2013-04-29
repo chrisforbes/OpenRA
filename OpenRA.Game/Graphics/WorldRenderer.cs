@@ -42,15 +42,12 @@ namespace OpenRA.Graphics
 		{
 			this.world = world;
 			palette = new HardwarePalette();
-			foreach (var p in CursorProvider.Palettes)
-				palette.AddPalette(p.Key, p.Value, false);
 
 			palettes = new Cache<string, PaletteReference>(CreatePaletteReference);
 			foreach (var pal in world.traitDict.ActorsWithTraitMultiple<IPalette>(world))
-				pal.Trait.InitPalette( this );
+				pal.Trait.InitPalette(this);
 
-			// Generate initial palette texture
-			palette.Update(new IPaletteModifier[] {});
+			palette.Initialize();
 
 			terrainRenderer = new TerrainRenderer(world, this);
 			shroudRenderer = new ShroudRenderer(world);
@@ -130,7 +127,8 @@ namespace OpenRA.Graphics
 			if (world.OrderGenerator != null)
 				world.OrderGenerator.RenderAfterWorld(this, world);
 
-			shroudRenderer.Draw( this );
+			var renderShroud = world.RenderPlayer != null ? world.RenderPlayer.Shroud : null;
+			shroudRenderer.Draw(this, renderShroud);
 			Game.Renderer.DisableScissor();
 
 			foreach (var g in world.Selection.Actors.Where(a => !a.Destroyed)
@@ -199,9 +197,44 @@ namespace OpenRA.Graphics
 			}
 		}
 
+		public void DrawRangeCircleWithContrast(Color fg, float2 location, float range, Color bg, int offset)
+		{
+			if (offset > 0) {
+				DrawRangeCircle(bg, location, range + (float) offset/Game.CellSize);
+				DrawRangeCircle(bg, location, range - (float) offset/Game.CellSize);
+			}
+
+			DrawRangeCircle(fg, location, range);
+		}
+
 		public void RefreshPalette()
 		{
-			palette.Update( world.WorldActor.TraitsImplementing<IPaletteModifier>() );
+			palette.ApplyModifiers(world.WorldActor.TraitsImplementing<IPaletteModifier>());
+			Game.Renderer.SetPalette(palette);
+		}
+
+		// Conversion between world and screen coordinates
+		public float2 ScreenPosition(WPos pos)
+		{
+			var c = Game.CellSize/1024f;
+			return new float2(c*pos.X, c*(pos.Y - pos.Z));
+		}
+
+		public int2 ScreenPxPosition(WPos pos)
+		{
+			return new int2(Game.CellSize*pos.X/1024, Game.CellSize*(pos.Y - pos.Z)/1024);
+		}
+		public float ScreenZOffset(WPos pos) { return pos.Z*Game.CellSize/1024f; }
+
+		public int2 ScreenPxOffset(WVec vec)
+		{
+			return new int2(Game.CellSize*vec.X/1024, Game.CellSize*(vec.Y - vec.Z)/1024);
+		}
+
+		public float[] ScreenOffset(WVec vec)
+		{
+			var c = Game.CellSize/1024f;
+			return new float[] {c*vec.X, c*vec.Y, c*vec.Z};
 		}
 	}
 }

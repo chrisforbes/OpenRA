@@ -39,7 +39,7 @@ namespace OpenRA
 			WidgetLoader = new WidgetLoader( this );
 		}
 
-		public void LoadInitialAssets()
+		public void LoadInitialAssets(bool enumMaps)
 		{
 			// all this manipulation of static crap here is nasty and breaks
 			// horribly when you use ModData in unexpected ways.
@@ -48,7 +48,8 @@ namespace OpenRA
 			foreach (var dir in Manifest.Folders)
 				FileSystem.Mount(dir);
 
-			AvailableMaps = FindMaps(Manifest.Mods);
+			if (enumMaps)
+				AvailableMaps = FindMaps(Manifest.Mods);
 
 			ChromeMetrics.Initialize(Manifest.ChromeMetrics);
 			ChromeProvider.Initialize(Manifest.Chrome);
@@ -65,7 +66,7 @@ namespace OpenRA
 			var map = new Map(AvailableMaps[uid].Path);
 
 			// Reinit all our assets
-			LoadInitialAssets();
+			LoadInitialAssets(false);
 			foreach (var pkg in Manifest.Packages)
 				FileSystem.Mount(pkg);
 
@@ -73,7 +74,8 @@ namespace OpenRA
 			FileSystem.Mount(FileSystem.OpenPackage(map.Path, int.MaxValue));
 
 			Rules.LoadRules(Manifest, map);
-			SpriteLoader = new SpriteLoader( Rules.TileSets[map.Tileset].Extensions, SheetBuilder );
+			SpriteLoader = new SpriteLoader(Rules.TileSets[map.Tileset].Extensions, SheetBuilder);
+			// TODO: Don't load the sequences for assets that are not used in this tileset. Maybe use the existing EditorTilesetFilters.
 			SequenceProvider.Initialize(Manifest.Sequences, map.Sequences);
 
 			return map;

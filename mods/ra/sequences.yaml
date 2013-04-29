@@ -50,6 +50,8 @@ fact:
 	damaged-build:
 		Start: 27
 		Length: 25
+	dead: factdead
+		Start: 0
 
 proc:
 	idle:
@@ -59,14 +61,16 @@ proc:
 	make: procmake
 		Start: 0
 		Length: *
+	dead: procdead
+		Start: 0
 
 silo:
-	idle:
+	idle: silo2
 		Start: 0
-		Length: 5
-	damaged-idle:
-		Start: 5
-		Length: 5
+		Length: 9
+	damaged-idle: silo2
+		Start: 9
+		Length: 9
 	make: silomake
 		Start: 0
 		Length: *
@@ -79,6 +83,8 @@ powr:
 	make: powrmake
 		Start: 0
 		Length: *
+	dead: powrdead
+		Start: 0
 
 apwr:
 	idle:
@@ -88,6 +94,8 @@ apwr:
 	make: apwrmake
 		Start: 0
 		Length: *
+	dead: apwrdead
+		Start: 0
 
 barr:
 	idle:
@@ -158,9 +166,9 @@ weap:
 	make: weapmake
 		Start: 0
 		Length: *
-	build-top: weap2
+	build-top: weap3
 		Start: 0
-		Length: 4
+		Length: 10
 	damaged-build-top: weap2
 		Start: 4
 		Length: 4
@@ -1835,6 +1843,9 @@ miss:
 		Start: 0
 	damaged-idle:
 		Start: 2
+	make: missmake
+		Start: 0
+		Length: *
 
 minp:
 	idle:
@@ -2556,63 +2567,75 @@ gpsdot:
 		Start: 5
 
 overlay:
-	build-valid:
+	build-valid-desert:
+		Start: 0
+	build-valid-interior:
+		Start: 0
+	build-valid-snow:
+		Start: 2
+	build-valid-temperat:
 		Start: 0
 	build-invalid:
 		Start: 1
 	target-select:
 		Start: 2
-	target-valid:
+	target-valid-desert:
+		Start: 0
+	target-valid-interior:
+		Start: 0
+	target-valid-snow:
+		Start: 2
+	target-valid-temperat:
 		Start: 0
 	target-invalid:
 		Start: 1
 
 #Volkov
 e8:
-	stand:
+	stand: gnrl
 		Start: 0
 		Facings: 8
-	run:
+	run: gnrl
 		Start: 8
 		Length: 5
 		Facings: 8
-	shoot:
+	shoot: gnrl
 		Start: 56
 		Length: 4
 		Facings: 8
-	prone-stand:
+	prone-stand: gnrl
 		Start: 88
 		Length: 2
 		Facings: 8
-	prone-run:
+	prone-run: gnrl
 		Start: 104
 		Length: 4
 		Facings: 8
-	standup-0:
+	standup-0: gnrl
 		Start: 136
 		Length: 2
 		Facings: 8
-	prone-shoot:
+	prone-shoot: gnrl
 		Start: 152
 		Length: 4
 		Facings: 8
-	idle1:
+	idle1: gnrl
 		Start: 184
 		Length: 26
 		Tick: 120
-	die1:
+	die1: gnrl
 		Start: 210
 		Length: 8
-	die2:
+	die2: gnrl
 		Start: 218
 		Length: 8
-	die3:
+	die3: gnrl
 		Start: 226
 		Length: 8
-	die4:
+	die4: gnrl
 		Start: 234
 		Length: 12
-	die5:
+	die5: gnrl
 		Start: 246
 		Length: 18
 	die6: electro

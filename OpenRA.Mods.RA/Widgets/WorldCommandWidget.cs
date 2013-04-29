@@ -53,15 +53,6 @@ namespace OpenRA.Mods.RA.Widgets
 				if (e.KeyName == Game.Settings.Keys.ToSelectionKey)
 					return ToSelection();
 
-				if (e.KeyName == Game.Settings.Keys.SellKey)
-					return PerformSwitchToSellMode();
-
-				if (e.KeyName == Game.Settings.Keys.PowerDownKey)
-					return PerformSwitchToPowerDownMode();
-
-				if (e.KeyName == Game.Settings.Keys.RepairKey)
-					return PerformSwitchToRepairMode();
-
 				if (!World.Selection.Actors.Any()) // Put all functions, that are no unit-functions, before this line!
 					return false;
 
@@ -84,7 +75,7 @@ namespace OpenRA.Mods.RA.Widgets
 			return false;
 		}
 
-		// todo: take ALL this garbage and route it through the OrderTargeter stuff.
+		// TODO: take ALL this garbage and route it through the OrderTargeter stuff.
 
 		bool PerformAttackMove()
 		{
@@ -101,7 +92,7 @@ namespace OpenRA.Mods.RA.Widgets
 		void PerformKeyboardOrderOnSelection(Func<Actor, Order> f)
 		{
 			var orders = World.Selection.Actors
-				.Where(a => a.Owner == World.LocalPlayer).Select(f).ToArray();
+				.Where(a => a.Owner == World.LocalPlayer && !a.Destroyed).Select(f).ToArray();
 			foreach (var o in orders) World.IssueOrder(o);
 			World.PlayVoiceForOrders(orders);
 		}
@@ -194,24 +185,6 @@ namespace OpenRA.Mods.RA.Widgets
 		bool ToSelection()
 		{
 			Game.viewport.Center(World.Selection.Actors);
-			return true;
-		}
-
-		bool PerformSwitchToSellMode()
-		{
-			World.ToggleInputMode<SellOrderGenerator>();
-			return true;
-		}
-
-		bool PerformSwitchToPowerDownMode()
-		{
-			World.ToggleInputMode<PowerDownOrderGenerator>();
-			return true;
-		}
-
-		bool PerformSwitchToRepairMode()
-		{
-			World.ToggleInputMode<RepairOrderGenerator>();
 			return true;
 		}
 	}

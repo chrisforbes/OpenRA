@@ -1,7 +1,5 @@
 CONYARDH:
 	Inherits: ^CONYARD
-	Buildable:
-		Owner: harkonnen
 	Transforms:
 		IntoActor: mcvh
 		Offset:1,1
@@ -10,85 +8,64 @@ CONYARDH:
 PWRH:
 	Inherits: ^POWER
 	Buildable:
-		Prerequisites: conyardh
 		Owner: harkonnen
 
 REFH:
 	Inherits: ^REFINERY
 	Buildable:
-		Prerequisites: pwrh
 		Owner: harkonnen
 	RenderBuildingWarFactory:
 		Image: REFH
 
-#TRIKEH:
-#	Inherits: ^TRIKE
-#	Buildable:
-#		Prerequisites: lighth
-#		Owner: harkonnen
-#		BuiltAt: lighth
-#	Valued:
-#		Cost: 250
-#	Tooltip:
-#		Name: Scout Quad
-#		Description: Heavy Scout\n Strong vs Infantry
-#		Icon: quadicon
-#	Health:
-#		HP: 125
-#	Mobile:
-#		ROT: 9
-#		Speed: 11
-#	AttackFrontal:
-#		PrimaryWeapon: M60mg
-#		PrimaryLocalOffset: 0,-1,0,-3,0
-#	RenderUnit:
-#		Image: QUAD
-
-#TRIKEH.starport:
-#	Inherits: ^TRIKE
-#	Buildable:
-#		Prerequisites: lighth
-#		Owner: harkonnen
-#		Queue: Starport
-#		BuiltAt: starporth
-#	Valued:
-#		Cost: 149
-#	RenderUnit:
-#		Image: TRIKE
-
-CARRYALLH:
-	Inherits: ^CARRYALL
-	RenderUnit:
-		Image: CARRYALL
-
-CARRYALLH.starport:
-	Inherits: CARRYALLH
-	Valued:
-		Cost: 999
-
 BARRH:
 	Inherits: ^BARRACKS
 	Buildable:
-		Prerequisites: pwrh
 		Owner: harkonnen
 	-RepairsUnits:
+
+SILOH:
+	Inherits: ^SILO
+	Buildable:
+		Owner: harkonnen
+
+LIGHTH:
+	Inherits: ^LIGHT
+	Buildable:
+		Owner: harkonnen
+	RenderBuildingWarFactory:
+		Image: LIGHTH
+
+HEAVYH:
+	Inherits: ^HEAVY
+	Buildable:
+		Owner: harkonnen
+	RenderBuildingWarFactory:
+		Image: HEAVYH
+
+RADARH:
+	Inherits: ^RADAR
+	Buildable:
+		Owner: harkonnen
+
+STARPORTH:
+	Inherits: ^STARPORT
+	Buildable:
+		Owner: harkonnen
 
 HIGHTECHH:
 	Inherits: ^HIGHTECH
 	Buildable:
-		Prerequisites: radarh
 		Owner: harkonnen
 
 PALACEH:
 	Inherits: ^PALACE
 	Buildable:
-		Prerequisites: hightechh
 		Owner: harkonnen
 	Tooltip:
 		Description: Provides elite infantry\n  Special Ability: Death Hand Missile
 	NukePower:
 		Image: deathhandicon
-		ChargeTime: 540
+		ChargeTime: 300
 		Description: Death Hand
 		LongDesc: Launches a nuclear missile at a target location
 		BeginChargeSound: HI_PREP.AUD
@@ -101,44 +78,9 @@ PALACEH:
 	RequiresPower:
 	SupportPowerChargeBar:
 
-SILOH:
-	Inherits: ^SILO
-	Buildable:
-		Prerequisites: refh
-		Owner: harkonnen
-
-LIGHTH:
-	Inherits: ^LIGHT
-	Buildable:
-		Prerequisites: refh
-		Owner: harkonnen
-	RenderBuildingWarFactory:
-		Image: LIGHTH
-
-HEAVYH:
-	Inherits: ^HEAVY
-	Buildable:
-		Prerequisites: lighth
-		Owner: harkonnen
-	RenderBuildingWarFactory:
-		Image: HEAVYH
-
-RADARH:
-	Inherits: ^RADAR
-	Buildable:
-		Prerequisites: barrh
-		Owner: harkonnen
-
-STARPORTH:
-	Inherits: ^STARPORT
-	Buildable:
-		Prerequisites: radarh,hightechh
-		Owner: harkonnen
-
 MCVH:
 	Inherits: ^MCV
 	Buildable:
-		Prerequisites: heavyh,repair
 		Owner: harkonnen
 		BuiltAt: heavyh
 	Transforms:
@@ -155,16 +97,64 @@ MCVH.starport:
 		Queue: Starport
 		BuiltAt: starporth
 	Valued:
-		Cost: 1499
+		Cost: 2500
+
+#TRIKEH:
+#	Inherits: ^TRIKE
+#	Buildable:
+#		Owner: harkonnen
+#		BuiltAt: lighth
+#	Valued:
+#		Cost: 250
+#	Tooltip:
+#		Name: Scout Quad
+#		Description: Heavy Scout\n Strong vs Infantry
+#		Icon: quadicon
+#	Health:
+#		HP: 125
+#	Mobile:
+#		ROT: 9
+#		Speed: 11
+#	Armament:
+#		Weapon: M60mg
+#		LocalOffset: 43,0,128
+#	AttackFrontal:
+#	RenderUnit:
+#		Image: QUAD
+
+#TRIKEH.starport:
+#	Inherits: ^TRIKE
+#	Buildable:
+#		Owner: harkonnen
+#		Queue: Starport
+#		BuiltAt: starporth
+#	Valued:
+#		Cost: 149
+#	RenderUnit:
+#		Image: TRIKE
+
+CARRYALLH:
+	Inherits: ^CARRYALL
+	RenderUnit:
+		Image: CARRYALL
+
+CARRYALLH.starport:
+	Inherits: CARRYALLH
+	Valued:
+		Cost: 1500
 
 COMBATH:
 	Inherits: ^COMBAT
 	Tooltip:
 		Icon: combathicon
 	Buildable:
-		Prerequisites: heavyh
 		Owner: harkonnen
 		BuiltAt: heavyh
+	Mobile:
+		Speed: 6
+		ROT: 4
+	Turreted:
+		ROT: 5
 	Health:
 		HP: 400
 	RenderUnitTurreted:
@@ -185,14 +175,14 @@ COMBATH.starport:
 		Queue: Starport
 		BuiltAt: starporth
 	Valued:
-		Cost: 489
+		Cost: 875
 
 DEVAST:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Armor
 		BuildPaletteOrder: 100
-		Prerequisites: heavyh,research
+		Prerequisites: Ix
 		Owner: harkonnen
 		BuiltAt: heavyh
 		Hotkey: d
@@ -213,11 +203,13 @@ DEVAST:
 	RevealsShroud:
 		Range: 7
 	RenderUnit:
+	Armament:
+		Weapon: DevBullet
+		LocalOffset: 683,213,85, 683,-171,85
 	AttackFrontal:
-		PrimaryWeapon: 120mm
-		PrimaryLocalOffset: 5,-16,0,-2,0, -4,-16,0,-2,0
 	AutoTarget:
-		InitialStance: Defend
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	Explodes:
 		Weapon: UnitExplodeScale
 		EmptyWeapon: UnitExplodeScale
@@ -260,6 +252,8 @@ SARDAUKAR:
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
+	Armament@PRIMARY:
+		Weapon: Vulcan
+	Armament@SECONDARY:
+		Weapon: Slung
 	AttackFrontal:
-		PrimaryWeapon: Vulcan
-		SecondaryWeapon: Slung

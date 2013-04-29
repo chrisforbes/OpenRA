@@ -169,9 +169,12 @@ dialog: dialog.png
 	corner-bl: 191,489,9,9
 	corner-br: 200,489,9,9
 
-spawnpoints: spawnpoints.png
-	unowned: 528,128,16,16
-	owned: 512,128,16,16
+lobby-bits: spawnpoints.png
+	spawn-unclaimed: 528,128,16,16
+	spawn-claimed: 512,128,16,16
+	admin: 37,5,7,5
+	colorpicker: 512,128,16,16
+	huepicker: 45,0,7,15
 
 strategic: strategic.png
 	unowned: 0,0,32,32
@@ -272,7 +275,7 @@ button-hover: dialog.png
 	corner-bl: 512,82,1,1
 	corner-br: 594,82,1,1
 
-button-hover-highlighted: dialog.png
+button-highlighted-hover: dialog.png
 	background: 513,145,126,126
 	border-r: 639,145,1,126
 	border-l: 512,145,1,126
@@ -295,7 +298,7 @@ button-disabled: dialog.png
 	corner-bl: 512,82,1,1
 	corner-br: 594,82,1,1
 
-button-disabled-highlighted: dialog.png
+button-highlighted-disabled: dialog.png
 	background: 513,145,126,126
 	border-r: 639,145,1,126
 	border-l: 512,145,1,126
@@ -318,7 +321,7 @@ button-pressed: dialog.png
 	corner-bl: 640,82,1,1
 	corner-br: 722,82,1,1
 
-button-pressed-highlighted: dialog.png
+button-highlighted-pressed: dialog.png
 	background: 641,145,126,126
 	border-r: 767,145,1,126
 	border-l: 640,145,1,126

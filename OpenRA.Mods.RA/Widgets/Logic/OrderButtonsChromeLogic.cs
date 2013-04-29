@@ -19,7 +19,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		[ObjectCreator.UseCtor]
 		public OrderButtonsChromeLogic(World world)
 		{
-			/* todo: attach this to the correct widget, to remove the lookups below */
+			/* TODO: attach this to the correct widget, to remove the lookups below */
 			var r = Ui.Root;
 			var gameRoot = r.Get("INGAME_ROOT");
 
@@ -41,6 +41,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				w.Pressed = () => world.OrderGenerator is T;
 				w.OnMouseDown = mi => world.ToggleInputMode<T>();
+				w.OnKeyPress = ki => world.ToggleInputMode<T>();
 			}
 		}
 	}

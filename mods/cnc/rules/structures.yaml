@@ -2,21 +2,24 @@
 
 FACT:
 	Inherits: ^Building
-	-Buildable:
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 1000
+		Owner: None
 	Valued:
 		Cost: 2000
 	Tooltip:
 		Name: Construction Yard
-		Icon: mcvicnh
 		Description: Builds structures
+		Icon: facticnh
 	Building:
 		Power: 15
 		Footprint: xxx xxx
 		Dimensions: 3,2
 	Health:
-		HP: 2000
+		HP: 1400
 	Armor: 
-		Type: Heavy
+		Type: Wood
 	RevealsShroud:
 		Range: 10
 	Bib:
@@ -42,6 +45,9 @@ FACT:
 		ReadyAudio: ConstructionComplete
 	BaseBuilding:
 	ProductionBar:
+	BaseProvider:
+		Cooldown: 100
+		Range: 14
 
 NUKE:
 	Inherits: ^Building
@@ -79,7 +85,7 @@ NUK2:
 		Prerequisite: anypower
 	Buildable:
 		BuildPaletteOrder: 30
-		Prerequisites: hq
+		Prerequisites: anyhq
 		Owner: gdi,nod
 	Building:
 		Power: 200
@@ -117,8 +123,8 @@ PROC:
 		TickRate: 15
 	StoresOre:
 		PipColor: Green
-		PipCount: 18
-		Capacity: 1800
+		PipCount: 15
+		Capacity: 1500
 	Selectable:
 		Bounds: 73,72
 	CustomSellValue:
@@ -134,14 +140,14 @@ PROC:
 SILO:
 	Inherits: ^Building
 	Valued:
-		Cost: 150
+		Cost: 300
 	Tooltip:
 		Name: Tiberium Silo
 		Icon: siloicnh
 		Description: Stores processed Tiberium
 	Buildable:
 		Queue: Defense
-		BuildPaletteOrder: 15
+		BuildPaletteOrder: 35
 		Prerequisites: proc
 		Owner: gdi,nod
 	Building:
@@ -150,16 +156,16 @@ SILO:
 		Dimensions: 2,1
 	-GivesBuildableArea:
 	Health:
-		HP: 300
+		HP: 400
 	RevealsShroud:
 		Range: 4
 	RenderBuildingSilo:
 	StoresOre:
-		PipCount: 12
+		PipCount: 24
 		PipColor: Green
-		Capacity: 1200
+		Capacity: 2400
 	Selectable:
-		Bounds: 49,24
+		Bounds: 49,30
 	-RenderBuilding:
 	-EmitInfantryOnSell:
 
@@ -257,7 +263,7 @@ AFLD:
 		Footprint: xxxx xxxx
 		Dimensions: 4,2
 	Health:
-		HP: 1500
+		HP: 1000
 	RevealsShroud:
 		Range: 7
 	Bib:
@@ -296,7 +302,7 @@ WEAP:
 		Footprint: ___ xxx ===
 		Dimensions: 3,3
 	Health:
-		HP: 1750
+		HP: 1000
 	RevealsShroud:
 		Range: 4
 	Bib:
@@ -361,6 +367,8 @@ HQ:
 		Name: Communications Center
 		Icon: hqicnh
 		Description: Provides an overview of the battlefield.\n  Requires power to operate.
+	ProvidesCustomPrerequisite:
+		Prerequisite: anyhq
 	Buildable:
 		BuildPaletteOrder: 70
 		Prerequisites: proc
@@ -391,11 +399,11 @@ HQ:
 FIX:
 	Inherits: ^Building
 	Valued:
-		Cost: 1200
+		Cost: 500
 	Tooltip:
 		Name: Repair Facility
 		Icon: fixicnh
-		Description: Repairs vehicles and allows the\nconstruction of additional bases.
+		Description: Repairs vehicles
 	Buildable:
 		BuildPaletteOrder: 80
 		Prerequisites: vehicleproduction
@@ -405,7 +413,7 @@ FIX:
 		Footprint: _x_ xxx _x_
 		Dimensions: 3,3
 	Health:
-		HP: 800
+		HP: 400
 	RevealsShroud:
 		Range: 5
 	BelowUnits:
@@ -423,16 +431,18 @@ EYE:
 		Name: Advanced Communications Center
 		Icon: eyeicnh
 		Description: Provides access to the Ion Cannon.\n  Requires power to operate.
+	ProvidesCustomPrerequisite:
+		Prerequisite: anyhq
 	Buildable:
 		BuildPaletteOrder: 100
-		Prerequisites: hq
+		Prerequisites: anyhq
 		Owner: gdi
 	Building:
 		Power: -200
 		Footprint: x_ xx
 		Dimensions: 2,2
 	Health:
-		HP: 1000
+		HP: 1200
 	RevealsShroud:
 		Range: 10
 	Bib:
@@ -461,9 +471,11 @@ TMPL:
 		Name: Temple of Nod
 		Icon: tmplicnh
 		Description: Place of worship and secret missile silo.\n  Requires power to operate.
+	ProvidesCustomPrerequisite:
+		Prerequisite: anyhq
 	Buildable:
 		BuildPaletteOrder: 100
-		Prerequisites: hq
+		Prerequisites: anyhq
 		Owner: nod
 	Building:
 		Power: -150
@@ -510,17 +522,20 @@ GUN:
 		ROT: 12
 		InitialFacing: 50
 	RenderBuildingTurreted:
+	Armament:
+		Weapon: TurretGun
+		LocalOffset: -71,0,85
 	AttackTurreted:
-		PrimaryWeapon: TurretGun
-		PrimaryLocalOffset: 0,4,0,-2,0
 	AutoTarget:
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	-AutoTargetIgnore:
 	-RenderBuilding:
 	-DeadBuildingState:
 	RenderRangeCircle:
 	RenderDetectionCircle:
 	DetectCloaked:
-		Range: 3
+		Range: 5
 
 SAM:
 	Inherits: ^Building
@@ -548,13 +563,16 @@ SAM:
 	RevealsShroud:
 		Range: 5
 	Turreted:
-		ROT: 7
+		ROT: 10
 		InitialFacing: 0
 	RenderBuildingTurreted:
+	Armament:
+		Weapon: SAMMissile
 	AttackPopupTurreted:
-		PrimaryWeapon: SAMMissile
 	WithMuzzleFlash:
 	AutoTarget:
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	-RenderBuilding:
 	RenderRangeCircle:
 
@@ -585,13 +603,18 @@ OBLI:
 		Range: 8
 	RenderBuildingCharge:
 		ChargeAudio: obelpowr.aud
-	AttackTurreted:
-		PrimaryWeapon: Laser
-		PrimaryOffset: 0,0,-2,-17
+	Armament:
+		Weapon: Laser
+		LocalOffset: 0,0,725
 		FireDelay: 8
+	AttackTurreted:
 	Turreted:
 		ROT:255
 	AutoTarget:
+	RenderBuilding:
+		QuantizedFacings: 8
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	-AutoTargetIgnore:
 	-RenderBuilding:
 	RenderRangeCircle:
@@ -617,17 +640,21 @@ GTWR:
 		Power: -10
 	-GivesBuildableArea:
 	Health:
-		HP: 600
+		HP: 400
 	RevealsShroud:
-		Range: 6
+		Range: 7
+	Armament:
+		Weapon: HighV
+		LocalOffset: 256,0,256
 	AttackTurreted:
-		PrimaryWeapon: HighV
-		PrimaryOffset: 0,0,0,-6
-		PrimaryLocalOffset: 0,-6,0,0,0
+	RenderBuilding:
+		QuantizedFacings: 8
 	AutoTarget:
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	-AutoTargetIgnore:
 	DetectCloaked:
-		Range: 3
+		Range: 5
 	RenderDetectionCircle:
 	RenderRangeCircle:
 	WithMuzzleFlash:
@@ -646,26 +673,31 @@ ATWR:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 60
-		Prerequisites: hq
+		Prerequisites: anyhq
 		Owner: gdi
 	Building:
-		Power: -20
+		Power: -40
 		Footprint: _ x
 		Dimensions: 1,2
 	-GivesBuildableArea:
 	Health:
-		HP: 800
+		HP: 600
 	Armor: 
 		Type: Heavy
 	RevealsShroud:
-		Range: 8
-	AttackTurreted:
-		PrimaryWeapon: TowerMissle
-		PrimaryOffset: 0,0,5,2
-		PrimaryLocalOffset: 7,-7,0,0,-25, -7,-7,0,0,25
+		Range: 9
 	Turreted:
 		ROT:255
+	Armament:
+		Weapon: TowerMissle
+		LocalOffset: 299,299,-85, 299,-299,-85
+		LocalYaw: -100,100
+	AttackTurreted:
 	AutoTarget:
+	RenderBuilding:
+		QuantizedFacings: 8
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
 	-AutoTargetIgnore:
 	RenderDetectionCircle:
 	DetectCloaked:
@@ -752,3 +784,8 @@ ANYPOWER:
 	Tooltip:
 		Name: Power Plant
 		Description: Power Plant
+
+ANYHQ:
+	Tooltip:
+		Name: a communications center
+		Description: a communications center

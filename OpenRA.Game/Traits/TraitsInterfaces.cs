@@ -34,6 +34,7 @@ namespace OpenRA.Traits
 	}
 
 	public interface ITick { void Tick(Actor self); }
+	public interface ITickRender { void TickRender(WorldRenderer wr, Actor self); }
 	public interface IRender { IEnumerable<Renderable> Render(Actor self, WorldRenderer wr); }
 	public interface IAutoSelectionSize { int2 SelectionSize(Actor self); }
 
@@ -85,7 +86,7 @@ namespace OpenRA.Traits
 		Color RadarSignatureColor(Actor self);
 	}
 
-	public interface IVisibilityModifier { bool IsVisible(Shroud s, Actor self); }
+	public interface IVisibilityModifier { bool IsVisible(Actor self, Player byPlayer); }
 	public interface IRadarColorModifier { Color RadarColorOverride(Actor self); }
 	public interface IHasLocation { PPos PxPosition { get; } }
 
@@ -211,6 +212,12 @@ namespace OpenRA.Traits
 	public interface IPostRenderSelection { void RenderAfterWorld(WorldRenderer wr); }
 	public interface IPreRenderSelection { void RenderBeforeWorld(WorldRenderer wr, Actor self); }
 	public interface IRenderAsTerrain { IEnumerable<Renderable> RenderAsTerrain(WorldRenderer wr, Actor self); }
+	public interface ILocalCoordinatesModel
+	{
+		WVec LocalToWorld(WVec vec);
+		WRot QuantizeOrientation(Actor self, WRot orientation);
+	}
+	public interface LocalCoordinatesModelInfo {}
 
 	public interface ITargetable
 	{

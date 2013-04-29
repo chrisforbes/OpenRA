@@ -168,20 +168,20 @@ namespace OpenRA
 					{
 						var isNetTick = LocalTick % NetTickScale == 0;
 
-						if ((!isNetTick || orderManager.IsReadyForNextFrame) && !orderManager.GamePaused )
+						if (!isNetTick || orderManager.IsReadyForNextFrame)
 						{
 							++orderManager.LocalFrameNumber;
 
 							Log.Write("debug", "--Tick: {0} ({1})", LocalTick, isNetTick ? "net" : "local");
 
-							if (isNetTick) orderManager.Tick();
-
+							if (isNetTick)
+								orderManager.Tick();
 
 							Sync.CheckSyncUnchanged(world, () =>
-								{
-									world.OrderGenerator.Tick(world);
-									world.Selection.Tick(world);
-								});
+							{
+								world.OrderGenerator.Tick(world);
+								world.Selection.Tick(world);
+							});
 
 							world.Tick();
 
@@ -190,7 +190,8 @@ namespace OpenRA
 						else
 							if (orderManager.NetFrameNumber == 0)
 								orderManager.LastTickTime = Environment.TickCount;
-					
+
+						world.TickRender(worldRenderer);
 						viewport.Tick();
 					}
 				}
@@ -210,7 +211,7 @@ namespace OpenRA
 
 			var map = modData.PrepareMap(mapUID);
 			viewport = new Viewport(new int2(Renderer.Resolution), map.Bounds, Renderer);
-			orderManager.world = new World(modData.Manifest, map, orderManager) { IsShellmap = isShellmap };
+			orderManager.world = new World(modData.Manifest, map, orderManager, isShellmap);
 			worldRenderer = new WorldRenderer(orderManager.world);
 
 			if (orderManager.GameStarted) return;
@@ -220,11 +221,14 @@ namespace OpenRA
 			orderManager.LastTickTime = Environment.TickCount;
 			orderManager.StartGame();
 			worldRenderer.RefreshPalette();
+
+			if (!isShellmap)
+				Sound.PlayNotification(null, "Speech", "StartGame", null);
 		}
 
 		public static bool IsHost
 		{
-			get 
+			get
 			{
 				var client= orderManager.LobbyInfo.ClientWithIndex (
 					orderManager.Connection.LocalClientId);
@@ -253,6 +257,15 @@ namespace OpenRA
 			Log.AddChannel("perf", "perf.log");
 			Log.AddChannel("debug", "debug.log");
 			Log.AddChannel("sync", "syncreport.log");
+			Log.AddChannel("server", "server.log");
+
+			if (Settings.Server.DiscoverNatDevices)
+				UPnP.TryNatDiscovery();
+			else
+			{
+				Settings.Server.NatDeviceAvailable = false;
+				Settings.Server.AllowPortForward = false;
+			}
 
 			FileSystem.Mount("."); // Needed to access shaders
 			Renderer.Initialize( Game.Settings.Graphics.Mode );
@@ -264,6 +277,13 @@ namespace OpenRA
 
 			Sound.Create(Settings.Sound.Engine);
 			InitializeWithMods(Settings.Game.Mods);
+
+			if (Settings.Server.DiscoverNatDevices)
+			{
+				RunAfterDelay(Settings.Server.NatDiscoveryTimeout, () =>
+				              UPnP.TryStoppingNatDiscovery()
+				              );
+			}
 		}
 
 		public static void InitializeWithMods(string[] mods)
@@ -293,7 +313,7 @@ namespace OpenRA
 
 			modData = new ModData( mm );
 			Renderer.InitializeFonts(modData.Manifest);
-			modData.LoadInitialAssets();
+			modData.LoadInitialAssets(true);
 
 
 			PerfHistory.items["render"].hasNormalTick = false;
@@ -412,7 +432,7 @@ namespace OpenRA
 		public static void CreateServer(ServerSettings settings)
 		{
 			server = new Server.Server(new IPEndPoint(IPAddress.Any, settings.ListenPort),
-				Game.Settings.Game.Mods, settings, modData);
+			                           Game.Settings.Game.Mods, settings, modData);
 		}
 
 		public static int CreateLocalServer(string map)
@@ -426,10 +446,10 @@ namespace OpenRA
 			// Work around a miscompile in mono 2.6.7:
 			// booleans that default to true cannot be set false by an initializer
 			settings.AdvertiseOnline = false;
-			settings.AllowUPnP = false;
+			settings.AllowPortForward = false;
 
 			server = new Server.Server(new IPEndPoint(IPAddress.Loopback, 0),
-				Game.Settings.Game.Mods, settings, modData);
+			                           Game.Settings.Game.Mods, settings, modData);
 
 			return server.Port;
 		}
@@ -454,6 +474,30 @@ namespace OpenRA
 			Game.Settings.Save();
 
 			Game.JoinServer(host, port);
+		}
+
+		public static bool DownloadMap(string mapHash)
+		{
+			try
+			{
+				var mod = Game.CurrentMods.FirstOrDefault().Value.Id;
+				var dirPath = "{1}maps{0}{2}".F(Path.DirectorySeparatorChar, Platform.SupportDir, mod);
+				if(!Directory.Exists(dirPath))
+					Directory.CreateDirectory(dirPath);
+				var mapPath = "{1}{0}{2}".F(Path.DirectorySeparatorChar, dirPath, mapHash+".oramap");
+				Console.Write("Trying to download map to {0} ... ".F(mapPath));
+				WebClient webClient = new WebClient();
+				webClient.DownloadFile(Game.Settings.Game.MapRepository + mapHash, mapPath);
+				Game.modData.AvailableMaps.Add(mapHash, new Map(mapPath));
+				Console.WriteLine("done");
+				return true;
+			}
+			catch (WebException e)
+			{
+				Log.Write("debug", "Could not download map '{0}'", mapHash);
+				Log.Write("debug", e.ToString());
+				return false;
+			}
 		}
 	}
 }

@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using OpenRA.Effects;
+using OpenRA.FileFormats;
 using OpenRA.GameRules;
 using OpenRA.Graphics;
 using OpenRA.Traits;
@@ -22,8 +23,10 @@ namespace OpenRA.Mods.RA.Effects
 	{
 		public readonly int Speed = 1;
 		public readonly string Trail = null;
-		public readonly float Inaccuracy = 0;			// pixels at maximum range
+		[Desc("Pixels at maximum range")]
+		public readonly float Inaccuracy = 0;
 		public readonly string Image = null;
+		[Desc("Check for whether an actor with Wall: trait blocks fire")]
 		public readonly bool High = false;
 		public readonly int RangeLimit = 0;
 		public readonly int Arm = 0;
@@ -125,7 +128,10 @@ namespace OpenRA.Mods.RA.Effects
 				}
 
 				if (Trail != null)
-					Trail.Tick((PPos)highPos.ToInt2());
+				{
+					var alt = (Info.High || Info.Angle > 0) ? GetAltitude() : 0;
+					Trail.Tick(new PPos((int)pos.X, (int)pos.Y).ToWPos((int)alt));
+				}
 			}
 
 			if (!Info.High)		// check for hitting a wall
@@ -154,7 +160,8 @@ namespace OpenRA.Mods.RA.Effects
 				var altitude = float2.Lerp(Args.srcAltitude, Args.destAltitude, at);
 				var pos = float2.Lerp(Args.src.ToFloat2(), Args.dest.ToFloat2(), at) - new float2(0, altitude);
 
-				if (Args.firedBy.World.RenderedShroud.IsVisible(((PPos) pos.ToInt2()).ToCPos()))
+				var cell = ((PPos)pos.ToInt2()).ToCPos();
+				if (!Args.firedBy.World.FogObscures(cell))
 				{
 					if (Info.High || Info.Angle > 0)
 					{
@@ -172,7 +179,7 @@ namespace OpenRA.Mods.RA.Effects
 			}
 
 			if (Trail != null)
-				Trail.Render(Args.firedBy);
+				Trail.Render(wr, Args.firedBy);
 		}
 
 		void Explode( World world )

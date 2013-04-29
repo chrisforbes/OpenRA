@@ -62,8 +62,8 @@ namespace OpenRA.Widgets
 
 			case MouseInputEvent.Down:
 				isMoving = true;
-				/* todo: handle snapping to ticks properly again */
-				/* todo: handle nudge via clicking outside the thumb */
+				/* TODO: handle snapping to ticks properly again */
+				/* TODO: handle nudge via clicking outside the thumb */
 				UpdateValue(ValueFromPx(mi.Location.X - RenderBounds.Left));
 				break;
 
@@ -77,7 +77,7 @@ namespace OpenRA.Widgets
 		}
 
 		float ValueFromPx(int x) { return MinimumValue + (MaximumValue - MinimumValue) * (1f * x / RenderBounds.Width); }
-		int PxFromValue(float x) { return (int)(RenderBounds.Width * (x - MinimumValue) / (MaximumValue - MinimumValue)); }
+		protected int PxFromValue(float x) { return (int)(RenderBounds.Width * (x - MinimumValue) / (MaximumValue - MinimumValue)); }
 
 		public override Widget Clone() { return new SliderWidget(this); }
 

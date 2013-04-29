@@ -13,13 +13,22 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Attach this to the world actor (not a building!) to define a new shared build queue.",
+		"Will only work together with the Production: trait on the actor that actually does the production.", 
+		"You will also want to add PrimaryBuildings: to let the user choose where new units should exit.")]
 	public class ClassicProductionQueueInfo : ProductionQueueInfo, Requires<TechTreeInfo>, Requires<PowerManagerInfo>, Requires<PlayerResourcesInfo>
 	{
+		[Desc("If you build more actors of the same type,", "the same queue will get its build time lowered for every actor produced there.")]
 		public readonly bool SpeedUp = false;
+		[Desc("Every time another production building of the same queue is", 
+			"contructed, the build times of all actors in the queue", 
+			"are divided by this value.")]
 		public readonly int BuildTimeSpeedUpDivisor = 2;
+		[Desc("You can still build more production buildings", "than this value, but the build time won't increase further.")]
 		public readonly int MaxBuildTimeReductionSteps = 6;
 
 		public override object Create(ActorInitializer init) { return new ClassicProductionQueue(init.self, this); }

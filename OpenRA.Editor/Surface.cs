@@ -36,8 +36,10 @@ namespace OpenRA.Editor
 		ITool Tool;
 
 		public bool IsPanning;
+		public bool IsErasing;
 		public bool ShowActorNames;
 		public bool ShowGrid;
+		public bool ShowRuler;
 
 		public bool IsPaste { get { return TileSelection != null && ResourceSelection != null; } }
 		public TileReference<ushort, byte>[,] TileSelection;
@@ -52,7 +54,10 @@ namespace OpenRA.Editor
 		public event Action<KeyValuePair<string, ActorReference>> ActorDoubleClicked = _ => { };
 
 		Dictionary<string, ActorTemplate> ActorTemplates = new Dictionary<string, ActorTemplate>();
-		Dictionary<int, ResourceTemplate> ResourceTemplates = new Dictionary<int, ResourceTemplate>();
+		public Dictionary<int, ResourceTemplate> ResourceTemplates = new Dictionary<int, ResourceTemplate>();
+
+		static readonly Font MarkerFont = new Font(FontFamily.GenericSansSerif, 12.0f, FontStyle.Regular);
+		static readonly SolidBrush TextBrush = new SolidBrush(Color.Red);
 
 		public Keys GetModifiers() { return ModifierKeys; }
 
@@ -154,10 +159,10 @@ namespace OpenRA.Editor
 				Scroll(oldMousePos - MousePos);
 			else
 			{
-				if (e.Button == MouseButtons.Right)
+				if (e.Button == MouseButtons.Right || (IsErasing && e.Button == MouseButtons.Left))
 					Erase();
 
-				if (e.Button == MouseButtons.Left)
+				if (e.Button == MouseButtons.Left && !IsErasing)
 					Draw();
 
 				Invalidate();
@@ -217,7 +222,7 @@ namespace OpenRA.Editor
 			if (!IsPanning)
 			{
 				if (e.Button == MouseButtons.Right) Erase();
-				if (e.Button == MouseButtons.Left)
+				if (e.Button == MouseButtons.Left && !IsErasing)
 				{
 					Draw();
 					if (!IsPaste)
@@ -386,7 +391,7 @@ namespace OpenRA.Editor
 					var x = new int2(u / ChunkSize, v / ChunkSize);
 					if (!Chunks.ContainsKey(x)) Chunks[x] = RenderChunk(u / ChunkSize, v / ChunkSize);
 
-					Bitmap bmp = Chunks[x];
+					var bmp = Chunks[x];
 
 					float DrawX = TileSet.TileSize * (float)ChunkSize * (float)x.X * Zoom + Offset.X;
 					float DrawY = TileSet.TileSize * (float)ChunkSize * (float)x.Y * Zoom + Offset.Y;
@@ -438,6 +443,27 @@ namespace OpenRA.Editor
 							Brushes.White,
 							Brushes.Black);
 
+			if (ShowRuler && Zoom > 0.2)
+			{
+				for (int i = Map.Bounds.Left; i <= Map.Bounds.Right; i+=8)
+				{
+					if( i % 8 == 0)
+					{
+						PointF point = new PointF(i * TileSet.TileSize * Zoom + Offset.X, (Map.Bounds.Top - 8) * TileSet.TileSize * Zoom + Offset.Y);
+						e.Graphics.DrawString((i - Map.Bounds.Left).ToString(), MarkerFont, TextBrush, point);
+					}
+				}
+
+				for (int i = Map.Bounds.Top; i <= Map.Bounds.Bottom; i+=8)
+				{
+					if (i % 8 == 0)
+					{
+						PointF point = new PointF((Map.Bounds.Left - 8) * TileSet.TileSize * Zoom + Offset.X, i * TileSet.TileSize * Zoom + Offset.Y);
+						e.Graphics.DrawString((i - Map.Bounds.Left).ToString(), MarkerFont, TextBrush, point);
+					}
+				}
+			}
+
 			if (Tool != null)
 				Tool.Preview(this, e.Graphics);
 
@@ -467,7 +493,7 @@ namespace OpenRA.Editor
 			{
 				for (int y = 0; y < height; y++)
 				{
-					//todo: crash prevention
+					//TODO: crash prevention
 					TileSelection[x, y] = Map.MapTiles.Value[start.X + x, start.Y + y];
 					ResourceSelection[x, y] = Map.MapResources.Value[start.X + x, start.Y + y];
 				}
@@ -487,7 +513,7 @@ namespace OpenRA.Editor
 					var mapX = loc.X + x;
 					var mapY = loc.Y + y;
 
-					//todo: crash prevention for outside of bounds
+					//TODO: crash prevention for outside of bounds
 					Map.MapTiles.Value[mapX, mapY] = TileSelection[x, y];
 					Map.MapResources.Value[mapX, mapY] = ResourceSelection[x, y];
 

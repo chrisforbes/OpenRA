@@ -34,7 +34,7 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new UnitTraitOrderTargeter<Building>("DemoAttack", 5, "attack", true, false) { ForceAttack = false };
+				yield return new TargetTypeOrderTargeter("DemoTruck", "DemoAttack", 5, "attack", true, false) { ForceAttack = false };
 				yield return new DeployOrderTargeter("DemoDeploy", 5);
 			}
 		}
@@ -56,6 +56,7 @@ namespace OpenRA.Mods.RA
 		{
 			if (order.OrderString == "DemoAttack")
 			{
+				self.SetTargetLine(Target.FromOrder(order), Color.Red);
 				self.World.AddFrameEndTask(w =>
 				{
 					self.QueueActivity(new MoveAdjacentTo(Target.FromOrder(order)));

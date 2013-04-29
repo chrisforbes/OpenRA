@@ -55,9 +55,15 @@ Assemblies:
 ChromeLayout:
 	mods/ra/chrome/gameinit.yaml
 	mods/ra/chrome/ingame.yaml
+	mods/ra/chrome/ingame-chat.yaml
+	mods/ra/chrome/ingame-fmvplayer.yaml
+	mods/ra/chrome/ingame-menu.yaml
+	mods/ra/chrome/ingame-objectives.yaml
+	mods/ra/chrome/ingame-observerstats.yaml
 	mods/ra/chrome/mainmenu.yaml
 	mods/ra/chrome/settings.yaml
 	mods/ra/chrome/lobby.yaml
+	mods/ra/chrome/color-picker.yaml
 	mods/ra/chrome/map-chooser.yaml
 	mods/ra/chrome/create-server.yaml
 	mods/ra/chrome/serverbrowser.yaml
@@ -65,7 +71,8 @@ ChromeLayout:
 	mods/ra/chrome/dropdowns.yaml
 	mods/ra/chrome/modchooser.yaml
 	mods/ra/chrome/cheats.yaml
-	mods/ra/chrome/objectives.yaml
+	mods/ra/chrome/musicplayer.yaml
+	mods/ra/chrome/tooltips.yaml
 
 Weapons:
 	mods/ra/weapons.yaml
@@ -99,6 +106,7 @@ LoadScreen: RALoadScreen
 
 ServerTraits:
 	LobbyCommands
+	PlayerPinger
 	MasterServerPinger
 
 ChromeMetrics:

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using OpenRA.Effects;
+using OpenRA.FileFormats;
 using OpenRA.GameRules;
 using OpenRA.Graphics;
 using OpenRA.Traits;
@@ -23,13 +24,16 @@ namespace OpenRA.Mods.RA.Effects
 	{
 		public readonly int Speed = 1;
 		public readonly int Arm = 0;
+		[Desc("Check for whether an actor with Wall: trait blocks fire")]
 		public readonly bool High = false;
 		public readonly bool Shadow = true;
 		public readonly bool Proximity = false;
 		public readonly string Trail = null;
 		public readonly float Inaccuracy = 0;
 		public readonly string Image = null;
+		[Desc("Rate of Turning")]
 		public readonly int ROT = 5;
+		[Desc("Explode when following the target longer than this.")]
 		public readonly int RangeLimit = 0;
 		public readonly bool TurboBoost = false;
 		public readonly int TrailInterval = 2;
@@ -37,8 +41,9 @@ namespace OpenRA.Mods.RA.Effects
 		public readonly Color ContrailColor = Color.White;
 		public readonly bool ContrailUsePlayerColor = false;
 		public readonly int ContrailDelay = 1;
+		public readonly bool Jammable = true;
 
-		public IEffect Create(ProjectileArgs args) { return new Missile( this, args ); }
+		public IEffect Create(ProjectileArgs args) { return new Missile(this, args); }
 	}
 
 	class Missile : IEffect
@@ -86,27 +91,44 @@ namespace OpenRA.Mods.RA.Effects
 		const int MissileCloseEnough = 7;
 		int ticksToNextSmoke;
 
-		public void Tick( World world )
+		public void Tick(World world)
 		{
 			t += 40;
 
 			// In pixels
 			var dist = Args.target.CenterLocation + offset - PxPosition;
 
-			var targetAltitude = 0;
+			var targetAltitude = 0; 
 			if (Args.target.IsValid && Args.target.IsActor && Args.target.Actor.HasTrait<IMove>())
-				targetAltitude =  Args.target.Actor.Trait<IMove>().Altitude;
+				targetAltitude = Args.target.Actor.Trait<IMove>().Altitude;
 
-			Altitude += Math.Sign(targetAltitude - Altitude);
+			var jammed = Info.Jammable && world.ActorsWithTrait<JamsMissiles>().Any(tp =>
+				(tp.Actor.CenterLocation - PxPosition).ToCVec().Length <= tp.Trait.Range
 
-			if (Args.target.IsValid)
+				&& (tp.Actor.Owner.Stances[Args.firedBy.Owner] != Stance.Ally
+				|| (tp.Actor.Owner.Stances[Args.firedBy.Owner] == Stance.Ally && tp.Trait.AlliedMissiles))
+
+				&& world.SharedRandom.Next(100 / tp.Trait.Chance) == 0);
+
+			if (!jammed)
+			{
+				Altitude += Math.Sign(targetAltitude - Altitude);
+				if (Args.target.IsValid)
+					Facing = Traits.Util.TickFacing(Facing,
+						Traits.Util.GetFacing(dist, Facing),
+						Info.ROT);
+			}
+			else
+			{
+				Altitude += world.SharedRandom.Next(-1, 2);
 				Facing = Traits.Util.TickFacing(Facing,
-					Traits.Util.GetFacing(dist, Facing),
+					Facing + world.SharedRandom.Next(-20, 21),
 					Info.ROT);
+			}
 
 			anim.Tick();
 
-			if (dist.LengthSquared < MissileCloseEnough * MissileCloseEnough && Args.target.IsValid )
+			if (dist.LengthSquared < MissileCloseEnough * MissileCloseEnough && Args.target.IsValid)
 				Explode(world);
 
 			// TODO: Replace this with a lookup table
@@ -141,7 +163,7 @@ namespace OpenRA.Mods.RA.Effects
 			}
 
 			if (Trail != null)
-				Trail.Tick(PxPosition - new PVecInt(0, Altitude));
+				Trail.Tick(PxPosition.ToWPos(Altitude));
 		}
 
 		void Explode(World world)
@@ -154,12 +176,12 @@ namespace OpenRA.Mods.RA.Effects
 
 		public IEnumerable<Renderable> Render(WorldRenderer wr)
 		{
-			if (Args.firedBy.World.RenderedShroud.IsVisible(PxPosition.ToCPos()))
+			if (!Args.firedBy.World.FogObscures(PxPosition.ToCPos()))
 				yield return new Renderable(anim.Image, PxPosition.ToFloat2() - 0.5f * anim.Image.size - new float2(0, Altitude),
 					wr.Palette(Args.weapon.Underwater ? "shadow" : "effect"), PxPosition.Y);
 
 			if (Trail != null)
-				Trail.Render(Args.firedBy);
+				Trail.Render(wr, Args.firedBy);
 		}
 	}
 }

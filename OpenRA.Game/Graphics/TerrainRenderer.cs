@@ -50,7 +50,7 @@ namespace OpenRA.Graphics
 					nv += 4;
 
 					if (tileMapping[map.MapTiles.Value[i, j]].sheet != terrainSheet)
-						throw new InvalidOperationException("Terrain sprites span multiple sheets");
+						throw new InvalidOperationException("Terrain sprites span multiple sheets. Try increasing Game.Settings.Graphics.SheetSize.");
 				}
 
 			vertexBuffer = Game.Renderer.Device.CreateVertexBuffer( vertices.Length );
@@ -69,18 +69,18 @@ namespace OpenRA.Graphics
 			if (lastRow < 0 || firstRow > map.Bounds.Height)
 				return;
 
-			if (firstRow < 0) firstRow = 0;
-			if (lastRow > map.Bounds.Height) lastRow = map.Bounds.Height;
-
-			if (world.RenderedPlayer != null && !world.RenderedShroud.Disabled && world.RenderedShroud.Bounds.HasValue)
+			if (world.VisibleBounds.HasValue)
 			{
-				var r = world.RenderedShroud.Bounds.Value;
+				var r = world.VisibleBounds.Value;
 				if (firstRow < r.Top - map.Bounds.Top)
 					firstRow = r.Top - map.Bounds.Top;
 
 				if (firstRow > r.Bottom - map.Bounds.Top)
 					firstRow = r.Bottom - map.Bounds.Top;
 			}
+
+			if (firstRow < 0) firstRow = 0;
+			if (lastRow > map.Bounds.Height) lastRow = map.Bounds.Height;
 
 			if( lastRow < firstRow ) lastRow = firstRow;
 

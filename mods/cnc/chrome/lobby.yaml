@@ -9,6 +9,8 @@ Container@SERVER_LOBBY:
 			RemapIndices: 176, 178, 180, 182, 184, 186, 189, 191, 177, 179, 181, 183, 185, 187, 188, 190
 		Label@TITLE:
 			Width:740
+			Height: 20
+			X:0
 			Y:0-25
 			Font:BigBold
 			Contrast:true
@@ -30,25 +32,34 @@ Container@SERVER_LOBBY:
 							Y:1
 							Width:192
 							Height:192
+							TooltipContainer:TOOLTIP_CONTAINER
 				Label@MAP_TITLE:
 					X:PARENT_RIGHT-15-WIDTH
-					Y:225
+					Y:227
 					Width:194
 					Height:25
 					Font:Bold
 					Align:Center
-				Checkbox@ALLOWCHEATS_CHECKBOX:
-					X:PARENT_RIGHT-209
+				Label@MAP_TYPE:
+					X:PARENT_RIGHT-15-WIDTH
+					Y:242
+					Width:194
+					Height:25
+					Font:TinyBold
+					Align:Center
+				Label@MAP_AUTHOR:
+					X:PARENT_RIGHT-15-WIDTH
 					Y:255
-					Width:130
-					Height:20
-					Text: Allow Cheats
+					Width:194
+					Height:25
+					Font:Tiny
+					Align:Center
 				ScrollPanel@PLAYERS:
 					X:15
 					Y:30
 					Width:503
 					ItemSpacing:5
-					Height:245
+					Height:219
 					Children:
 						Container@TEMPLATE_EDITABLE_PLAYER:
 							X:5
@@ -57,15 +68,40 @@ Container@SERVER_LOBBY:
 							Height:25
 							Visible:false
 							Children:
+								Image@ADMIN_INDICATOR:
+									ImageCollection:lobby-bits
+									ImageName:admin
+									X:2
+									Visible:false
+								Background@LATENCY:
+									Background:button
+									X:0
+									Y:6
+									Width:11
+									Height:14
+									Visible:false
+									Children:
+										ColorBlock@LATENCY_COLOR:
+											X:2
+											Y:2
+											Width:PARENT_RIGHT-4
+											Height:PARENT_BOTTOM-4
+								ClientTooltipRegion@CLIENT_REGION:
+									TooltipContainer:TOOLTIP_CONTAINER
+									Template:CLIENT_TOOLTIP
+									Width:11
+									Height:25
 								TextField@NAME:
 									Text:Name
-									Width:205
+									X:15
+									Width:190
 									Height:25
 									MaxLength:16
 									Visible:false
-								DropDownButton@BOT_DROPDOWN:
+								DropDownButton@SLOT_OPTIONS:
 									Text:Name
-									Width:205
+									X:15
+									Width:190
 									Height:25
 									Font:Regular
 									Visible:false
@@ -125,11 +161,34 @@ Container@SERVER_LOBBY:
 							Height:25
 							Visible:false
 							Children:
+								Image@ADMIN_INDICATOR:
+									ImageCollection:lobby-bits
+									ImageName:admin
+									X:2
+									Visible:false
+								Background@LATENCY:
+									Background:button
+									X:0
+									Y:6
+									Width:11
+									Height:14
+									Visible:false
+									Children:
+										ColorBlock@LATENCY_COLOR:
+											X:2
+											Y:2
+											Width:PARENT_RIGHT-4
+											Height:PARENT_BOTTOM-4
+								ClientTooltipRegion@CLIENT_REGION:
+									TooltipContainer:TOOLTIP_CONTAINER
+									Template:CLIENT_TOOLTIP
+									Width:11
+									Height:25
 								Label@NAME:
 									Text:Name
-									Width:200
+									Width:185
 									Height:25
-									X:5
+									X:15
 									Y:0-1
 								Button@KICK:
 									Text:X
@@ -138,12 +197,12 @@ Container@SERVER_LOBBY:
 									X:180
 									Y:2
 									Font:Bold
-								ColorBlock@COLOR:
+								ColorBlock@COLORBLOCK:
 									X:215
 									Y:6
 									Width:35
 									Height:13
-								Label@FACTION:
+								Container@FACTION:
 									Width:100
 									Height:25
 									X:285
@@ -181,9 +240,10 @@ Container@SERVER_LOBBY:
 							Height:25
 							Visible:false
 							Children:
-								DropDownButton@NAME_HOST:
+								DropDownButton@SLOT_OPTIONS:
 									Text:Name
-									Width:205
+									X:15
+									Width:190
 									Height:25
 									Font:Regular
 									Visible:false
@@ -191,7 +251,7 @@ Container@SERVER_LOBBY:
 									Text:Name
 									Width:200
 									Height:25
-									X:5
+									X:15
 									Y:0-1
 									Visible:false
 								Button@JOIN:
@@ -208,9 +268,33 @@ Container@SERVER_LOBBY:
 							Height:25
 							Visible:false
 							Children:
+								Image@ADMIN_INDICATOR:
+									ImageCollection:lobby-bits
+									ImageName:admin
+									X:2
+									Visible:false
+								Background@LATENCY:
+									Background:button
+									X:0
+									Y:6
+									Width:11
+									Height:14
+									Visible:false
+									Children:
+										ColorBlock@LATENCY_COLOR:
+											X:2
+											Y:2
+											Width:PARENT_RIGHT-4
+											Height:PARENT_BOTTOM-4
+								ClientTooltipRegion@CLIENT_REGION:
+									TooltipContainer:TOOLTIP_CONTAINER
+									Template:CLIENT_TOOLTIP
+									Width:11
+									Height:25
 								TextField@NAME:
 									Text:Name
-									Width:205
+									X:15
+									Width:190
 									Height:25
 									MaxLength:16
 								DropDownButton@COLOR:
@@ -245,11 +329,34 @@ Container@SERVER_LOBBY:
 							Height:25
 							Visible:false
 							Children:
+								Image@ADMIN_INDICATOR:
+									ImageCollection:lobby-bits
+									ImageName:admin
+									X:2
+									Visible:false
+								Background@LATENCY:
+									Background:button
+									X:0
+									Y:6
+									Width:11
+									Height:14
+									Visible:false
+									Children:
+										ColorBlock@LATENCY_COLOR:
+											X:2
+											Y:2
+											Width:PARENT_RIGHT-4
+											Height:PARENT_BOTTOM-4
+								ClientTooltipRegion@CLIENT_REGION:
+									TooltipContainer:TOOLTIP_CONTAINER
+									Template:CLIENT_TOOLTIP
+									Width:11
+									Height:25
 								Label@NAME:
 									Text:Name
-									Width:200
+									Width:185
 									Height:25
-									X:5
+									X:15
 									Y:0-1
 								Button@KICK:
 									Text:X
@@ -258,7 +365,7 @@ Container@SERVER_LOBBY:
 									X:180
 									Y:2
 									Font:Bold
-								ColorBlock@COLOR:
+								ColorBlock@COLORBLOCK:
 									X:215
 									Y:6
 									Width:35
@@ -289,9 +396,9 @@ Container@SERVER_LOBBY:
 								Button@SPECTATE:
 									Text:Spectate
 									Font:Regular
-									Width:470
+									Width:455
 									Height:25
-									X:0
+									X:15
 									Y:0
 				Container@LABEL_CONTAINER:
 					X:20
@@ -331,6 +438,26 @@ Container@SERVER_LOBBY:
 							Text:Ready
 							Align:Left
 							Font:Bold
+				Checkbox@ALLOWCHEATS_CHECKBOX:
+					X:15
+					Y:257
+					Width:130
+					Height:20
+					Text: Debug Menu
+				Checkbox@CRATES_CHECKBOX:
+					X:160
+					Y:257
+					Width:80
+					Height:20
+					Text: Crates
+				DropDownButton@ASSIGNTEAMS_DROPDOWNBUTTON:
+					X:398
+					Y:255
+					Width:120
+					Height:25
+					Font:Bold
+					Visible:false
+					Text:Assign
 				ScrollPanel@CHAT_DISPLAY:
 					X:15
 					Y:285
@@ -397,3 +524,4 @@ Container@SERVER_LOBBY:
 			Width:140
 			Height:35
 			Text:Start Game
+		TooltipContainer@TOOLTIP_CONTAINER:

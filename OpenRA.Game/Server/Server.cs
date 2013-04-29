@@ -16,8 +16,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
-using UPnP;
 using System.Threading;
+
 using OpenRA.FileFormats;
 using OpenRA.GameRules;
 using OpenRA.Network;
@@ -50,6 +50,7 @@ namespace OpenRA.Server
 
 		public readonly IPAddress Ip;
 		public readonly int Port;
+
 		int randomSeed;
 		public readonly Thirdparty.Random Random = new Thirdparty.Random();
 
@@ -74,8 +75,6 @@ namespace OpenRA.Server
 		{
 			foreach (var t in ServerTraits.WithInterface<IEndGame>())
 				t.GameEnded(this);
-			if (Settings.AllowUPnP)
-				RemovePortforward();
 		}
 
 		public Server(IPEndPoint endpoint, string[] mods, ServerSettings settings, ModData modData)
@@ -94,43 +93,8 @@ namespace OpenRA.Server
 
 			randomSeed = (int)DateTime.Now.ToBinary();
 
-			if (Settings.AllowUPnP)
-			{
-				try
-				{
-					if (UPnP.NAT.Discover())
-						{
-							Log.Write("server", "UPnP-enabled router discovered.");
-							Log.Write("server", "Your IP is: {0}", UPnP.NAT.GetExternalIP() );
-						}
-						else
-						{
-							Log.Write("server", "No UPnP-enabled router detected.");
-							Settings.AllowUPnP = false;
-						}
-				}
-				catch (Exception e)
-				{
-					OpenRA.Log.Write("server", "Can't discover UPnP-enabled routers: {0}", e);
-					Settings.AllowUPnP = false;
-				}
-			}
-
-			if (Settings.AllowUPnP)
-			{
-				try
-				{
-					if (UPnP.NAT.ForwardPort(Port, ProtocolType.Tcp, "OpenRA"))
-						Log.Write("server", "Port {0} (TCP) has been forwarded.", Port);
-					else
-						Settings.AllowUPnP = false;
-				}
-				catch (Exception e)
-				{
-					OpenRA.Log.Write("server", "Can not forward ports via UPnP: {0}", e);
-					Settings.AllowUPnP = false;
-				}
-			}
+			if (Settings.AllowPortForward)
+				UPnP.ForwardPort();
 
 			foreach (var trait in modData.Manifest.ServerTraits)
 				ServerTraits.Add( modData.ObjectCreator.CreateObject<ServerTrait>(trait) );
@@ -156,7 +120,7 @@ namespace OpenRA.Server
 				var timeout = ServerTraits.WithInterface<ITick>().Min(t => t.TickTimeout);
 				for( ; ; )
 				{
-					var checkRead = new ArrayList();
+					var checkRead = new List<Socket>();
 					checkRead.Add( listener.Server );
 					foreach( var c in conns ) checkRead.Add( c.socket );
 					foreach( var c in preConns ) checkRead.Add( c.socket );
@@ -168,14 +132,18 @@ namespace OpenRA.Server
 						break;
 					}
 
-					foreach( Socket s in checkRead )
+					foreach( var s in checkRead )
 						if( s == listener.Server ) AcceptConnection();
 						else if (preConns.Count > 0)
 						{
 							var p = preConns.SingleOrDefault( c => c.socket == s );
 							if (p != null) p.ReadData( this );
 						}
-						else if (conns.Count > 0) conns.Single( c => c.socket == s ).ReadData( this );
+						else if (conns.Count > 0)
+						{
+							var conn = conns.SingleOrDefault( c => c.socket == s );
+							if (conn != null) conn.ReadData( this );
+						}
 
 					foreach (var t in ServerTraits.WithInterface<ITick>())
 						t.Tick(this);
@@ -183,6 +151,8 @@ namespace OpenRA.Server
 					if (State == ServerState.ShuttingDown)
 					{
 						EndGame();
+						if (Settings.AllowPortForward)
+							UPnP.RemovePortforward();
 						break;
 					}
 				}
@@ -198,20 +168,7 @@ namespace OpenRA.Server
 
 		}
 
-		void RemovePortforward()
-		{
-			try
-			{
-				if (UPnP.NAT.DeleteForwardingRule(Port, ProtocolType.Tcp))
-					Log.Write("server", "Port {0} (TCP) forwarding rules has been removed.", Port);
-			}
-  			catch (Exception e)
-			{
-				OpenRA.Log.Write("server", "Can not remove UPnP portforwarding rules: {0}", e);
-			}
-		}
-
-		/* lobby rework todo:
+		/* lobby rework TODO:
 		 *	- "teams together" option for team games -- will eliminate most need
 		 *		for manual spawnpoint choosing.
 		 */
@@ -279,12 +236,11 @@ namespace OpenRA.Server
 				var mods = handshake.Mods;
 
 				// Check that the client has compatible mods
-				var valid = mods.All( m => m.Contains('@')) && //valid format
-							mods.Count() == Game.CurrentMods.Count() &&  //same number
-							mods.Select( m => Pair.New(m.Split('@')[0], m.Split('@')[1])).All(kv => Game.CurrentMods.ContainsKey(kv.First) &&
-					 		(kv.Second == "{DEV_VERSION}" || Game.CurrentMods[kv.First].Version == "{DEV_VERSION}" || kv.Second == Game.CurrentMods[kv.First].Version));
-				
-				if (!valid)
+				var validMod = mods.All(m => m.Contains('@')) && //valid format
+					mods.Count() == Game.CurrentMods.Count() && //same number
+					mods.Select(m => Pair.New(m.Split('@')[0], m.Split('@')[1])).All(kv => Game.CurrentMods.ContainsKey(kv.First));
+
+				if (!validMod)
 				{
 					Log.Write("server", "Rejected connection from {0}; mods do not match.",
 						newConn.socket.RemoteEndPoint);
@@ -293,23 +249,27 @@ namespace OpenRA.Server
 					DropClient(newConn);
 					return;
 				}
-				
-				// Drop DEV_VERSION if it's a Dedicated
-				if ( lobbyInfo.GlobalSettings.Dedicated &&  mods.Any(m => m.Contains("{DEV_VERSION}")) )
+
+				var validVersion = mods.Select(m => Pair.New(m.Split('@')[0], m.Split('@')[1])).All(
+					kv => kv.Second == Game.CurrentMods[kv.First].Version);
+
+				if (!validVersion && !lobbyInfo.GlobalSettings.AllowVersionMismatch)
 				{
-					Log.Write("server", "Rejected connection from {0}; DEV_VERSION is not allowed here.",
+					Log.Write("server", "Rejected connection from {0}; Not running the same version.",
 						newConn.socket.RemoteEndPoint);
 
-					SendOrderTo(newConn, "ServerError", "DEV_VERSION is not allowed here");
+					SendOrderTo(newConn, "ServerError", "Not running the same version.");
 					DropClient(newConn);
 					return;
 				}
 
+				client.IpAddress = ((IPEndPoint)newConn.socket.RemoteEndPoint).Address.ToString();
+
 				// Check if IP is banned
 				if (lobbyInfo.GlobalSettings.Ban != null)
 				{
-					var remote_addr = ((IPEndPoint)newConn.socket.RemoteEndPoint).Address.ToString();
-					if (lobbyInfo.GlobalSettings.Ban.Contains(remote_addr))
+
+					if (lobbyInfo.GlobalSettings.Ban.Contains(client.IpAddress))
 					{
 						Console.WriteLine("Rejected connection from "+client.Name+"("+newConn.socket.RemoteEndPoint+"); Banned.");
 						Log.Write("server", "Rejected connection from {0}; Banned.",
@@ -332,14 +292,15 @@ namespace OpenRA.Server
 					SyncClientToPlayerReference(client, Map.Players[client.Slot]);
 
 				lobbyInfo.Clients.Add(client);
-				//Assume that first validated client is server admin
-				if(lobbyInfo.Clients.Where(c1 => c1.Bot == null).Count()==1)
+
+				// Assume that first validated client is server admin
+				if (lobbyInfo.Clients.Where(c1 => c1.Bot == null).Count() == 1)
 					client.IsAdmin=true;
 
 				OpenRA.Network.Session.Client clientAdmin = lobbyInfo.Clients.Where(c1 => c1.IsAdmin).Single();
 				
-				Log.Write("server", "Client {0}: Accepted connection from {1}",
-					newConn.PlayerIndex, newConn.socket.RemoteEndPoint);
+				Log.Write("server", "Client {0}: Accepted connection from {1}.",
+				          newConn.PlayerIndex, newConn.socket.RemoteEndPoint);
 
 				foreach (var t in ServerTraits.WithInterface<IClientJoined>())
 					t.ClientJoined(this, newConn);
@@ -347,13 +308,16 @@ namespace OpenRA.Server
 				SyncLobbyInfo();
 				SendChat(newConn, "has joined the game.");
 
-				if ( File.Exists("{0}motd_{1}.txt".F(Platform.SupportDir, lobbyInfo.GlobalSettings.Mods[0])) )
+				// Send initial ping
+				SendOrderTo(newConn, "Ping", Environment.TickCount.ToString());
+
+				if (File.Exists("{0}motd_{1}.txt".F(Platform.SupportDir, lobbyInfo.GlobalSettings.Mods[0])))
 				{
 					var motd = System.IO.File.ReadAllText("{0}motd_{1}.txt".F(Platform.SupportDir, lobbyInfo.GlobalSettings.Mods[0]));
 					SendChatTo(newConn, motd);
 				}
 
-				if ( lobbyInfo.GlobalSettings.Dedicated )
+				if (lobbyInfo.GlobalSettings.Dedicated)
 				{
 					if (client.IsAdmin)
 						SendChatTo(newConn, "    You are admin now!");
@@ -362,8 +326,8 @@ namespace OpenRA.Server
 				}
 
 				if (mods.Any(m => m.Contains("{DEV_VERSION}")))
-					SendChat(newConn, "is running a development version, "+
-					"and may cause desync if they have any incompatible changes.");
+					SendChat(newConn, "is running a non-versioned development build, "+
+					"and may cause desync if it contains any incompatible changes.");
 			}
 			catch (Exception) { DropClient(newConn); }
 		}
@@ -494,12 +458,35 @@ namespace OpenRA.Server
 						DispatchOrdersToClient(c, fromIndex, 0, so.Serialize());
 					break;
 				
-				case "PauseRequest":
-					foreach (var c in conns.ToArray())
-					{  var x = Order.PauseGame();
-						DispatchOrdersToClient(c, fromIndex, 0, x.Serialize());
-					}
+				case "PauseGame":
+					foreach (var c in conns.Except(conn).ToArray())
+						DispatchOrdersToClient(c, fromIndex, 0, so.Serialize());
 					break;
+				case "Pong":
+				{
+					int pingSent;
+					if (!int.TryParse(so.Data, out pingSent))
+					{
+						Log.Write("server", "Invalid order pong payload: {0}", so.Data);
+						break;
+					}
+
+					var history = fromClient.LatencyHistory.ToList();
+					history.Add(Environment.TickCount - pingSent);
+
+					// Cap ping history at 5 values (25 seconds)
+					if (history.Count > 5)
+						history.RemoveRange(0, history.Count - 5);
+
+					fromClient.Latency = history.Sum() / history.Count;
+					fromClient.LatencyJitter = (history.Max() - history.Min())/2;
+					fromClient.LatencyHistory = history.ToArray();
+
+					if (State == ServerState.WaitingPlayers)
+						SyncLobbyInfo();
+
+					break;
+				}
 			}
 		}
 
@@ -525,9 +512,12 @@ namespace OpenRA.Server
 				lobbyInfo.Clients.RemoveAll(c => c.Index == toDrop.PlayerIndex);
 
 				// reassign admin if necessary
-				if ( lobbyInfo.GlobalSettings.Dedicated && dropClient.IsAdmin && State == ServerState.WaitingPlayers)
+				if (lobbyInfo.GlobalSettings.Dedicated && dropClient.IsAdmin && State == ServerState.WaitingPlayers)
 				{
-					if (lobbyInfo.Clients.Where(c1 => c1.Bot == null).Count() > 0)
+					// clean up the bots that were added by the last admin
+					lobbyInfo.Clients.RemoveAll(c => c.Bot != null && c.BotControllerClientIndex == toDrop.PlayerIndex);
+
+					if (lobbyInfo.Clients.Any(c1 => c1.Bot == null))
 					{
 						// client was not alone on the server but he was admin: set admin to the last connected client
 						OpenRA.Network.Session.Client lastClient = lobbyInfo.Clients.Where(c1 => c1.Bot == null).Last();
@@ -535,11 +525,13 @@ namespace OpenRA.Server
 						SendChat(toDrop, "Admin left! {0} is a new admin now!".F(lastClient.Name));
 					}
 				}
-				
+
 				DispatchOrders( toDrop, toDrop.MostRecentFrame, new byte[] { 0xbf } );
 
 				if (conns.Count != 0 || lobbyInfo.GlobalSettings.Dedicated)
 					SyncLobbyInfo();
+				if (!lobbyInfo.GlobalSettings.Dedicated && dropClient.IsAdmin)
+					Shutdown();
 			}
 
 			try
@@ -581,7 +573,7 @@ namespace OpenRA.Server
 				t.GameStarted(this);
 			
 			// Check TimeOut
-			if ( Settings.TimeOut > 10000 )
+			if (Settings.TimeOut > 10000)
 			{
 				gameTimeout = new XTimer(Settings.TimeOut);
 				gameTimeout.Elapsed += (_,e) =>

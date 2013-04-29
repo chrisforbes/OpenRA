@@ -73,8 +73,11 @@ namespace OpenRA.Mods.RA
 			if (remainingTime > 0)
 				return r;
 
-			if (Cloaked && IsVisible(self))
-				return r.Select(a => a.WithPalette(wr.Palette(info.Palette)));
+			if (Cloaked && IsVisible(self, self.World.RenderPlayer))
+				if (string.IsNullOrEmpty(info.Palette))
+					return r;
+				else
+					return r.Select(a => a.WithPalette(wr.Palette(info.Palette)));
 			else
 				return Nothing;
 		}
@@ -94,26 +97,12 @@ namespace OpenRA.Mods.RA
 			}
 		}
 		
-		public bool IsVisible(Actor self)
+		public bool IsVisible(Actor self, Player byPlayer)
 		{
-			return IsVisible(null, self);
-		}
+			if (!Cloaked || self.Owner.IsAlliedWith(byPlayer))
+				return true;
 
-		public bool IsVisible(Shroud s, Actor self)
-		{			
-		    if (self.World.LocalPlayer != null) {
-			    if (s == null) {
-    				if (!Cloaked || self.Owner == self.World.LocalPlayer ||
-    					self.Owner.Stances[self.World.LocalPlayer] == Stance.Ally)
-    					return true;
-    			}
-    			else {
-    				if (!Cloaked || self.Owner == s.Owner ||
-    					self.Owner.Stances[s.Owner] == Stance.Ally)
-    					return true;
-    			}
-			}
-			
+			// TODO: Change this to be per-player? A cloak detector revealing to everyone is dumb
 			return self.World.ActorsWithTrait<DetectCloaked>().Any(a =>
 				a.Actor.Owner.Stances[self.Owner] != Stance.Ally &&
 				(self.Location - a.Actor.Location).Length < a.Actor.Info.Traits.Get<DetectCloakedInfo>().Range);

@@ -14,7 +14,6 @@ TRAN:
 	Selectable:
 		Bounds: 41,41
 	Helicopter:
-		RearmBuildings: hpad
 		LandWhenIdle: true
 		ROT: 5
 		Speed: 15
@@ -28,17 +27,21 @@ TRAN:
 		Range: 8
 	RenderUnit:
 	WithRotor@PRIMARY:
-		Offset: 0,14,0,-4
+		Offset: -597,0,171
 	WithRotor@SECONDARY:
 		Id: rotor_2
-		Offset: 0,-14,0,-2
+		Offset: 597,0,85
 	WithShadow:
 	Cargo:
 		Types: Infantry
 		MaxWeight: 10
 		PipCount: 10
 	FallsToEarth:
-
+		Explosion: HeliCrash
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
+		
 HELI:
 	Inherits: ^Helicopter
 	Valued:
@@ -49,7 +52,7 @@ HELI:
 		Description: Helicopter Gunship with Chainguns.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks
 	Buildable:
 		BuildPaletteOrder: 20
-		Prerequisites: hpad, hq
+		Prerequisites: hpad, anyhq
 		BuiltAt: hpad
 		Owner: nod
 	Selectable:
@@ -63,14 +66,14 @@ HELI:
 	Armor:
 		Type: Light
 	RevealsShroud:
-		Range: 8
+		Range: 10
+	Armament@PRIMARY:
+		Weapon: HeliAGGun
+		LocalOffset: 128,-213,-85, 128,213,-85
+	Armament@SECONDARY:
+		Weapon: HeliAAGun
+		LocalOffset: 128,-213,-85, 128,213,-85
 	AttackHeli:
-		PrimaryWeapon: HeliAGGun
-		PrimaryOffset: 0,-3,0,2
-		PrimaryLocalOffset: -5,0,0,0,0, 5,0,0,0,0
-		SecondaryWeapon: HeliAAGun
-		SecondaryOffset: 0,-3,0,2
-		SecondaryLocalOffset: -5,0,0,0,0, 5,0,0,0,0
 		FacingTolerance: 20
 	LimitedAmmo:
 		Ammo: 10
@@ -80,11 +83,17 @@ HELI:
 		Period: 200
 	RenderUnit:
 	WithRotor:
-		Offset: 0,0,0,-2
+		Offset: 0,0,85
 	WithMuzzleFlash:
 	WithShadow:
 	FallsToEarth:
+		Explosion: HeliCrash
 	AutoTarget:
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
 
 ORCA:
 	Inherits: ^Helicopter
@@ -96,7 +105,7 @@ ORCA:
 		Description: Helicopter Gunship with AG Missiles.\n  Strong vs Buildings, Tanks\n  Weak vs Infantry
 	Buildable:
 		BuildPaletteOrder: 20
-		Prerequisites: hpad, hq
+		Prerequisites: hpad, anyhq
 		BuiltAt: hpad
 		Owner: gdi
 	Selectable:
@@ -106,29 +115,35 @@ ORCA:
 		ROT: 4
 		Speed: 20
 	Health:
-		HP: 100
+		HP: 90
 	Armor:
 		Type: Light
 	RevealsShroud:
-		Range: 8
+		Range: 10
+	Armament@PRIMARY:
+		Weapon: OrcaAGMissiles
+		LocalOffset: 427,-171,-213, 427,171,-213
+	Armament@SECONDARY:
+		Weapon: OrcaAAMissiles
+		LocalOffset: 427,-171,-213, 427,171,-213
 	AttackHeli:
-		PrimaryWeapon: OrcaAGMissiles
-		PrimaryOffset: 0,-10,0,5
-		PrimaryLocalOffset: -4,0,0,0,0, 4,0,0,0,0
-		SecondaryWeapon: OrcaAAMissiles
-		SecondaryOffset: 0,-10,0,5
-		SecondaryLocalOffset: -4,0,0,0,0, 4,0,0,0,0
 		FacingTolerance: 20
 	LimitedAmmo:
-		Ammo: 10
-		PipCount: 5
+		Ammo: 6
+		PipCount: 6
 	Reloads:
-		Count: 2
-		Period: 100
+		Count: 1
+		Period: 150
 	RenderUnit:
 	WithShadow:
 	FallsToEarth:
+		Explosion: HeliCrash
 	AutoTarget:
+	DebugRetiliateAgainstAggressor:
+	DebugNextAutoTargetScanTime:
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
 
 C17:
 	ParaDrop:
@@ -136,6 +151,14 @@ C17:
 	Inherits: ^Plane
 	Tooltip:
 		Name: Supply Aircraft
+		Description: Drops vehicle reinforcements on Airstrips
+		Icon: c17icnh
+	Buildable:
+		Queue: Aircraft
+		BuildPaletteOrder: 1000
+		Owner: None
+	Valued:
+		Cost: 2000
 	Plane:
 		ROT: 5
 		Speed: 35
@@ -160,15 +183,22 @@ A10:
 	Tooltip:
 		Name: A10 Bomber
 		Icon: a10icnh
+		Description: Used to deliver Napalm strikes.
+	Buildable:
+		Queue: Aircraft
+		BuildPaletteOrder: 1000
+		Owner: None
+	Valued:
+		Cost: 2000
 	Plane:
 		ROT: 4
 		Speed: 40
 	Health:
-		HP: 60
+		HP: 150
 	Armor:
 		Type: Heavy
 	RevealsShroud:
-		Range: 8
+		Range: 12
 	RenderUnit:
 	WithShadow:
 	LimitedAmmo:

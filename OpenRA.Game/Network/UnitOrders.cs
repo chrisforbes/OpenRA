@@ -20,7 +20,7 @@ namespace OpenRA.Network
 	{
 		static Player FindPlayerByClient(this World world, Session.Client c)
 		{
-			/* todo: this is still a hack.
+			/* TODO: this is still a hack.
 			 * the cases we're trying to avoid are the extra players on the host's client -- Neutral, other MapPlayers,..*/
 			return world.Players.FirstOrDefault(
 				p => (p.ClientIndex == c.Index && p.PlayerReference.Playable));
@@ -44,6 +44,7 @@ namespace OpenRA.Network
 						{
 							var player = world != null ? world.FindPlayerByClient(client) : null;
 							var suffix = (player != null && player.WinState == WinState.Lost) ? " (Dead)" : "";
+							suffix = client.IsObserver ? " (Spectator)" : suffix;
 							Game.AddChatLine(client.ColorRamp.GetColor(0), client.Name + suffix, order.TargetString);
 						}
 						else
@@ -69,7 +70,7 @@ namespace OpenRA.Network
 						{
 							if (world == null)
 							{
-								if (client.Team == orderManager.LocalClient.Team)
+								if (orderManager.LocalClient != null && client.Team == orderManager.LocalClient.Team)
 									Game.AddChatLine(client.ColorRamp.GetColor(0), client.Name + " (Team)",
 										order.TargetString);
 							}
@@ -94,16 +95,20 @@ namespace OpenRA.Network
 						Game.StartGame(orderManager.LobbyInfo.GlobalSettings.Map, false);
 						break;
 					}
-				
+
 				case "PauseGame":
-					{	
+					{
 						var client = orderManager.LobbyInfo.ClientWithIndex(clientId);
-				
-						if(client != null)
+						if (client != null)
 						{
-							orderManager.GamePaused = !orderManager.GamePaused;
-							var pausetext = "The game is {0} by {1}".F( orderManager.GamePaused ? "paused" : "un-paused", client.Name );
-							Game.AddChatLine(Color.White, "", pausetext);
+							var pause = order.TargetString == "Pause";
+							if (orderManager.world.Paused != pause && !world.LobbyInfo.IsSinglePlayer)
+							{
+								var pausetext = "The game is {0} by {1}".F(pause ? "paused" : "un-paused", client.Name);
+								Game.AddChatLine(Color.White, "", pausetext);
+							}
+
+							orderManager.world.Paused = pause;
 						}
 						break;
 					}
@@ -118,7 +123,12 @@ namespace OpenRA.Network
 							throw new InvalidOperationException("Server's mod ({0}) and yours ({1}) don't match".F(localMods.FirstOrDefault().ToString().Split('@')[0], request.Mods.FirstOrDefault().ToString().Split('@')[0]));
 						// Check that the map exists on the client
 						if (!Game.modData.AvailableMaps.ContainsKey(request.Map))
-							throw new InvalidOperationException("Missing map {0}".F(request.Map));
+						{
+							if (Game.Settings.Game.AllowDownloading)
+								Game.DownloadMap(request.Map);
+							else
+								throw new InvalidOperationException("Missing map {0}".F(request.Map));
+						}
 
 						var info = new Session.Client()
 						{
@@ -154,8 +164,7 @@ namespace OpenRA.Network
 							&& !orderManager.GameStarted)
 						{
 							orderManager.FramesAhead = orderManager.LobbyInfo.GlobalSettings.OrderLatency;
-							Game.Debug(
-								"Order lag is now {0} frames.".F(orderManager.LobbyInfo.GlobalSettings.OrderLatency));
+							Game.Debug("Order lag is now {0} frames.".F(orderManager.LobbyInfo.GlobalSettings.OrderLatency));
 						}
 						Game.SyncLobbyInfo();
 						break;
@@ -163,7 +172,7 @@ namespace OpenRA.Network
 
 				case "SetStance":
 					{
-						if (Game.orderManager.LobbyInfo.GlobalSettings.LockTeams)
+						if (!Game.orderManager.LobbyInfo.GlobalSettings.FragileAlliances)
 							return;
 
 						var targetPlayer = order.Player.World.Players.FirstOrDefault(p => p.InternalName == order.TargetString);
@@ -181,6 +190,11 @@ namespace OpenRA.Network
 							Game.Debug("{0} has reciprocated",targetPlayer.PlayerName);
 						}
 
+						break;
+					}
+				case "Ping":
+					{
+						orderManager.IssueOrder(Order.Pong(order.TargetString));
 						break;
 					}
 				default:
@@ -203,6 +217,7 @@ namespace OpenRA.Network
 			var oldStance = p.Stances[target];
 			p.Stances[target] = s;
 			target.Shroud.UpdatePlayerStance(w, p, oldStance, s);
+			p.Shroud.UpdatePlayerStance(w, target, oldStance, s);
 
 			foreach (var nsc in w.ActorsWithTrait<INotifyStanceChanged>())
 				nsc.Trait.StanceChanged(nsc.Actor, p, target, oldStance, s);
