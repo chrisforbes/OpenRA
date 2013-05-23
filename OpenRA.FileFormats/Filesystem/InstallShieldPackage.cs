@@ -45,11 +45,20 @@ namespace OpenRA.FileFormats
 			// Parse the directory list
 			s.Seek(TOCAddress, SeekOrigin.Begin);
 			BinaryReader TOCreader = new BinaryReader(s);
+
+			var fileCountInDirs = new List<uint>();
+			// Parse directories
 			for (var i = 0; i < DirCount; i++)
-				ParseDirectory(TOCreader);
+				fileCountInDirs.Add(ParseDirectory(TOCreader));
+
+			// Parse files
+			foreach (var fileCount in fileCountInDirs)
+				for (var i = 0; i < fileCount; i++)
+					ParseFile(reader);
+
 		}
 
-		void ParseDirectory(BinaryReader reader)
+		uint ParseDirectory(BinaryReader reader)
 		{
 			// Parse directory header
 			var FileCount = reader.ReadUInt16();
@@ -59,10 +68,7 @@ namespace OpenRA.FileFormats
 
 			// Skip to the end of the chunk
 			reader.ReadBytes(ChunkSize - NameLength - 6);
-
-			// Parse files
-			for (var i = 0; i < FileCount; i++)
-				ParseFile(reader);
+			return FileCount;
 		}
 
 		uint AccumulatedData = 0;
@@ -77,7 +83,8 @@ namespace OpenRA.FileFormats
 			var FileName = new String(reader.ReadChars(NameLength));
 
 			var hash = PackageEntry.HashFilename(FileName);
-			index.Add(hash, new PackageEntry(hash,AccumulatedData, CompressedSize));
+			if(!index.ContainsKey(hash))
+				index.Add(hash, new PackageEntry(hash,AccumulatedData, CompressedSize));
 			AccumulatedData += CompressedSize;
 
 			// Skip to the end of the chunk
