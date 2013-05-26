@@ -55,7 +55,7 @@ namespace OpenRA.Mods.RA
 		public void AddSmudge(CPos loc)
 		{
 			if (Game.CosmeticRandom.Next(0,100) <= Info.SmokePercentage)
-				world.AddFrameEndTask(w => w.Add(new Smoke(w, Traits.Util.CenterOfCell(loc), Info.SmokeType)));
+				world.AddFrameEndTask(w => w.Add(new Smoke(w, loc.CenterPosition, Info.SmokeType)));
 
 			// No smudge; create a new one
 			if (!tiles.ContainsKey(loc))
@@ -78,12 +78,12 @@ namespace OpenRA.Mods.RA
 		public void Render( WorldRenderer wr )
 		{
 			var cliprect = Game.viewport.WorldBounds(world);
-			var localPlayer = world.LocalPlayer;
 			foreach (var kv in tiles)
 			{
 				if (!cliprect.Contains(kv.Key.X,kv.Key.Y))
 					continue;
-				if (localPlayer != null && !world.RenderedShroud.IsExplored(kv.Key))
+
+				if (world.ShroudObscures(kv.Key))
 					continue;
 
 				smudgeSprites[kv.Value.type- 1][kv.Value.index].DrawAt(wr, kv.Key.ToPPos().ToFloat2(), "terrain");

@@ -99,3 +99,51 @@ Background@SUPPORT_POWER_TOOLTIP:
 			Y:20
 			Font:TinyBold
 			VAlign:Top
+
+Background@SPAWN_TOOLTIP:
+	Logic:SpawnSelectorTooltipLogic
+	Background:panel-black
+	Width:5
+	Children:
+		Container@SINGLE_HEIGHT:
+			Height:26
+		Container@DOUBLE_HEIGHT:
+			Height:40
+		Label@LABEL:
+			X:5
+			Height:23
+			Font:Bold
+		Image@FLAG:
+			X:5
+			Y:5
+			Width:32
+			Height:16
+		Label@TEAM:
+			Y:21
+			Height:15
+			Font:TinyBold
+			Align:center
+
+Background@CLIENT_TOOLTIP:
+	Logic:ClientTooltipLogic
+	Background:panel-black
+	Height:35
+	Width:5
+	Children:
+		Label@ADMIN:
+			Y:2
+			Height:18
+			Font:Bold
+			Text:Game Admin
+			Align:Center
+		Label@IP:
+			Y:5
+			Width:5
+			Height:10
+			Font:TinyBold
+			Align:Center
+		Label@LATENCY:
+			Y:17
+			Height:10
+			Font:TinyBold
+			Align:Center

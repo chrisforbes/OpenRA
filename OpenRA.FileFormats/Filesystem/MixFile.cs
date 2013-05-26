@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -19,127 +20,149 @@ namespace OpenRA.FileFormats
 	{
 		Stream GetContent(string filename);
 		bool Exists(string filename);
-		IEnumerable<uint> AllFileHashes();
+		IEnumerable<uint> ClassicHashes();
+		IEnumerable<uint> CrcHashes();
+		IEnumerable<string> AllFileNames();
 		void Write(Dictionary<string, byte[]> contents);
 		int Priority { get; }
+		string Name { get; }
 	}
 
 	public class MixFile : IFolder
 	{
 		readonly Dictionary<uint, PackageEntry> index;
-		readonly bool isRmix, isEncrypted;
 		readonly long dataStart;
 		readonly Stream s;
-		int priority;
+		readonly int priority;
+		readonly string filename;
+		readonly PackageHashType type;
 
-		// Create a new MixFile
+		// Save a mix to disk with the given contents
 		public MixFile(string filename, int priority, Dictionary<string, byte[]> contents)
 		{
+			this.filename = filename;
 			this.priority = priority;
+			this.type = PackageHashType.Classic;
+
 			if (File.Exists(filename))
 				File.Delete(filename);
 
 			s = File.Create(filename);
+			index = new Dictionary<uint, PackageEntry>();
+			contents.Add("local mix database.dat", new XccLocalDatabase(contents.Keys.Append("local mix database.dat")).Data());
 			Write(contents);
 		}
 
-		public MixFile(string filename, int priority)
+		public MixFile(string filename, PackageHashType type, int priority)
 		{
+			this.filename = filename;
 			this.priority = priority;
+			this.type = type;
 			s = FileSystem.Open(filename);
 
-			BinaryReader reader = new BinaryReader(s);
-			uint signature = reader.ReadUInt32();
+			// Detect format type
+			s.Seek(0, SeekOrigin.Begin);
+			var reader = new BinaryReader(s);
+			var isCncMix = reader.ReadUInt16() != 0;
 
-			isRmix = 0 == (signature & ~(uint)(MixFileFlags.Checksum | MixFileFlags.Encrypted));
+			// The C&C mix format doesn't contain any flags or encryption
+			var isEncrypted = false;
+			if (!isCncMix)
+				isEncrypted = (reader.ReadUInt16() & 0x2) != 0;
 
-			if (isRmix)
+			List<PackageEntry> entries;
+			if (isEncrypted)
 			{
-				isEncrypted = 0 != (signature & (uint)MixFileFlags.Encrypted);
-				if( isEncrypted )
-				{
-					index = ParseRaHeader(s, out dataStart).ToDictionaryWithConflictLog(x => x.Hash,
-						"MixFile.RaHeader", null, x => "(offs={0}, len={1})".F(x.Offset, x.Length)
-					);
-					return;
-				}
+				long unused;
+				entries = ParseHeader(DecryptHeader(s, 4, out dataStart), 0, out unused);
 			}
 			else
-				s.Seek( 0, SeekOrigin.Begin );
+				entries = ParseHeader(s, isCncMix ? 0 : 4, out dataStart);
 
-			isEncrypted = false;
-			index = ParseTdHeader(s, out dataStart).ToDictionaryWithConflictLog(x => x.Hash,
-				"MixFile.TdHeader", null, x => "(offs={0}, len={1})".F(x.Offset, x.Length)
+			index = entries.ToDictionaryWithConflictLog(x => x.Hash,
+				"{0} ({1} format, Encrypted: {2}, DataStart: {3})".F(filename, (isCncMix ? "C&C" : "RA/TS/RA2"), isEncrypted, dataStart),
+			    null, x => "(offs={0}, len={1})".F(x.Offset, x.Length)
 			);
 		}
 
-		const long headerStart = 84;
-
-		List<PackageEntry> ParseRaHeader(Stream s, out long dataStart)
+		List<PackageEntry> ParseHeader(Stream s, long offset, out long headerEnd)
 		{
-			BinaryReader reader = new BinaryReader(s);
-			byte[] keyblock = reader.ReadBytes(80);
-			byte[] blowfishKey = new BlowfishKeyProvider().DecryptKey(keyblock);
+			s.Seek(offset, SeekOrigin.Begin);
+			var reader = new BinaryReader(s);
+			var numFiles = reader.ReadUInt16();
+			/*uint dataSize = */reader.ReadUInt32();
 
-			uint[] h = ReadUints(reader, 2);
+			var items = new List<PackageEntry>();
+			for (var i = 0; i < numFiles; i++)
+				items.Add(new PackageEntry(reader));
 
-			Blowfish fish = new Blowfish(blowfishKey);
-			MemoryStream ms = Decrypt( h, fish );
-			BinaryReader reader2 = new BinaryReader(ms);
-
-			ushort numFiles = reader2.ReadUInt16();
-			reader2.ReadUInt32(); /*datasize*/
-
-			s.Position = headerStart;
-			reader = new BinaryReader(s);
-
-			int byteCount = 6 + numFiles * PackageEntry.Size;
-			h = ReadUints( reader, ( byteCount + 3 ) / 4 );
-
-			ms = Decrypt( h, fish );
-
-			dataStart = headerStart + byteCount + ( ( ~byteCount + 1 ) & 7 );
-
-			long ds;
-			return ParseTdHeader( ms, out ds );
+			headerEnd = offset + 6 + numFiles*PackageEntry.Size;
+			return items;
 		}
 
-		static MemoryStream Decrypt( uint[] h, Blowfish fish )
+		MemoryStream DecryptHeader(Stream s, long offset, out long headerEnd)
 		{
-			uint[] decrypted = fish.Decrypt( h );
+			s.Seek(offset, SeekOrigin.Begin);
+			var reader = new BinaryReader(s);
 
-			MemoryStream ms = new MemoryStream();
-			BinaryWriter writer = new BinaryWriter( ms );
-			foreach( uint t in decrypted )
-				writer.Write( t );
+			// Decrypt blowfish key
+			var keyblock = reader.ReadBytes(80);
+			var blowfishKey = new BlowfishKeyProvider().DecryptKey(keyblock);
+			var fish = new Blowfish(blowfishKey);
+
+			// Decrypt first block to work out the header length
+			var ms = Decrypt(ReadBlocks(s, offset + 80, 1), fish);
+			var numFiles = new BinaryReader(ms).ReadUInt16();
+
+			// Decrypt the full header - round bytes up to a full block
+			var blockCount = (13 + numFiles*PackageEntry.Size)/8;
+			headerEnd = offset + 80 + blockCount*8;
+
+			return Decrypt(ReadBlocks(s, offset + 80, blockCount), fish);
+		}
+
+		static MemoryStream Decrypt(uint[] h, Blowfish fish)
+		{
+			var decrypted = fish.Decrypt(h);
+
+			var ms = new MemoryStream();
+			var writer = new BinaryWriter(ms);
+			foreach(var t in decrypted)
+				writer.Write(t);
 			writer.Flush();
 
-			ms.Position = 0;
+			ms.Seek(0, SeekOrigin.Begin);
 			return ms;
 		}
 
-		uint[] ReadUints(BinaryReader r, int count)
+		uint[] ReadBlocks(Stream s, long offset, int count)
 		{
-			uint[] ret = new uint[count];
-			for (int i = 0; i < ret.Length; i++)
+			s.Seek(offset, SeekOrigin.Begin);
+			var r = new BinaryReader(s);
+
+			// A block is a single encryption unit (represented as two 32-bit integers)
+			var ret = new uint[2*count];
+			for (var i = 0; i < ret.Length; i++)
 				ret[i] = r.ReadUInt32();
 
 			return ret;
 		}
 
-		List<PackageEntry> ParseTdHeader(Stream s, out long dataStart)
+		uint? FindMatchingHash(string filename)
 		{
-			List<PackageEntry> items = new List<PackageEntry>();
+			var hash = PackageEntry.HashFilename(filename, type);
+			if (index.ContainsKey(hash))
+				return hash;
 
-			BinaryReader reader = new BinaryReader(s);
-			ushort numFiles = reader.ReadUInt16();
-			/*uint dataSize = */reader.ReadUInt32();
+			// Maybe we were given a raw hash?
+			uint raw;
+			if (!uint.TryParse(filename, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out raw))
+			    return null;
 
-			for (int i = 0; i < numFiles; i++)
-				items.Add(new PackageEntry(reader));
+			if ("{0:X}".F(raw) == filename && index.ContainsKey(raw))
+				return raw;
 
-			dataStart = s.Position;
-			return items;
+			return null;
 		}
 
 		public Stream GetContent(uint hash)
@@ -148,33 +171,71 @@ namespace OpenRA.FileFormats
 			if (!index.TryGetValue(hash, out e))
 				return null;
 
-			s.Seek( dataStart + e.Offset, SeekOrigin.Begin );
-			byte[] data = new byte[ e.Length ];
-			s.Read( data, 0, (int)e.Length );
+			s.Seek(dataStart + e.Offset, SeekOrigin.Begin);
+			var data = new byte[e.Length];
+			s.Read(data, 0, (int)e.Length);
 			return new MemoryStream(data);
 		}
 
 		public Stream GetContent(string filename)
 		{
-			return GetContent(PackageEntry.HashFilename(filename));
+			var hash = FindMatchingHash(filename);
+			return hash.HasValue ? GetContent(hash.Value) : null;
 		}
 
-		public IEnumerable<uint> AllFileHashes()
+		static readonly uint[] Nothing = {};
+		public IEnumerable<uint> ClassicHashes()
 		{
-			return index.Keys;
+			if (type == PackageHashType.Classic)
+				return index.Keys;
+
+			return Nothing;
+		}
+
+		public IEnumerable<uint> CrcHashes()
+		{
+			if (type == PackageHashType.CRC32)
+				return index.Keys;
+
+			return Nothing;
+		}
+
+		public IEnumerable<string> AllFileNames()
+		{
+			var lookup = new Dictionary<uint, string>();
+			if (Exists("local mix database.dat"))
+			{
+				var db = new XccLocalDatabase(GetContent("local mix database.dat"));
+				foreach (var e in db.Entries)
+				{
+					var hash = PackageEntry.HashFilename(e, type);
+					if (!lookup.ContainsKey(hash))
+						lookup.Add(hash, e);
+				}
+			}
+
+			if (FileSystem.Exists("global mix database.dat"))
+			{
+				var db = new XccGlobalDatabase(FileSystem.Open("global mix database.dat"));
+				foreach (var e in db.Entries)
+				{
+					var hash = PackageEntry.HashFilename(e, type);
+					if (!lookup.ContainsKey(hash))
+						lookup.Add(hash, e);
+				}
+			}
+
+			return index.Keys.Select(k => lookup.ContainsKey(k) ? lookup[k] : "{0:X}".F(k));
 		}
 
 		public bool Exists(string filename)
 		{
-			return index.ContainsKey(PackageEntry.HashFilename(filename));
+			return FindMatchingHash(filename).HasValue;
 		}
 
-
-		public int Priority
-		{
-			get { return 1000 + priority; }
-		}
-
+		public int Priority { get { return 1000 + priority; } }
+		public string Name { get { return filename; } }
+		
 		public void Write(Dictionary<string, byte[]> contents)
 		{
 			// Cannot modify existing mixfile - rename existing file and
@@ -190,14 +251,14 @@ namespace OpenRA.FileFormats
 			var items = new List<PackageEntry>();
 			foreach (var kv in contents)
 			{
-				uint length = (uint)kv.Value.Length;
-				uint hash = PackageEntry.HashFilename(Path.GetFileName(kv.Key));
+				var length = (uint)kv.Value.Length;
+				var hash = PackageEntry.HashFilename(Path.GetFileName(kv.Key), type);
 				items.Add(new PackageEntry(hash, dataSize, length));
 				dataSize += length;
 			}
 
 			// Write the new file
-			s.Seek(0,SeekOrigin.Begin);
+			s.Seek(0, SeekOrigin.Begin);
 			using (var writer = new BinaryWriter(s))
 			{
 				// Write file header
@@ -213,12 +274,5 @@ namespace OpenRA.FileFormats
 					s.Write(file.Value);
 			}
 		}
-	}
-
-	[Flags]
-	enum MixFileFlags : uint
-	{
-		Checksum = 0x10000,
-		Encrypted = 0x20000,
 	}
 }

@@ -16,16 +16,17 @@ RIFLE:
 		HP: 50
 	Mobile:
 		Speed: 5
+	Armament:
+		Weapon: LMG
 	AttackFrontal:
-		PrimaryWeapon: M1Carbine
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
-		IdleAnimations: idle1,idle2
 
 ENGINEER:
 	Inherits: ^Infantry
 	Buildable:
+		Prerequisites: Outpost
 		Queue: Infantry
 		BuildPaletteOrder: 50
 		Owner: atreides,harkonnen,ordos
@@ -54,6 +55,7 @@ ENGINEER:
 BAZOOKA:
 	Inherits: ^Infantry
 	Buildable:
+		Prerequisites: Outpost
 		Queue: Infantry
 		BuildPaletteOrder: 20
 		Owner: atreides,harkonnen,ordos
@@ -69,14 +71,13 @@ BAZOOKA:
 		HP: 45
 	Mobile:
 		Speed: 4
+	Armament:
+		Weapon: Bazooka
+		LocalOffset: 0,0,555
 	AttackFrontal:
-		PrimaryWeapon: RedEye
-		SecondaryWeapon: Dragon
-		PrimaryOffset: 0,0,0,-13
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
-		IdleAnimations: idle1,idle2
 
 MEDIC:
 	Inherits: ^Infantry
@@ -100,8 +101,10 @@ MEDIC:
 	Mobile:
 		Speed: 4
 	AutoHeal:
+	Armament:
+		Weapon: Heal
 	AttackMedic:
-		PrimaryWeapon: Heal
+		Cursor: ability
 	Passenger:
 		PipType: Blue
 	-AutoTarget:

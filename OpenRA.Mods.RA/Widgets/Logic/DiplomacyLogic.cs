@@ -41,6 +41,8 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 			validPlayers = world.Players.Where(a => a != world.LocalPlayer && !a.NonCombatant).Count();
 			diplomacy.IsVisible = () => (validPlayers > 0);
+
+			diplomacyBG.Get<ButtonWidget>("CLOSE_DIPLOMACY").OnClick = () => { diplomacyBG.Visible = false; };
 		}
 
 		// This is shit
@@ -87,7 +89,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 					Text = p.PlayerName,
 					Align = TextAlign.Left,
 					Font = "Bold",
-					Color = p.ColorRamp.GetColor(0),
+					Color = p.Color.RGB,
 				};
 
 				bg.AddChild(label);
@@ -110,6 +112,9 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 					Bounds = new Rectangle( margin + 2 * labelWidth + 20,  y, labelWidth, 25),
 					GetText = () => world.LocalPlayer.Stances[ pp ].ToString(),
 				};
+
+				if (!p.World.LobbyInfo.GlobalSettings.FragileAlliances)
+					myStance.Disabled = true;
 
 				myStance.OnMouseDown = mi => ShowDropDown(pp, myStance);
 
@@ -138,7 +143,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 		void SetStance(ButtonWidget bw, Player p, Stance ss)
 		{
-			if (p.World.LobbyInfo.GlobalSettings.LockTeams)
+			if (!p.World.LobbyInfo.GlobalSettings.FragileAlliances)
 				return;	// team changes are banned
 
 			// NOTE(jsd): Abuse of the type system here with `CPos`

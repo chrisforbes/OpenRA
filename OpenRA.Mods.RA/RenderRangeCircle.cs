@@ -9,6 +9,7 @@
 #endregion
 
 using System.Drawing;
+using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Traits;
 
@@ -25,10 +26,12 @@ namespace OpenRA.Mods.RA
 
 		public void Render(WorldRenderer wr, World w, ActorInfo ai, PPos centerLocation)
 		{
-			wr.DrawRangeCircle(
-				Color.FromArgb(128, Color.Yellow),
-				centerLocation.ToFloat2(),
-				ai.Traits.Get<AttackBaseInfo>().GetMaximumRange());
+			wr.DrawRangeCircleWithContrast(
+				Color.FromArgb(128, Color.Yellow), centerLocation.ToFloat2(),
+				ai.Traits.WithInterface<ArmamentInfo>()
+					.Select(a => Rules.Weapons[a.Weapon.ToLowerInvariant()].Range).Max(),
+				Color.FromArgb(96, Color.Black), 1
+			);
 
 			foreach (var a in w.ActorsWithTrait<RenderRangeCircle>())
 				if (a.Actor.Owner == a.Actor.World.LocalPlayer)
@@ -44,9 +47,11 @@ namespace OpenRA.Mods.RA
 			if (self.Owner != self.World.LocalPlayer)
 				return;
 
-			wr.DrawRangeCircle(
+			wr.DrawRangeCircleWithContrast(
 				Color.FromArgb(128, Color.Yellow),
-				self.CenterLocation.ToFloat2(), self.Trait<AttackBase>().GetMaximumRange());
+				self.CenterLocation.ToFloat2(), self.Trait<AttackBase>().GetMaximumRange(),
+				Color.FromArgb(96, Color.Black),
+				1);
 		}
 	}
 }

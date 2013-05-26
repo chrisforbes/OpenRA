@@ -23,11 +23,22 @@ namespace OpenRA
 		public PPos(int x, int y) { X = x; Y = y; }
 
 		public static readonly PPos Zero = new PPos(0, 0);
+		public static PPos FromWPos(WPos pos)
+		{
+			return new PPos(Game.CellSize*pos.X/1024, Game.CellSize*pos.Y/1024);
+		}
+
+		// Temporary hack for things that throw away altitude and
+		// cache screen positions directly. This can go once all
+		// the callers understand world coordinates
+		public static PPos FromWPosHackZ(WPos pos)
+		{
+			return new PPos(Game.CellSize*pos.X/1024, Game.CellSize*(pos.Y - pos.Z)/1024);
+		}
 
 		public static explicit operator PPos(int2 a) { return new PPos(a.X, a.Y); }
 
 		public static explicit operator PVecInt(PPos a) { return new PVecInt(a.X, a.Y); }
-		public static explicit operator PVecFloat(PPos a) { return new PVecFloat(a.X, a.Y); }
 
 		public static PPos operator +(PPos a, PVecInt b) { return new PPos(a.X + b.X, a.Y + b.Y); }
 		public static PVecInt operator -(PPos a, PPos b) { return new PVecInt(a.X - b.X, a.Y - b.Y); }
@@ -44,6 +55,25 @@ namespace OpenRA
 			return a + ((PVecInt)(b - a) * mul / div);
 		}
 
+		public static PPos Average(params PPos[] list)
+		{
+			if (list == null || list.Length == 0)
+				throw new ArgumentException("PPos: Cannot calculate average of empty list.");
+
+			var x = 0;
+			var y = 0;
+			foreach(var pos in list)
+			{
+				x += pos.X;
+				y += pos.Y;
+			}
+
+			x /= list.Length;
+			y /= list.Length;
+
+			return new PPos(x,y);
+		}
+
 		public float2 ToFloat2() { return new float2(X, Y); }
 		public int2 ToInt2() { return new int2(X, Y); }
 		public CPos ToCPos() { return new CPos((int)(1f / Game.CellSize * X), (int)(1f / Game.CellSize * Y)); }
@@ -53,6 +83,13 @@ namespace OpenRA
 		{
 			return new PPos(Math.Min(r.Right, Math.Max(X, r.Left)),
 							Math.Min(r.Bottom, Math.Max(Y, r.Top)));
+		}
+
+		public WPos ToWPos(int z)
+		{
+			return new WPos(1024*X/Game.CellSize,
+			                1024*Y/Game.CellSize,
+			                1024*z/Game.CellSize);
 		}
 
 		public override int GetHashCode() { return X.GetHashCode() ^ Y.GetHashCode(); }

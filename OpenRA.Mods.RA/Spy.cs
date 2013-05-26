@@ -84,7 +84,7 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new UnitTraitOrderTargeter<RenderInfantry>("Disguise", 7, "ability", true, true) { ForceAttack=false };
+				yield return new TargetTypeOrderTargeter("Disguise", "Disguise", 7, "ability", true, true) { ForceAttack=false };
 			}
 		}
 
@@ -115,11 +115,10 @@ namespace OpenRA.Mods.RA
 
 		public Color RadarColorOverride(Actor self)
 		{
-			if (!Disguised || self.World.LocalPlayer == null ||
-				self.Owner.Stances[self.World.LocalPlayer] == Stance.Ally)
-				return self.Owner.ColorRamp.GetColor(0);
+			if (!Disguised || self.Owner.IsAlliedWith(self.World.RenderPlayer))
+				return self.Owner.Color.RGB;
 
-			return disguisedAsPlayer.ColorRamp.GetColor(0);
+			return disguisedAsPlayer.Color.RGB;
 		}
 
 		void DisguiseAs(Actor target)

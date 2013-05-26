@@ -24,10 +24,15 @@ namespace OpenRA.Widgets
 		public float MinimumValue = 0;
 		public float MaximumValue = 1;
 		public float Value = 0;
+		public Func<float> GetValue;
 
 		protected bool isMoving = false;
 
-		public SliderWidget() : base() {}
+		public SliderWidget()
+			: base()
+		{
+			GetValue = () => Value;
+		}
 
 		public SliderWidget(SliderWidget other)
 			: base(other)
@@ -38,6 +43,7 @@ namespace OpenRA.Widgets
 			MaximumValue = other.MaximumValue;
 			Value = other.Value;
 			TrackHeight = other.TrackHeight;
+			GetValue = other.GetValue;
 		}
 
 		void UpdateValue(float newValue)
@@ -53,7 +59,7 @@ namespace OpenRA.Widgets
 			if (mi.Event == MouseInputEvent.Down && !TakeFocus(mi))	return false;
 			if (!Focused) return false;
 
-			switch( mi.Event )
+			switch(mi.Event)
 			{
 			case MouseInputEvent.Up:
 				isMoving = false;
@@ -62,8 +68,8 @@ namespace OpenRA.Widgets
 
 			case MouseInputEvent.Down:
 				isMoving = true;
-				/* todo: handle snapping to ticks properly again */
-				/* todo: handle nudge via clicking outside the thumb */
+				/* TODO: handle snapping to ticks properly again */
+				/* TODO: handle nudge via clicking outside the thumb */
 				UpdateValue(ValueFromPx(mi.Location.X - RenderBounds.Left));
 				break;
 
@@ -77,7 +83,7 @@ namespace OpenRA.Widgets
 		}
 
 		float ValueFromPx(int x) { return MinimumValue + (MaximumValue - MinimumValue) * (1f * x / RenderBounds.Width); }
-		int PxFromValue(float x) { return (int)(RenderBounds.Width * (x - MinimumValue) / (MaximumValue - MinimumValue)); }
+		protected int PxFromValue(float x) { return (int)(RenderBounds.Width * (x - MinimumValue) / (MaximumValue - MinimumValue)); }
 
 		public override Widget Clone() { return new SliderWidget(this); }
 
@@ -98,6 +104,8 @@ namespace OpenRA.Widgets
 		{
 			if (!IsVisible())
 				return;
+
+			Value = GetValue();
 
 			var tr = ThumbRect;
 			var rb = RenderBounds;

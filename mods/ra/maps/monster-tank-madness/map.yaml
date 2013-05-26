@@ -32,6 +32,7 @@ Players:
 		LockSpawn: True
 		LockTeam: True
 		Enemies: BadGuy,USSR,Ukraine,Turkey
+		Required: True
 	PlayerReference@BadGuy:
 		Name: BadGuy
 		Race: soviet
@@ -2522,6 +2523,12 @@ Actors:
 	waypoint99: waypoint
 		Location: 68,63
 		Owner: Neutral
+	Actor1000: camera.large
+		Location: 1,1
+		Owner: USSR
+	Actor1001: camera.large
+		Location: 1,1
+		Owner: Turkey
 
 Smudges:
 
@@ -2568,15 +2575,20 @@ Rules:
 			Range: 6
 		Turreted:
 			ROT: 1
+		Armament@PRIMARY:
+			Weapon: SuperTankPrimary
+			LocalOffset: 213,-171,0, 213,171,0
+			Recoil: 171
+			RecoilRecovery: 30
+		Armament@SECONDARY:
+			Weapon: MammothTusk
+			LocalOffset: -85,-299,0, -85,299,0
+			LocalYaw: -100,100
+			Recoil: 43
 		AttackTurreted:
-			PrimaryWeapon: SuperTankPrimary
-			SecondaryWeapon: MammothTusk
-			PrimaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-			SecondaryLocalOffset: -7,2,0,0,25, 7,2,0,0,-25
-			PrimaryRecoil: 4
-			PrimaryRecoilRecovery: 0.7
-		RenderUnitTurreted:
+		RenderUnit:
 			Image: 4TNK
+		WithTurret:
 		AutoTarget:
 		Explodes:
 			Weapon: MiniNuke
@@ -2598,9 +2610,6 @@ Rules:
 			Image: 4TNK
 		ThrowsParticle@turret:
 			Anim: turret
-			Spread: 3,3
-			Speed: 6
-			AnimKey: turret
 		Health:
 			HP: 2000
 	SILO:
@@ -2709,6 +2718,13 @@ Rules:
 	GAP:
 		Buildable:
 			Owner: None
+	MRJ:
+		Buildable:
+			Owner: None
+	CAMERA.Large:
+		Inherits: CAMERA
+		RevealsShroud:
+			Range: 1000
 
 Sequences:
 

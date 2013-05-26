@@ -77,7 +77,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ColorRamp.cs" />
     <Compile Include="Evaluator.cs" />
     <Compile Include="Exts.cs" />
     <Compile Include="FieldLoader.cs" />
@@ -85,6 +84,7 @@
     <Compile Include="FileFormats\Blast.cs" />
     <Compile Include="FileFormats\Blowfish.cs" />
     <Compile Include="FileFormats\BlowfishKeyProvider.cs" />
+    <Compile Include="FileFormats\CRC32.cs" />
     <Compile Include="FileFormats\Format2.cs" />
     <Compile Include="FileFormats\Format40.cs" />
     <Compile Include="FileFormats\Format80.cs" />
@@ -132,6 +132,15 @@
     <Compile Include="Support\Timer.cs" />
     <Compile Include="Thirdparty\Random.cs" />
     <Compile Include="TypeDictionary.cs" />
+    <Compile Include="WPos.cs" />
+    <Compile Include="WVec.cs" />
+    <Compile Include="WAngle.cs" />
+    <Compile Include="WRot.cs" />
+    <Compile Include="WRange.cs" />
+    <Compile Include="HSLColor.cs" />
+    <Compile Include="Graphics\ShpTSReader.cs" />
+    <Compile Include="FileFormats\XccLocalDatabase.cs" />
+    <Compile Include="FileFormats\XccGlobalDatabase.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

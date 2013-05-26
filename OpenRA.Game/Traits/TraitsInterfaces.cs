@@ -34,7 +34,8 @@ namespace OpenRA.Traits
 	}
 
 	public interface ITick { void Tick(Actor self); }
-	public interface IRender { IEnumerable<Renderable> Render(Actor self, WorldRenderer wr); }
+	public interface ITickRender { void TickRender(WorldRenderer wr, Actor self); }
+	public interface IRender { IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr); }
 	public interface IAutoSelectionSize { int2 SelectionSize(Actor self); }
 
 	public interface IIssueOrder
@@ -85,7 +86,7 @@ namespace OpenRA.Traits
 		Color RadarSignatureColor(Actor self);
 	}
 
-	public interface IVisibilityModifier { bool IsVisible(Shroud s, Actor self); }
+	public interface IVisibilityModifier { bool IsVisible(Actor self, Player byPlayer); }
 	public interface IRadarColorModifier { Color RadarColorOverride(Actor self); }
 	public interface IHasLocation { PPos PxPosition { get; } }
 
@@ -115,7 +116,7 @@ namespace OpenRA.Traits
 	}
 
 	public interface INotifyAttack { void Attacking(Actor self, Target target); }
-	public interface IRenderModifier { IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r); }
+	public interface IRenderModifier { IEnumerable<IRenderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r); }
 	public interface IDamageModifier { float GetDamageModifier(Actor attacker, WarheadInfo warhead); }
 	public interface ISpeedModifier { decimal GetSpeedModifier(); }
 	public interface IFirepowerModifier { float GetFirepowerModifier(); }
@@ -140,47 +141,15 @@ namespace OpenRA.Traits
 	{
 		int ROT { get; }
 		int Facing { get; set; }
-		int InitialFacing { get; }
 	}
 
-	public interface IFacingInfo {}		/* tag interface for infoclasses whose corresponding trait has IFacing */
+	public interface IFacingInfo { int GetInitialFacing(); }
 
 	public interface ICrushable
 	{
 		void OnCrush(Actor crusher);
 		void WarnCrush(Actor crusher);
 		bool CrushableBy(string[] crushClasses, Player owner);
-	}
-
-	public struct Renderable
-	{
-		public readonly Sprite Sprite;
-		public readonly float2 Pos;
-		public readonly PaletteReference Palette;
-		public readonly int Z;
-		public readonly int ZOffset;
-		public float Scale;
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z, int zOffset, float scale)
-		{
-			Sprite = sprite;
-			Pos = pos;
-			Palette = palette;
-			Z = z;
-			ZOffset = zOffset;
-			Scale = scale; /* default */
-		}
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z)
-			: this(sprite, pos, palette, z, 0, 1f) { }
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z, float scale)
-			: this(sprite, pos, palette, z, 0, scale) { }
-
-		public Renderable WithScale(float newScale) { return new Renderable(Sprite, Pos, Palette, Z, ZOffset, newScale); }
-		public Renderable WithPalette(PaletteReference newPalette) { return new Renderable(Sprite, Pos, newPalette, Z, ZOffset, Scale); }
-		public Renderable WithZOffset(int newOffset) { return new Renderable(Sprite, Pos, Palette, Z, newOffset, Scale); }
-		public Renderable WithPos(float2 newPos) { return new Renderable(Sprite, newPos, Palette, Z, ZOffset, Scale); }
 	}
 
 	public interface ITraitInfo { object Create(ActorInitializer init); }
@@ -210,7 +179,13 @@ namespace OpenRA.Traits
 
 	public interface IPostRenderSelection { void RenderAfterWorld(WorldRenderer wr); }
 	public interface IPreRenderSelection { void RenderBeforeWorld(WorldRenderer wr, Actor self); }
-	public interface IRenderAsTerrain { IEnumerable<Renderable> RenderAsTerrain(WorldRenderer wr, Actor self); }
+	public interface IRenderAsTerrain { IEnumerable<IRenderable> RenderAsTerrain(WorldRenderer wr, Actor self); }
+	public interface ILocalCoordinatesModel
+	{
+		WVec LocalToWorld(WVec vec);
+		WRot QuantizeOrientation(Actor self, WRot orientation);
+	}
+	public interface LocalCoordinatesModelInfo {}
 
 	public interface ITargetable
 	{

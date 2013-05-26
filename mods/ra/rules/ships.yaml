@@ -6,7 +6,7 @@ SS:
 		Prerequisites: spen
 		BuiltAt: spen
 		Owner: soviet
-		Hotkey: b
+		Hotkey: u
 	Valued:
 		Cost: 950
 	Tooltip:
@@ -31,10 +31,11 @@ SS:
 		CloakDelay: 50
 		CloakSound: subshow1.aud
 		UncloakSound: subshow1.aud
-	AttackFrontal:
-		PrimaryWeapon: TorpTube
-		PrimaryLocalOffset: -4,0,0,0,0, 4,0,0,0,0
+	Armament:
+		Weapon: TorpTube
+		LocalOffset: 0,-171,0, 0,171,0
 		FireDelay: 2
+	AttackFrontal:
 	Selectable:
 		Bounds: 38,38
 	Chronoshiftable:
@@ -78,9 +79,10 @@ MSUB:
 		CloakDelay: 100
 		CloakSound: subshow1.aud
 		UncloakSound: subshow1.aud
-	AttackFrontal:
-		PrimaryWeapon: SubMissile
+	Armament:
+		Weapon: SubMissile
 		FireDelay: 2
+	AttackFrontal:
 	Selectable:
 		Bounds: 44,44
 	Chronoshiftable:
@@ -116,14 +118,20 @@ DD:
 		Range: 6
 	Turreted:
 		ROT: 7
+		Offset: 341,0,128
+	Armament@PRIMARY:
+		Weapon: Stinger
+		LocalOffset: 0,-171,0, 0,171,0
+		LocalYaw: 80, -80
+	Armament@SECONDARY:
+		Weapon: DepthCharge
+		LocalOffset: 0,-171,0, 0,171,0
+		LocalYaw: 80, -80
 	AttackTurreted:
-		PrimaryWeapon: Stinger
-		SecondaryWeapon: DepthCharge
-		PrimaryOffset: 0,-8,0,-3
-		PrimaryLocalOffset: -4,0,0,0,-20, 4,0,0,0,20
 	Selectable:
 		Bounds: 38,38
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Chronoshiftable:
 	IronCurtainable:
@@ -151,26 +159,38 @@ CA:
 	Armor:
 		Type: Heavy
 	Mobile:
-		ROT: 2
-		Speed: 2
+		ROT: 3
+		Speed: 3
 	RevealsShroud:
 		Range: 7
-	Turreted:
+	Turreted@PRIMARY:
+		Turret: primary
+		Offset: -725,0,85
 		ROT: 3
+	Turreted@SECONDARY:
+		Turret: secondary
+		Offset: 725,0,85
+		ROT: 3
+	Armament@PRIMARY:
+		Turret: primary
+		Weapon: 8Inch
+		LocalOffset: 213,-171,0, 213,171,0
+		Recoil: 171
+		RecoilRecovery: 34
+	Armament@SECONDARY:
+		Turret: secondary
+		Weapon: 8Inch
+		LocalOffset: 213,-171,0, 213,171,0
+		Recoil: 171
+		RecoilRecovery: 34
 	AttackTurreted:
-		PrimaryWeapon: 8Inch
-		SecondaryWeapon: 8Inch
-		PrimaryOffset: 0,17,0,-2
-		SecondaryOffset: 0,-17,0,-2
-		PrimaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-		SecondaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-		PrimaryRecoil: 4
-		SecondaryRecoil: 4
-		PrimaryRecoilRecovery: 0.8
-		SecondaryRecoilRecovery: 0.8
 	Selectable:
 		Bounds: 44,44
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret@PRIMARY:
+		Turret: primary
+	WithTurret@SECONDARY:
+		Turret: secondary
 	AutoTarget:
 	Chronoshiftable:
 	IronCurtainable:
@@ -215,7 +235,7 @@ PT:
 		Prerequisites: syrd
 		BuiltAt: syrd
 		Owner: allies
-		Hotkey: g
+		Hotkey: b
 	Valued:
 		Cost: 500
 	Tooltip:
@@ -232,13 +252,16 @@ PT:
 		Range: 7
 	Turreted:
 		ROT: 7
+		Offset: 256,0,43
+	Armament@PRIMARY:
+		Weapon: 2Inch
+	Armament@SECONDARY:
+		Weapon: DepthCharge
 	AttackTurreted:
-		PrimaryWeapon: 2Inch
-		SecondaryWeapon: DepthCharge
-		PrimaryOffset: 0,-6,0,-1
 	Selectable:
 		Bounds: 32,32
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Chronoshiftable:
 	IronCurtainable:

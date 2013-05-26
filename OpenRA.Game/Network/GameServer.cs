@@ -10,6 +10,8 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
+using System.Threading;
 
 namespace OpenRA.Network
 {
@@ -36,10 +38,10 @@ namespace OpenRA.Network
 
 		static bool AreVersionsCompatible(string a, string b)
 		{
-			/* dev versions are assumed compatible; if you're using one,
-			 * we trust that you know what you're doing. */
+			if (Game.Settings.Debug.IgnoreVersionMismatch)
+				return true;
 
-			return a == "{DEV_VERSION}" || b == "{DEV_VERSION}" || a == b;
+			return a == b;
 		}
 
 		public bool CanJoin()
@@ -54,7 +56,8 @@ namespace OpenRA.Network
 
 			// Don't have the map locally
 			if (!Game.modData.AvailableMaps.ContainsKey(Map))
-				return false;
+				if (!Game.Settings.Game.AllowDownloading)
+					return false;
 
 			return CompatibleVersion();
 		}

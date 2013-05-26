@@ -53,6 +53,9 @@ namespace OpenRA.Mods.D2k
 			if (lastLoadScreen.ElapsedTime() < 0.5)
 				return;
 
+			if (r.Fonts == null)
+				return;
+
 			lastLoadScreen.Reset();
 			var text = Comments.Random(Game.CosmeticRandom);
 			var textSize = r.Fonts["Bold"].Measure(text);
@@ -84,9 +87,8 @@ namespace OpenRA.Mods.D2k
 			}
 			else
 			{
-				Game.LoadShellMap();
 				Ui.ResetAll();
-				Ui.OpenWindow("MAINMENU_BG");
+				Game.LoadShellMap();
 			}
 		}
 	}

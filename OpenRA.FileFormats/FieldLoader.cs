@@ -148,16 +148,71 @@ namespace OpenRA.FileFormats
 				return InvalidValueAction(x,fieldType, field);
 			}
 
-			else if (fieldType == typeof(ColorRamp))
+			else if (fieldType == typeof(HSLColor))
 			{
 				var parts = x.Split(',');
-				if (parts.Length == 4)
-					return new ColorRamp(
+				// Allow old ColorRamp format to be parsed as HSLColor
+				if (parts.Length == 3 || parts.Length == 4)
+					return new HSLColor(
 						(byte)int.Parse(parts[0]).Clamp(0, 255),
 						(byte)int.Parse(parts[1]).Clamp(0, 255),
-						(byte)int.Parse(parts[2]).Clamp(0, 255),
-						(byte)int.Parse(parts[3]).Clamp(0, 255));
+						(byte)int.Parse(parts[2]).Clamp(0, 255));
 
+				return InvalidValueAction(x, fieldType, field);
+			}
+
+			else if (fieldType == typeof(WRange))
+			{
+				WRange res;
+				if (WRange.TryParse(x, out res))
+					return res;
+
+				return InvalidValueAction(x, fieldType, field);
+			}
+
+			else if (fieldType == typeof(WVec))
+			{
+				var parts = x.Split(',');
+				if (parts.Length == 3)
+				{
+					WRange rx, ry, rz;
+					if (WRange.TryParse(parts[0], out rx) && WRange.TryParse(parts[1], out ry) && WRange.TryParse(parts[2], out rz))
+						return new WVec(rx, ry, rz);
+				}
+
+				return InvalidValueAction(x, fieldType, field);
+			}
+
+			else if (fieldType == typeof(WPos))
+			{
+				var parts = x.Split(',');
+				if (parts.Length == 3)
+				{
+					WRange rx, ry, rz;
+					if (WRange.TryParse(parts[0], out rx) && WRange.TryParse(parts[1], out ry) && WRange.TryParse(parts[2], out rz))
+						return new WPos(rx, ry, rz);
+				}
+
+				return InvalidValueAction(x, fieldType, field);
+			}
+
+			else if (fieldType == typeof(WAngle))
+			{
+				int res;
+				if (int.TryParse(x, out res))
+					return new WAngle(res);
+				return InvalidValueAction(x, fieldType, field);
+			}
+
+			else if (fieldType == typeof(WRot))
+			{
+				var parts = x.Split(',');
+				if (parts.Length == 3)
+				{
+					int rr, rp, ry;
+					if (int.TryParse(x, out rr) && int.TryParse(x, out rp) && int.TryParse(x, out ry))
+						return new WRot(new WAngle(rr), new WAngle(rp), new WAngle(ry));
+				}
 				return InvalidValueAction(x, fieldType, field);
 			}
 
@@ -351,4 +406,11 @@ namespace OpenRA.FileFormats
 	}
 
 	public class FieldFromYamlKeyAttribute : Attribute { }
+
+	// mirrors DescriptionAttribute from System.ComponentModel but we dont want to have to use that everywhere.
+	public class DescAttribute : Attribute
+	{
+		public readonly string[] Lines;
+		public DescAttribute(params string[] lines) { Lines = lines; }
+	}
 }

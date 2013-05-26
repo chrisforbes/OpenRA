@@ -84,19 +84,21 @@ Section "Client" Client
 	File "${SRCDIR}\OpenRA.Renderer.Null.dll"
 	File "${SRCDIR}\ICSharpCode.SharpZipLib.dll"
 	File "${SRCDIR}\FuzzyLogicLibrary.dll"
+	File "${SRCDIR}\Mono.Nat.dll"
 	File "${SRCDIR}\COPYING"
 	File "${SRCDIR}\HACKING"
 	File "${SRCDIR}\INSTALL"
 	File "${SRCDIR}\*.ttf"
 	File "${SRCDIR}\OpenRA.ico"
 	File "${SRCDIR}\Tao.*.dll"
-		
+	File "${SRCDIR}\SharpFont.dll"
+
 	!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 		CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 		CreateShortCut "$SMPROGRAMS\$StartMenuFolder\OpenRA.lnk" $OUTDIR\OpenRA.Game.exe "" \
 			"$OUTDIR\OpenRA.Game.exe" "" "" "" ""
 	!insertmacro MUI_STARTMENU_WRITE_END
-	
+
 	SetOutPath "$INSTDIR\cg"
 	File "${SRCDIR}\cg\*.fx"
 	SetOutPath "$INSTDIR\glsl"
@@ -149,6 +151,7 @@ SectionGroup /e "Mods"
 		File /r "${SRCDIR}\mods\d2k\rules"
 		File /r "${SRCDIR}\mods\d2k\tilesets"
 		File /r "${SRCDIR}\mods\d2k\uibits"
+		File /r "${SRCDIR}\mods\d2k\weapons"
 	SectionEnd
 SectionGroupEnd
 
@@ -157,17 +160,14 @@ SectionGroupEnd
 ;***************************
 Section "-OpenAl" OpenAl
 	AddSize 768
+	SetOutPath "$TEMP"
 	ClearErrors
 	${GetFileVersion} $SYSDIR\OpenAL32.dll $0
 	IfErrors installal 0
 	${VersionCompare} $0 "6.14.357.24" $1
 	IntCmp $1 1 done done installal
 	installal:
-		SetOutPath "$TEMP"
-		NSISdl::download http://connect.creativelabs.com/openal/Downloads/oalinst.zip oalinst.zip
-		Pop $R0
-		StrCmp $R0 "success" +2
-			Abort
+		!insertmacro DownloadDependency "openal" "oalinst.zip"
 		!insertmacro ZIPDLL_EXTRACT oalinst.zip OpenAL oalinst.exe
 		ExecWait "$TEMP\OpenAL\oalinst.exe"
 	done:
@@ -175,10 +175,10 @@ SectionEnd
 
 Section "-Sdl" SDL
 	AddSize 317
+	SetOutPath "$TEMP"
 	IfFileExists $INSTDIR\SDL.dll done installsdl
 	installsdl:
-		SetOutPath "$TEMP"
-		NSISdl::download http://www.libsdl.org/release/SDL-1.2.14-win32.zip sdl.zip
+		!insertmacro DownloadDependency "sdl" "sdl.zip"
 		!insertmacro ZIPDLL_EXTRACT sdl.zip $INSTDIR SDL.dll
 	done:
 SectionEnd
@@ -262,7 +262,9 @@ Function ${UN}Clean
 	Delete $INSTDIR\OpenRA.Renderer.SdlCommon.dll
 	Delete $INSTDIR\ICSharpCode.SharpZipLib.dll
 	Delete $INSTDIR\FuzzyLogicLibrary.dll
+	Delete $INSTDIR\Mono.Nat.dll
 	Delete $INSTDIR\Tao.*.dll
+	Delete $INSTDIR\SharpFont.dll
 	Delete $INSTDIR\COPYING
 	Delete $INSTDIR\HACKING
 	Delete $INSTDIR\INSTALL

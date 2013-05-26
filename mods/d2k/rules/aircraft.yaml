@@ -15,20 +15,14 @@
 	Helicopter:
 		InitialFacing: 0
 		ROT: 4
-		Speed: 20
+		Speed: 30
 		LandableTerrainTypes: Sand, Rock, Transition, Spice, Dune
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 		MinimalLandAltitude: 25
-	SmokeTrailWhenDamaged@0:
-		Offset: 15, -12
-		Interval: 3
-	SmokeTrailWhenDamaged@1:
-		Offset: -15, -12
-		Interval: 3
 	RenderUnit:
-	RenderCargo:
-		RelativeAltitude: 20
+	WithCargo:
+		LocalOffset: 0,0,-854
 	WithShadow:
 	Cargo:
 		Types: Vehicle
@@ -49,7 +43,7 @@ FRIGATE:
 		Description: Supply spacecraft
 	Plane:
 		ROT: 5
-		Speed: 30
+		Speed: 50
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	Health:
@@ -82,15 +76,16 @@ ORNI:
 		Type: Light
 	RevealsShroud:
 		Range: 10
+	Armament:
+		Weapon: ChainGun
+		LocalOffset: 85,-213,-85
 	AttackHeli:
-		PrimaryWeapon: ChainGun
-		PrimaryOffset: -5,-2,0,2
 		FacingTolerance: 20
 	Helicopter:
 		LandWhenIdle: false
 		InitialFacing: 20
 		ROT: 6
-		Speed: 30
+		Speed: 40
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	RenderUnit:
@@ -101,8 +96,6 @@ ORNI:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplodeScale
-	SmokeTrailWhenDamaged:
-		Offset: 0,-10
 
 ORNI.bomber:
 	CarpetBomb:
@@ -113,9 +106,11 @@ ORNI.bomber:
 		HP: 100
 	Armor:
 		Type: Light
+	RevealsShroud:
+		Range: 10
 	Plane:
 		ROT: 5
-		Speed: 35
+		Speed: 50
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	LimitedAmmo:
@@ -131,28 +126,23 @@ ORNI.bomber:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplodeScale
-	SmokeTrailWhenDamaged:
-		Offset: 0,-10
 
 CARRYALL.infantry:
 	ParaDrop:
 		LZRange: 5
+		ChuteSound:
 	Inherits: ^Plane
 	Health:
 		HP: 200
 	Armor:
 		Type: Light
+	RevealsShroud:
+		Range: 12
 	Plane:
 		ROT: 4
-		Speed: 25
+		Speed: 40
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
-	SmokeTrailWhenDamaged@0:
-		Offset: 15, -12
-		Interval: 3
-	SmokeTrailWhenDamaged@1:
-		Offset: -15, -12
-		Interval: 3
 	RenderUnit:
 		Image: carryall
 	WithShadow:

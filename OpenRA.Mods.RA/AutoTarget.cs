@@ -8,17 +8,26 @@
  */
 #endregion
 
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 using System.Drawing;
 using System.Linq;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("The actor will automatically engage the enemy when it is in range.")]
 	public class AutoTargetInfo : ITraitInfo, Requires<AttackBaseInfo>
 	{
+		[Desc("It will try to hunt down the enemy if it is not set to defend.")]
 		public readonly bool AllowMovement = true;
+		[Desc("Set to a value >1 to override weapons maximum range for this.")]
 		public readonly int ScanRadius = -1;
 		public readonly UnitStance InitialStance = UnitStance.AttackAnything;
+
+		[Desc("Ticks to wait until next AutoTarget: attempt.")]
+		public readonly int MinimumScanTimeInterval = 3;
+		[Desc("Ticks to wait until next AutoTarget: attempt.")]
+		public readonly int MaximumScanTimeInterval = 8;
 
 		public object Create(ActorInitializer init) { return new AutoTarget(init.self, this); }
 	}
@@ -30,10 +39,11 @@ namespace OpenRA.Mods.RA
 		readonly AutoTargetInfo Info;
 		readonly AttackBase attack;
 
-		[Sync] int nextScanTime = 0;
+		[Sync] public int nextScanTime = 0;
 		public UnitStance stance;
 		[Sync] public int stanceNumber { get { return (int)stance; } }
 		public UnitStance predictedStance;		/* NOT SYNCED: do not refer to this anywhere other than UI code */
+		[Sync] public int AggressorID;
 
 		public AutoTarget(Actor self, AutoTargetInfo info)
 		{
@@ -64,6 +74,8 @@ namespace OpenRA.Mods.RA
 			if (e.Attacker.AppearsFriendlyTo(self)) return;
 
 			if (e.Damage < 0) return;	// don't retaliate against healers
+
+			AggressorID = (int)e.Attacker.ActorID;
 
 			attack.AttackTarget(Target.FromActor(e.Attacker), false, Info.AllowMovement && stance != UnitStance.Defend);
 		}
@@ -106,29 +118,32 @@ namespace OpenRA.Mods.RA
 
 		Actor ChooseTarget(Actor self, float range)
 		{
-			var info = self.Info.Traits.Get<AttackBaseInfo>();
-			nextScanTime = self.World.SharedRandom.Next(info.MinimumScanTimeInterval, info.MaximumScanTimeInterval);
+			nextScanTime = self.World.SharedRandom.Next(Info.MinimumScanTimeInterval, Info.MaximumScanTimeInterval);
 
 			var inRange = self.World.FindUnitsInCircle(self.CenterLocation, (int)(Game.CellSize * range));
 
-			if (self.Owner.HasFogVisibility()) {
+			if (self.Owner.HasFogVisibility())
+			{
 				return inRange
 					.Where(a => a.AppearsHostileTo(self))
 					.Where(a => !a.HasTrait<AutoTargetIgnore>())
 					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-					.ClosestTo( self.CenterLocation );
+					.ClosestTo(self.CenterLocation);
 			}
-			else {
+			else
+			{
 				return inRange
 					.Where(a => a.AppearsHostileTo(self))
 					.Where(a => !a.HasTrait<AutoTargetIgnore>())
 					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
 					.Where(a => self.Owner.Shroud.IsTargetable(a))
-					.ClosestTo( self.CenterLocation );
+					.ClosestTo(self.CenterLocation);
 			}
 		}
 	}
 
+	[Desc("Will not get automatically targeted by enemy (like walls)")]
 	class AutoTargetIgnoreInfo : TraitInfo<AutoTargetIgnore> { }
 	class AutoTargetIgnore { }
+	
 }

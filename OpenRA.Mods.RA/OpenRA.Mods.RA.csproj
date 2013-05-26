@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -48,6 +48,7 @@
       </CustomCommands>
     </CustomCommands>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -57,6 +58,7 @@
     <WarningLevel>4</WarningLevel>
     <OutputPath>bin\Release\</OutputPath>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FuzzyLogicLibrary">
@@ -227,13 +229,14 @@
     <Compile Include="GainsExperience.cs" />
     <Compile Include="GivesBounty.cs" />
     <Compile Include="GivesExperience.cs" />
+    <Compile Include="Guard.cs" />
     <Compile Include="Harvester.cs" />
     <Compile Include="HarvesterHuskModifier.cs" />
     <Compile Include="Husk.cs" />
     <Compile Include="InfiltrateForSupportPower.cs" />
-    <Compile Include="InvisibleToEnemy.cs" />
     <Compile Include="Invulnerable.cs" />
     <Compile Include="IronCurtainable.cs" />
+    <Compile Include="JamsMissiles.cs" />
     <Compile Include="LeavesHusk.cs" />
     <Compile Include="LightPaletteRotator.cs" />
     <Compile Include="LimitedAmmo.cs" />
@@ -242,6 +245,7 @@
     <Compile Include="Lint\CheckSyncAnnotations.cs" />
     <Compile Include="Lint\CheckTraitPrerequisites.cs" />
     <Compile Include="Lint\LintBuildablePrerequisites.cs" />
+    <Compile Include="Missions\DesertShellmapScript.cs" />
     <Compile Include="MPStartLocations.cs" />
     <Compile Include="Mine.cs" />
     <Compile Include="Minelayer.cs" />
@@ -266,7 +270,7 @@
     <Compile Include="Move\PathSearch.cs" />
     <Compile Include="NukePaletteEffect.cs" />
     <Compile Include="NullLoadScreen.cs" />
-    <Compile Include="OpenWidgetAtGameStart.cs" />
+    <Compile Include="LoadWidgetAtGameStart.cs" />
     <Compile Include="Orders\DeployOrderTargeter.cs" />
     <Compile Include="Orders\EnterBuildingOrderTargeter.cs" />
     <Compile Include="Orders\PlaceBuildingOrderGenerator.cs" />
@@ -301,12 +305,12 @@
     <Compile Include="RallyPoint.cs" />
     <Compile Include="Reloads.cs" />
     <Compile Include="RenderDetectionCircle.cs" />
+    <Compile Include="RenderJammerCircle.cs" />
     <Compile Include="RenderRangeCircle.cs" />
     <Compile Include="Render\RenderBuilding.cs" />
     <Compile Include="Render\RenderBuildingCharge.cs" />
     <Compile Include="Render\RenderBuildingSilo.cs" />
     <Compile Include="Render\RenderBuildingTurreted.cs" />
-    <Compile Include="Render\RenderBuildingSeparateTurret.cs" />
     <Compile Include="Render\RenderBuildingWall.cs" />
     <Compile Include="Render\RenderBuildingWarFactory.cs" />
     <Compile Include="Render\RenderEditorOnly.cs" />
@@ -317,8 +321,6 @@
     <Compile Include="Render\RenderSpy.cs" />
     <Compile Include="Render\RenderUnit.cs" />
     <Compile Include="Render\RenderUnitReload.cs" />
-    <Compile Include="Render\RenderUnitSpinner.cs" />
-    <Compile Include="Render\RenderUnitTurreted.cs" />
     <Compile Include="Render\WithBuildingExplosion.cs" />
     <Compile Include="Render\WithMuzzleFlash.cs" />
     <Compile Include="Render\WithRotor.cs" />
@@ -368,16 +370,17 @@
     <Compile Include="Turreted.cs" />
     <Compile Include="Valued.cs" />
     <Compile Include="WaterPaletteRotation.cs" />
-    <Compile Include="Weapon.cs" />
     <Compile Include="Widgets\BuildPaletteWidget.cs" />
+    <Compile Include="Widgets\LogicTickerWidget.cs" />
+    <Compile Include="Widgets\Logic\IngameMenuLogic.cs" />
     <Compile Include="Widgets\Logic\ModBrowserLogic.cs" />
     <Compile Include="Widgets\Logic\ColorPickerLogic.cs" />
     <Compile Include="Widgets\Logic\ConnectionLogic.cs" />
     <Compile Include="Widgets\Logic\DiplomacyLogic.cs" />
     <Compile Include="Widgets\Logic\DirectConnectLogic.cs" />
     <Compile Include="Widgets\Logic\DownloadPackagesLogic.cs" />
+    <Compile Include="Widgets\Logic\IngameChatLogic.cs" />
     <Compile Include="Widgets\Logic\IngameChromeLogic.cs" />
-    <Compile Include="Widgets\Logic\IngameObserverChromeLogic.cs" />
     <Compile Include="Widgets\Logic\LobbyLogic.cs" />
     <Compile Include="Widgets\Logic\LobbyUtils.cs" />
     <Compile Include="Widgets\Logic\MainMenuButtonsLogic.cs" />
@@ -418,8 +421,24 @@
     <Compile Include="Widgets\Logic\CheatsLogic.cs" />
     <Compile Include="CloakPaletteEffect.cs" />
     <Compile Include="Widgets\ColorPreviewManagerWidget.cs" />
-    <Compile Include="FogPalette.cs" />
     <Compile Include="Infiltrates.cs" />
+    <Compile Include="Armament.cs" />
+    <Compile Include="DebugMuzzlePositions.cs" />
+    <Compile Include="Buildings\BaseProvider.cs" />
+    <Compile Include="Render\WithSpinner.cs" />
+    <Compile Include="Widgets\Logic\ObserverShroudSelectorLogic.cs" />
+    <Compile Include="RepairsBridges.cs" />
+    <Compile Include="Activities\RepairBridge.cs" />
+    <Compile Include="BridgeHut.cs" />
+    <Compile Include="Lint\CheckSequences.cs" />
+    <Compile Include="ServerTraits\PlayerPinger.cs" />
+    <Compile Include="Widgets\Logic\SpawnSelectorTooltipLogic.cs" />
+    <Compile Include="Widgets\Logic\ClientTooltipLogic.cs" />
+    <Compile Include="Widgets\ColorMixerWidget.cs" />
+    <Compile Include="Widgets\HueSliderWidget.cs" />
+    <Compile Include="Render\WithTurret.cs" />
+    <Compile Include="Widgets\Logic\AssetBrowserLogic.cs" />
+    <Compile Include="Widgets\Logic\ConvertGameFilesLogic.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">
@@ -431,6 +450,10 @@
       <Project>{0DFB103F-2962-400F-8C6D-E2C28CCBA633}</Project>
       <Name>OpenRA.Game</Name>
       <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenRA.Utility\OpenRA.Utility.csproj">
+      <Project>{F33337BE-CB69-4B24-850F-07D23E408DDF}</Project>
+      <Name>OpenRA.Utility</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

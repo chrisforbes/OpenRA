@@ -22,7 +22,7 @@ namespace OpenRA.Mods.RA.Orders
 		readonly Actor Producer;
 		readonly string Building;
 		readonly BuildingInfo BuildingInfo;
-		IEnumerable<Renderable> preview;
+		IEnumerable<IRenderable> preview;
 		Sprite buildOk, buildBlocked;
 		bool initialized = false;
 
@@ -30,9 +30,10 @@ namespace OpenRA.Mods.RA.Orders
 		{
 			Producer = producer;
 			Building = name;
+			var tileset = producer.World.TileSet.Id.ToLower();
 			BuildingInfo = Rules.Info[Building].Traits.Get<BuildingInfo>();
 
-			buildOk = SequenceProvider.GetSequence("overlay", "build-valid").GetSprite(0);
+			buildOk = SequenceProvider.GetSequence("overlay", "build-valid-{0}".F(tileset)).GetSprite(0);
 			buildBlocked = SequenceProvider.GetSequence("overlay", "build-invalid").GetSprite(0);
 		}
 
@@ -97,10 +98,9 @@ namespace OpenRA.Mods.RA.Orders
 					initialized = true;
 				}
 
+				var offset = (topLeft - CPos.Zero).ToWVec() + FootprintUtils.CenterOffset(BuildingInfo);
 				foreach (var r in preview)
-					r.Sprite.DrawAt(topLeft.ToPPos().ToFloat2() + r.Pos,
-									r.Palette.Index,
-									r.Scale*r.Sprite.size);
+					r.WithPos(r.Pos + offset).Render(wr);
 
 				var res = world.WorldActor.Trait<ResourceLayer>();
 				var isCloseEnough = BuildingInfo.IsCloseEnoughToBase(world, world.LocalPlayer, Building, topLeft);

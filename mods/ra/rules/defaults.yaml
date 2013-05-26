@@ -26,7 +26,6 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
 		Types:Vehicle
 	GivesBounty:
@@ -34,6 +33,9 @@
 		String:Vehicle
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Tank:
 	AppearsOnRadar:
@@ -63,7 +65,6 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
 		Types:Tank
 	GivesBounty:
@@ -71,6 +72,9 @@
 		String:Vehicle
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Infantry:
 	AppearsOnRadar:
@@ -94,7 +98,7 @@
 	Selectable:
 		Voice: GenericVoice
 	TargetableUnit:
-		TargetTypes: Ground
+		TargetTypes: Ground, Disguise
 	RenderInfantry:
 	AutoTarget:
 	AttackMove:
@@ -106,20 +110,22 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
 		Types:Infantry
 	GivesBounty:
 	GpsDot:
 		String:Infantry
 	ParachuteAttachment:
-		Offset: 0,-10
+		Offset: 0,0,427
 	CrushableInfantry:
 		CrushSound: squishy2.aud
 	RepairableNear:
 		Buildings: hosp
 		CloseEnough: 1
 	UpdatesPlayerStatistics:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Ship:
 	AppearsOnRadar:
@@ -129,7 +135,7 @@
 			Water: 100
 	SelectionDecorations:
 	Selectable:
-		Voice: ShipVoice
+		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground, Water
 	DetectCloaked:
@@ -140,7 +146,7 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: navylst1.aud
+		Notification: NavalUnitLost
 	ProximityCaptor:
 		Types:Ship
 	GivesBounty:
@@ -148,6 +154,9 @@
 		String:Ship
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Plane:
 	AppearsOnRadar:
@@ -163,11 +172,7 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: aunitl1.aud
-	DebugAircraftFacing:
-	DebugAircraftSubPxX:
-	DebugAircraftSubPxY:
-	DebugAircraftAltitude:
+		Notification: AirUnitLost
 	ProximityCaptor:
 		Types:Plane
 	EjectOnDeath:
@@ -177,6 +182,7 @@
 	GpsDot:
 		String:Plane
 	UpdatesPlayerStatistics:
+	DebugMuzzlePositions:
 
 ^Helicopter:
 	Inherits: ^Plane
@@ -189,7 +195,7 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4, DemoTruck
 	Building:
 		Dimensions: 1,1
 		Footprint: x
@@ -210,7 +216,6 @@
 	GivesExperience:
 #	FrozenUnderFog:
 	CaptureNotification:
-		Notification: strucap1.aud
 	EditorAppearance:
 		RelativeToTopLeft: yes
 	ShakeOnDeath:
@@ -220,7 +225,9 @@
 	AcceptsSupplies:
 	GivesBounty:
 	UpdatesPlayerStatistics:
-	C4Demolishable:
+	DebugMuzzlePositions:
+	Guardable:
+		Range: 3
 
 ^Wall:
 	AppearsOnRadar:
@@ -241,7 +248,7 @@
 	Selectable:
 		Priority: 1
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4, DemoTruck
 	RenderBuildingWall:
 		HasMakeAnimation: false
 		Palette: terrain
@@ -254,7 +261,7 @@
 		Types:Wall
 	Sellable:
 	UpdatesPlayerStatistics:
-	C4Demolishable:
+	Guardable:
 
 ^TechBuilding:
 	Inherits: ^Building
@@ -289,8 +296,9 @@
 		Speed: 4
 	RevealsShroud:
 		Range: 2
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ProximityCaptor:
 		Types:CivilianInfantry
 	-RenderInfantry:
@@ -334,8 +342,6 @@
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
 
 ^Husk:
@@ -350,6 +356,7 @@
 	Burns:
 	ProximityCaptor:
 		Types:Husk
+	BelowUnits:
 
 ^Bridge:
 	Tooltip:

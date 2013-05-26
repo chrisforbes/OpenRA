@@ -50,6 +50,8 @@ fact:
 	damaged-build:
 		Start: 27
 		Length: 25
+	dead: factdead
+		Start: 0
 
 proc:
 	idle:
@@ -59,14 +61,16 @@ proc:
 	make: procmake
 		Start: 0
 		Length: *
+	dead: procdead
+		Start: 0
 
 silo:
-	idle:
+	idle: silo2
 		Start: 0
-		Length: 5
-	damaged-idle:
-		Start: 5
-		Length: 5
+		Length: 9
+	damaged-idle: silo2
+		Start: 9
+		Length: 9
 	make: silomake
 		Start: 0
 		Length: *
@@ -79,6 +83,8 @@ powr:
 	make: powrmake
 		Start: 0
 		Length: *
+	dead: powrdead
+		Start: 0
 
 apwr:
 	idle:
@@ -88,6 +94,8 @@ apwr:
 	make: apwrmake
 		Start: 0
 		Length: *
+	dead: apwrdead
+		Start: 0
 
 barr:
 	idle:
@@ -158,9 +166,9 @@ weap:
 	make: weapmake
 		Start: 0
 		Length: *
-	build-top: weap2
+	build-top: weap3
 		Start: 0
-		Length: 4
+		Length: 10
 	damaged-build-top: weap2
 		Start: 4
 		Length: 4
@@ -185,24 +193,24 @@ hpad:
 		Length: 6
 
 afld:
-	idle:
-		Start: 4
-		Length: 4
+	idle: afldidle
+		Start: 0
+		Length: 8
 		Tick: 160
-	damaged-idle:
-		Start: 12
-		Length: 4
+	damaged-idle: afldidle
+		Start: 8
+		Length: 8
 		Tick: 160
 	make: afldmake
 		Start: 0
 		Length: *
 	active:
 		Start: 0
-		Length: 4
+		Length: 8
 		Tick: 160
 	damaged-active:
 		Start: 8
-		Length: 4
+		Length: 8
 		Tick: 160
 
 spen:
@@ -587,6 +595,7 @@ e1:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 8
@@ -599,6 +608,7 @@ e1:
 		Start: 144
 		Length: 4
 		Facings: 8
+		Tick: 100
 	standup-0:
 		Start: 176
 		Length: 2
@@ -649,6 +659,7 @@ sniper:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 16
@@ -664,6 +675,7 @@ sniper:
 		Start: 208
 		Length: 4
 		Facings: 8
+		Tick: 100
 	standup:
 		Start: 240
 		Length: 2
@@ -715,6 +727,10 @@ powerdown:
 	idle:
 		Start: 0
 
+50cal:
+	idle:
+		Start: 0
+
 e3:
 	stand:
 		Start: 0
@@ -726,6 +742,7 @@ e3:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 120
 	shoot:
 		Start: 64
 		Length: 8
@@ -768,6 +785,7 @@ e3:
 		Start: 144
 		Length: 4
 		Facings: 8
+		Tick: 120
 	prone-shoot:
 		Start: 192
 		Length: 10
@@ -784,6 +802,7 @@ e6:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	idle1:
 		Start: 121
 		Length: 8
@@ -822,6 +841,7 @@ e6:
 		Start: 82
 		Length: 4
 		Facings: 8
+		Tick: 100
 
 ca:
 	idle:
@@ -855,6 +875,7 @@ medi:
 		Start: 8
 		Length: 6
 		Facings: 8
+		Tick: 100
 	heal:
 		Start: 56
 		Length: 58
@@ -900,6 +921,7 @@ medi:
 		Start: 130
 		Length: 4
 		Facings: 8
+		Tick: 100
 		
 mech:
 	stand:
@@ -909,6 +931,7 @@ mech:
 		Start: 8
 		Length: 6
 		Facings: 8
+		Tick: 100
 	heal:
 		Start: 56
 		Length: 58
@@ -954,6 +977,7 @@ mech:
 		Start: 130
 		Length: 4
 		Facings: 8
+		Tick: 100
 
 explosion:
 	piff: piff
@@ -981,6 +1005,9 @@ explosion:
 		Start: 0
 		Length: *
 	self_destruct: art-exp1
+		Start: 0
+		Length: *
+	artillery_explosion: art-exp1
 		Start: 0
 		Length: *
 	building: fball1
@@ -1380,6 +1407,7 @@ e2:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 80
 	shoot:
 		Start: 64
 		Length: 20
@@ -1422,6 +1450,7 @@ e2:
 		Start: 240
 		Length: 4
 		Facings: 8
+		Tick: 80
 	prone-shoot:
 		Start: 288
 		Length: 12
@@ -1440,6 +1469,7 @@ dog:
 		Start: 8
 		Length: 6
 		Facings: 8
+		Tick: 80
 	idle1:
 		Start: 216
 		Length: 7
@@ -1491,6 +1521,7 @@ spy:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 8
@@ -1533,6 +1564,7 @@ spy:
 		Start: 144
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 192
 		Length: 8
@@ -1546,6 +1578,7 @@ thf:
 		Start: 8
 		Length: 6
 		Facings: 8
+		Tick: 100
 	die1:
 		Start: 139
 		Length: 8
@@ -1585,6 +1618,7 @@ e7:
 		Start: 8
 		Length: 6
 		Facings: 8
+		Tick: 80
 	shoot:
 		Start: 56
 		Length: 7
@@ -1627,6 +1661,7 @@ e7:
 		Start: 128
 		Length: 4
 		Facings: 8
+		Tick: 80
 	prone-shoot:
 		Start: 176
 		Length: 7
@@ -1643,6 +1678,7 @@ e4:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 120
 	shoot:
 		Start: 64
 		Length: 16
@@ -1685,6 +1721,7 @@ e4:
 		Start: 208
 		Length: 4
 		Facings: 8
+		Tick: 120
 	prone-shoot:
 		Start: 256
 		Length: 16
@@ -1835,6 +1872,9 @@ miss:
 		Start: 0
 	damaged-idle:
 		Start: 2
+	make: missmake
+		Start: 0
+		Length: *
 
 minp:
 	idle:
@@ -2102,6 +2142,7 @@ c1:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 
 c2:
 	stand:
@@ -2145,6 +2186,7 @@ c2:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 		
 c3:
 	stand:
@@ -2188,6 +2230,7 @@ c3:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 
 einstein:
 	stand:
@@ -2205,6 +2248,7 @@ einstein:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 	die1:
 		Start: 115
 		Length: 8
@@ -2244,6 +2288,7 @@ delphi:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 	die1:
 		Start: 115
 		Length: 8
@@ -2283,6 +2328,7 @@ chan:
 		Start: 56
 		Length: 6
 		Facings: 8
+		Tick: 80
 	die1:
 		Start: 115
 		Length: 8
@@ -2314,6 +2360,7 @@ gnrl:
 		Start: 8
 		Length: 5
 		Facings: 8
+		Tick: 80
 	shoot:
 		Start: 56
 		Length: 4
@@ -2430,6 +2477,7 @@ shok:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 120
 	shoot:
 		Start: 64
 		Length: 16
@@ -2445,6 +2493,7 @@ shok:
 		Start: 208
 		Length: 4
 		Facings: 8
+		Tick: 120
 	standup:
 		Start: 240
 		Length: 2
@@ -2556,72 +2605,28 @@ gpsdot:
 		Start: 5
 
 overlay:
-	build-valid:
+	build-valid-desert:
+		Start: 0
+	build-valid-interior:
+		Start: 0
+	build-valid-snow:
+		Start: 2
+	build-valid-temperat:
 		Start: 0
 	build-invalid:
 		Start: 1
 	target-select:
 		Start: 2
-	target-valid:
+	target-valid-desert:
+		Start: 0
+	target-valid-interior:
+		Start: 0
+	target-valid-snow:
+		Start: 2
+	target-valid-temperat:
 		Start: 0
 	target-invalid:
 		Start: 1
-
-#Volkov
-e8:
-	stand:
-		Start: 0
-		Facings: 8
-	run:
-		Start: 8
-		Length: 5
-		Facings: 8
-	shoot:
-		Start: 56
-		Length: 4
-		Facings: 8
-	prone-stand:
-		Start: 88
-		Length: 2
-		Facings: 8
-	prone-run:
-		Start: 104
-		Length: 4
-		Facings: 8
-	standup-0:
-		Start: 136
-		Length: 2
-		Facings: 8
-	prone-shoot:
-		Start: 152
-		Length: 4
-		Facings: 8
-	idle1:
-		Start: 184
-		Length: 26
-		Tick: 120
-	die1:
-		Start: 210
-		Length: 8
-	die2:
-		Start: 218
-		Length: 8
-	die3:
-		Start: 226
-		Length: 8
-	die4:
-		Start: 234
-		Length: 12
-	die5:
-		Start: 246
-		Length: 18
-	die6: electro
-		Start: 0
-		Length: *
-	die-crushed: botwreck1
-		Start: 0
-		Length: 6
-		Tick: 1600
 
 dtrk:
 	idle:

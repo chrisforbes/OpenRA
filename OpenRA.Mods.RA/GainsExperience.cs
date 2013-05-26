@@ -20,6 +20,7 @@ namespace OpenRA.Mods.RA
 {
 	public class GainsExperienceInfo : ITraitInfo, Requires<ValuedInfo>
 	{
+		[Desc("XP requirements for each level, as multiples of our own cost.")]
 		public readonly float[] CostThreshold = { 2, 4, 8, 16 };
 		public readonly float[] FirepowerModifier = { 1.1f, 1.15f, 1.2f, 1.5f };
 		public readonly float[] ArmorModifier = { 1.1f, 1.2f, 1.3f, 1.5f };
@@ -78,7 +79,7 @@ namespace OpenRA.Mods.RA
 			{
 				Level++;
 				Sound.PlayNotification(self.Owner, "Sounds", "LevelUp", self.Owner.Country.Race);
-				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup", new int2(0,-24))));
+				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup")));
 			}
 		}
 
@@ -97,23 +98,28 @@ namespace OpenRA.Mods.RA
 			return Level > 0 ? Info.SpeedModifier[Level - 1] : 1m;
 		}
 
-		public IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
+		public IEnumerable<IRenderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r)
 		{
-			if ((self.Owner == self.World.LocalPlayer || self.World.LocalPlayer == null) && Level > 0)
+			// TODO: Make this consistent with everything else that adds animations to RenderSimple.
+			if (self.Owner.IsAlliedWith(self.World.RenderPlayer) && Level > 0)
 				return InnerModifyRender(self, wr, r);
 			else
 				return r;
 		}
 
-		IEnumerable<Renderable> InnerModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
+		IEnumerable<IRenderable> InnerModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r)
 		{
 			foreach (var rs in r)
 				yield return rs;
 
 			RankAnim.Tick();	// HACK
+
+			if (self.World.FogObscures(self))
+				yield break;
+
 			var bounds = self.Bounds.Value;
-			yield return new Renderable(RankAnim.Image, new float2(bounds.Right - 6, bounds.Bottom - 8),
-				wr.Palette("effect"), self.CenterLocation.Y);
+			var pos = new float2(bounds.Right, bounds.Bottom - 2);
+			yield return new SpriteRenderable(RankAnim.Image, pos, wr.Palette("effect"), self.CenterLocation.Y);
 		}
 	}
 

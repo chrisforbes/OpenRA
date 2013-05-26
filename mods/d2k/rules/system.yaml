@@ -2,38 +2,33 @@ Player:
 	TechTree:
 	ClassicProductionQueue@Building:
 		Type: Building
-		BuildSpeed: .4
 		LowPowerSlowdown: 3
 		QueuedAudio: Building
 		ReadyAudio: BuildingReady
 		BlockedAudio: NoRoom
 	ClassicProductionQueue@Infantry:
 		Type: Infantry
-		BuildSpeed: .5
-		LowPowerSlowdown: 3
+		LowPowerSlowdown: 2
 		BlockedAudio: NoRoom
 	ClassicProductionQueue@Vehicle:
 		Type: Vehicle
-		BuildSpeed: .5
 		LowPowerSlowdown: 3
 		QueuedAudio: Building
 		BlockedAudio: NoRoom
 	ClassicProductionQueue@Armor:
 		Type: Armor
-		BuildSpeed: .4
 		LowPowerSlowdown: 3
 		QueuedAudio: Building
 		BlockedAudio: NoRoom
 	ClassicProductionQueue@Starport:
 		Type: Starport
-		BuildSpeed: .8
-		LowPowerSlowdown: 2
+		BuildSpeedModifier: .2
+		LowPowerSlowdown: 1
 		BlockedAudio: NoRoom
 		QueuedAudio: OrderPlaced
 		ReadyAudio:
 	ClassicProductionQueue@Aircraft:
 		Type: Aircraft
-		BuildSpeed: .4
 		LowPowerSlowdown: 3
 		QueuedAudio: Building
 		BlockedAudio: NoRoom
@@ -274,20 +269,21 @@ Player:
 		RemapIndex: 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 245, 244, 243, 242, 241, 240
 	BaseAttackNotifier:
 	Shroud:
+		Shroud: false
 	HarvesterAttackNotifier:
+	PlayerStatistics:
 
 World:
-	OpenWidgetAtGameStart:
+	LoadWidgetAtGameStart:
 		Widget: INGAME_ROOT
-		ObserverWidget: OBSERVER_ROOT
 	ScreenShaker:
 	NukePaletteEffect:
 	BuildingInfluence:
 	ChooseBuildTabOnSelect:
 	CrateSpawner:
-		Minimum: 1
-		Maximum: 3
-		SpawnInterval: 120
+		Minimum: 0
+		Maximum: 2
+		SpawnInterval: 60
 		WaterChance: 0
 		ValidGround: Sand, Dune, Rock
 	PaletteFromCurrentTileset:
@@ -301,6 +297,7 @@ World:
 		Name: chrome
 		Filename: d2k.pal
 		ShadowIndex: 3
+		AllowModifiers: false
 	PaletteFromFile@effect:
 		Name: effect
 		Filename: temperat.pal
@@ -340,8 +337,11 @@ World:
 		G: 0
 		B: 0
 		A: 180
-	ShroudPalette:
-	FogPalette:
+	ShroudPalette@shroud:
+		Type: Shroud
+	ShroudPalette@fog:
+		Name: fog
+		Type: Fog
 	Country@Atreides:
 		Name: Atreides
 		Race: atreides
@@ -356,24 +356,26 @@ World:
 		BibWidths: 3, 2
 	ResourceLayer:
 	ResourceClaimLayer:
-	ResourceType@spice:
+	ResourceType@Spice:
 		ResourceType: 1
 		Palette: d2k
 		TerrainType: Spice
 		SpriteNames: spice1
-		ValuePerUnit: 50
+		ValuePerUnit: 25
 		Name: Spice
 		PipColor: green
 		AllowedTerrainTypes: Sand
 		AllowUnderActors: false
-	SmudgeLayer@rock:
-		Type:RockCrater
-		Types:rockcrater1,rockcrater2
-		Depths:15,15
-	SmudgeLayer@sand:
-		Type:SandCrater
-		Types:sandcrater1,sandcrater2
-		Depths:15,15
+	SmudgeLayer@Rock:
+		Type: RockCrater
+		Types: rockcrater1, rockcrater2
+		Depths: 15, 15
+		SmokePercentage: 0
+	SmudgeLayer@Sand:
+		Type: SandCrater
+		Types: sandcrater1, sandcrater2
+		Depths: 15, 15
+		SmokePercentage: 0
 	SpawnMapActors:
 	CreateMPPlayers:
 	MPStartLocations:
@@ -388,10 +390,9 @@ World:
 		Faction: ordos
 	SpatialBins:
 		BinSize: 4
-	Shroud:
-	Fog:
 	PathFinder:
 	ValidateOrder:
+	DebugPauseState:
 
 CRATE:
 	Tooltip:
@@ -400,88 +401,81 @@ CRATE:
 		Lifetime: 120
 		TerrainTypes: Sand, Dune, Rock
 	GiveCashCrateAction@1:
-		Amount: 1000
-		SelectionShares: 40
+		Amount: 750
+		SelectionShares: 25
 		UseCashTick: yes
 	GiveCashCrateAction@2:
-		Amount: 2000
-		SelectionShares: 15
+		Amount: 1000
+		SelectionShares: 50
 		UseCashTick: yes
 	GiveCashCrateAction@3:
-		Amount: 5000
-		SelectionShares: 5
+		Amount: 1500
+		SelectionShares: 25
 		UseCashTick: yes
-	LevelUpCrateAction:
+	GiveUnitCrateAction@TrikeA:
+		SelectionShares: 20
+		Unit: trikea
+	GiveUnitCrateAction@TrikeO:
+		SelectionShares: 15
+		Unit: trikeo
+	GiveUnitCrateAction@Quad:
 		SelectionShares: 40
-	ExplodeCrateAction@boom:
-		Weapon: CrateExplosion
+		Unit: quad
+	GiveUnitCrateAction@CombatA:
 		SelectionShares: 10
-	ExplodeCrateAction@nuke:
-		Weapon: CrateNuke
+		Unit: combata
+	GiveUnitCrateAction@CombatH:
+		SelectionShares: 10
+		Unit: combath
+	GiveUnitCrateAction@CombatO:
+		SelectionShares: 10
+		Unit: combato
+	GiveUnitCrateAction@SiegeTank:
+		SelectionShares: 10
+		Unit: siegetank
+	GiveUnitCrateAction@MissileTank:
+		SelectionShares: 10
+		Unit: missiletank
+	GiveUnitCrateAction@StealthTrike:
+		SelectionShares: 7
+		Unit: stealthtrike
+	GiveUnitCrateAction@Fremen:
 		SelectionShares: 5
-	HideMapCrateAction:
+		Unit: fremen
+	GiveUnitCrateAction@Sardaukar:
+		SelectionShares: 8
+		Unit: sardaukar
+	GiveUnitCrateAction@Saboteur:
 		SelectionShares: 3
-		Effect: hide-map
-	RevealMapCrateAction:
+		Unit: saboteur
+	GiveUnitCrateAction@SonicTank:
+		SelectionShares: 5
+		Unit: sonictank
+	GiveUnitCrateAction@Devast:
 		SelectionShares: 2
-		Effect: reveal-map
+		Unit: devast
+	GiveUnitCrateAction@DeviatorTank:
+		SelectionShares: 5
+		Unit: deviatortank
 	GiveMcvCrateAction@Atreides:
-		SelectionShares: 3
+		SelectionShares: 0
 		NoBaseSelectionShares: 9001
 		Unit: mcva
 	GiveMcvCrateAction@Harkonnen:
-		SelectionShares: 3
+		SelectionShares: 0
 		NoBaseSelectionShares: 9001
 		Unit: mcvh
 	GiveMcvCrateAction@Ordos:
-		SelectionShares: 3
+		SelectionShares: 0
 		NoBaseSelectionShares: 9001
 		Unit: mcvo
-	GiveUnitCrateAction@TrikeA:
-		SelectionShares: 13#8
-		Unit: trikea
-	#GiveUnitCrateAction@TrikeH:
-	#	SelectionShares: 6
-	#	Unit: trikeh
-	GiveUnitCrateAction@Quad:
-		SelectionShares: 18
-		Unit: quad
-	GiveUnitCrateAction@TrikeO:
-		SelectionShares: 5
-		Unit: trikeo
-	GiveUnitCrateAction@SiegeTank:
-		SelectionShares: 18
-		Unit: siegetank
-	GiveUnitCrateAction@MissileTank:
-		SelectionShares: 12
-		Unit: missiletank
-	GiveUnitCrateAction@CombatA:
-		SelectionShares: 6
-		Unit: combata
-	GiveUnitCrateAction@CombatH:
-		SelectionShares: 6
-		Unit: combath
-	GiveUnitCrateAction@CombatO:
-		SelectionShares: 6
-		Unit: combato
-	GiveUnitCrateAction@Fremen:
-		SelectionShares: 4
-		Unit: fremen
-	GiveUnitCrateAction@Sardaukar:
-		SelectionShares: 6
-		Unit: sardaukar
-	GiveUnitCrateAction@Saboteur:
-		SelectionShares: 2
-		Unit: saboteur
-	GiveUnitCrateAction@SonicTank:
-		SelectionShares: 3
-		Unit: sonictank
-	GiveUnitCrateAction@Devast:
-		SelectionShares: 4
-		Unit: devast
-	GiveUnitCrateAction@deviatortank:
-		SelectionShares: 2
-		Unit: deviatortank
+	CloakCrateAction:
+		SelectionShares: 15
+		InitialDelay: 15
+		CloakDelay: 90
+		CloakSound: appear1.aud
+		UncloakSound: appear1.aud
+		Effect: cloak
 	RenderSimple:
 	BelowUnits:
 	ProximityCaptor:
@@ -511,7 +505,7 @@ SPICEBLOOM:
 		Name: Spice Bloom
 	SeedsResource:
 		ResourceType: Spice
-		Interval: 175
+		Interval: 75
 	RadarColorFromTerrain:
 		Terrain: Spice
 
@@ -523,7 +517,7 @@ SPICEBLOOM:
 #	Tooltip:
 #		Name: Sandworm
 #		Description: Attracted by vibrations in the sand. Will eat units whole and has a large appetite.
-#		Icon: wormjaw
+#		Icon: black
 #	Health:
 #		HP: 10000
 #		Radius: 3
@@ -541,8 +535,9 @@ SPICEBLOOM:
 #	AttackMove:
 #		JustMove: true
 #	AttackWander:
+#	Armament:
+#		Weapon: WormJaw
 #	AttackLeap:
-#		PrimaryWeapon: WormJaw
 #		CanAttackGround: no
 #	RenderInfantry:
 #	BelowUnits:

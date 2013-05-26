@@ -32,11 +32,11 @@ namespace OpenRA.Scripting
 				return;
 			}
 
-			w.EnableTick = false;
+			w.SetPauseState(true);
 
 			// Mute world sounds
 			var oldModifier = Sound.SoundVolumeModifier;
-			// Todo: this also modifies vqa audio
+			// TODO: this also modifies vqa audio
 			//Sound.SoundVolumeModifier = 0f;
 
 			// Stop music while fmv plays
@@ -51,7 +51,7 @@ namespace OpenRA.Scripting
 
 				Ui.CloseWindow();
 				Sound.SoundVolumeModifier = oldModifier;
-				w.EnableTick = true;
+				w.SetPauseState(false);
 				onComplete();
 			});
 		}

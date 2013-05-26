@@ -46,11 +46,10 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 			foreach (var p in world.Players.Where(a => !a.NonCombatant))
 			{
 				Player pp = p;
-				var c = world.LobbyInfo.ClientWithIndex(pp.ClientIndex);
 				var item = itemTemplate.Clone();
 				var nameLabel = item.Get<LabelWidget>("NAME");
 				nameLabel.GetText = () => pp.WinState == WinState.Lost ? pp.PlayerName + " (Dead)" : pp.PlayerName;
-				nameLabel.GetColor = () => pp.ColorRamp.GetColor(0);
+				nameLabel.GetColor = () => pp.Color.RGB;
 
 				var flag = item.Get<ImageWidget>("FACTIONFLAG");
 				flag.GetImageName = () => pp.Country.Race;
@@ -58,7 +57,7 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				item.Get<LabelWidget>("FACTION").GetText = () => pp.Country.Name;
 
 				var team = item.Get<LabelWidget>("TEAM");
-				team.GetText = () => (c.Team == 0) ? "-" : c.Team.ToString();
+				team.GetText = () => (pp.PlayerReference.Team == 0) ? "-" : pp.PlayerReference.Team.ToString();
 				scrollpanel.AddChild(item);
 
 				item.Get<LabelWidget>("KILLS").GetText = () => pp.Kills.ToString();

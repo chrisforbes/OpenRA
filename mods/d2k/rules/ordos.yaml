@@ -1,7 +1,5 @@
 CONYARDO:
 	Inherits: ^CONYARD
-	Buildable:
-		Owner: ordos
 	Transforms:
 		IntoActor: mcvo
 		Offset:1,1
@@ -10,13 +8,11 @@ CONYARDO:
 PWRO:
 	Inherits: ^POWER
 	Buildable:
-		Prerequisites: conyardo
 		Owner: ordos
 
 REFO:
 	Inherits: ^REFINERY
 	Buildable:
-		Prerequisites: pwro
 		Owner: ordos
 	RenderBuildingWarFactory:
 		Image: REFO
@@ -24,19 +20,45 @@ REFO:
 BARRO:
 	Inherits: ^BARRACKS
 	Buildable:
-		Prerequisites: pwro
+		Owner: ordos
+
+SILOO:
+	Inherits: ^SILO
+	Buildable:
+		Owner: ordos
+
+LIGHTO:
+	Inherits: ^LIGHT
+	Buildable:
+		Owner: ordos
+	RenderBuildingWarFactory:
+		Image: LIGHTO
+
+HEAVYO:
+	Inherits: ^HEAVY
+	Buildable:
+		Owner: ordos
+	RenderBuildingWarFactory:
+		Image: HEAVYO
+
+RADARO:
+	Inherits: ^RADAR
+	Buildable:
+		Owner: ordos
+
+STARPORTO:
+	Inherits: ^STARPORT
+	Buildable:
 		Owner: ordos
 
 HIGHTECHO:
 	Inherits: ^HIGHTECH
 	Buildable:
-		Prerequisites: radaro
 		Owner: ordos
 
 PALACEO:
 	Inherits: ^PALACE
 	Buildable:
-		Prerequisites: hightecho
 		Owner: ordos
 	AirstrikePower:
 		Image: orniicon
@@ -50,44 +72,9 @@ PALACEO:
 	RequiresPower:
 	SupportPowerChargeBar:
 
-SILOO:
-	Inherits: ^SILO
-	Buildable:
-		Prerequisites: refo
-		Owner: ordos
-
-LIGHTO:
-	Inherits: ^LIGHT
-	Buildable:
-		Prerequisites: refo
-		Owner: ordos
-	RenderBuildingWarFactory:
-		Image: LIGHTO
-
-HEAVYO:
-	Inherits: ^HEAVY
-	Buildable:
-		Prerequisites: lighto
-		Owner: ordos
-	RenderBuildingWarFactory:
-		Image: HEAVYO
-
-RADARO:
-	Inherits: ^RADAR
-	Buildable:
-		Prerequisites: barro
-		Owner: ordos
-
-STARPORTO:
-	Inherits: ^STARPORT
-	Buildable:
-		Prerequisites: radaro,hightecho
-		Owner: ordos
-
 MCVO:
 	Inherits: ^MCV
 	Buildable:
-		Prerequisites: heavyo,repair
 		Owner: ordos
 		BuiltAt: heavyo
 	Transforms:
@@ -104,23 +91,26 @@ MCVO.starport:
 		Queue: Starport
 		BuiltAt: starporto
 	Valued:
-		Cost: 1499
+		Cost: 2500
 
 COMBATO:
 	Inherits: ^COMBAT
 	Tooltip:
 		Icon: combatoicon
 	Buildable:
-		Prerequisites: heavyo
 		Owner: ordos
 		BuiltAt: heavyo
+	RevealsShroud:
+		Range: 8
+	Turreted:
+		ROT: 8
 	Mobile:
 		Speed: 9
+		ROT: 8
 		Crushes: crate, infantry
-	Turreted:
-		ROT: 7
-	RenderUnitTurreted:
+	RenderUnit:
 		Image: COMBATO
+	WithTurret:
 	LeavesHusk:
 		HuskActor: Combato.Husk
 
@@ -137,39 +127,67 @@ COMBATO.starport:
 		Queue: Starport
 		BuiltAt: starporto
 	Valued:
-		Cost: 489
+		Cost: 875
 
 TRIKEO:
 	Inherits: ^TRIKE
 	Buildable:
-		Prerequisites: lighto
 		Owner: ordos
 		BuiltAt: lighto
 	Valued:
-		Cost: 250
+		Cost: 300
 	Tooltip:
 		Name: Raider Trike
-		Description: Improved Scout\n Strong vs Infantry
+		Description: Improved Scout\n Strong vs Infantry, Light Vehicles
 		Icon: raidericon
 	Health:
-		HP: 100
+		HP: 110
 	Mobile:
 		ROT: 10
 		Speed: 14
 	RenderUnit:
 		Image: RAIDER
+	Armament:
+		Weapon: HMGo
+		LocalOffset: 256,0,128
 	AttackFrontal:
-		PrimaryWeapon: M60mgo
-		PrimaryOffset: 0,-6,0,-3
-		#PrimaryLocalOffset: 1,0,0,-3,0, -1,0,0,-3,0
 
-
+STEALTHTRIKE:
+	Inherits: ^TRIKE
+	Buildable:
+		Prerequisites: Hitech
+		Owner: ordos
+		BuiltAt: lighto
+		BuildPaletteOrder: 30
+	Valued:
+		Cost: 400
+	Tooltip:
+		Name: Stealth Raider Trike
+		Description: Invisible Raider Trike\n Strong vs Infantry, Light Vehicles
+		Icon: raidersicon
+	Health:
+		HP: 110
+	Mobile:
+		ROT: 10
+		Speed: 14
+	RenderUnit:
+		Image: RAIDER
+	Armament:
+		Weapon: HMGo
+		LocalOffset: 256,0,128
+	AttackFrontal:
+	Cloak:
+		InitialDelay: 45
+		CloakDelay: 90
+		CloakSound: appear1.aud
+		UncloakSound: appear1.aud
+	AutoTarget:
+		InitialStance: HoldFire
 
 #TRIKEO.starport:
 #	Inherits: ^TRIKE
 #	Buildable:
 #		Queue: Starport
-#		Prerequisites: lighto
 #		Owner: ordos
 #		BuiltAt: starporto
 #	RenderUnit:
@@ -185,7 +203,7 @@ CARRYALLO:
 CARRYALLO.starport:
 	Inherits: CARRYALLO
 	Valued:
-		Cost: 999
+		Cost: 1500
 
 DEVIATORTANK:
 	Inherits: ^Tank
@@ -199,7 +217,7 @@ DEVIATORTANK:
 		Queue: Armor
 		BuildPaletteOrder: 50
 		Prerequisites: heavyo,research
-		Owner: ordos
+#		Owner: ordos
 		BuiltAt: heavyo
 		Hotkey: d
 	Mobile:
@@ -212,9 +230,10 @@ DEVIATORTANK:
 	RevealsShroud:
 		Range: 5
 	RenderUnit:
+	Armament:
+		Weapon: FakeMissile
+		LocalOffset: -299,0,85 #7
 	AttackLoyalty:
-		PrimaryWeapon: FakeMissile
-		PrimaryLocalOffset: 0,7,0,-2,0 #7
 	AutoTarget:
 		InitialStance: Defend
 	Explodes:

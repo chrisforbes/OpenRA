@@ -58,6 +58,8 @@ FCOM:
 		Power: -200
 		Footprint: xx xx
 		Dimensions: 2,2
+	Valued:
+		Cost: 2000
 	Health:
 		HP: 400
 	Armor:
@@ -103,9 +105,10 @@ V01.SNIPER:
 	AutoTarget:
 	Turreted:
 		ROT: 255
+	Armament:
+		Weapon: Sniper
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Sniper
-		PrimaryLocalOffset: 0,-11,0,0,0
 	Cargo:
 		InitialUnits: sniper
 		Types: Infantry
@@ -243,7 +246,8 @@ BARL:
 	AutoTargetIgnore:
 	Armor:
 		Type: Light
-	-C4Demolishable:
+	TargetableBuilding:
+		TargetTypes: Ground, DemoTruck
 
 BRL3:
 	Inherits: ^TechBuilding
@@ -258,7 +262,8 @@ BRL3:
 	AutoTargetIgnore:
 	Armor:
 		Type: Light
-	-C4Demolishable:
+	TargetableBuilding:
+		TargetTypes: Ground, DemoTruck
 
 MISS:
 	Inherits: ^TechBuilding
@@ -267,6 +272,8 @@ MISS:
 	Building:
 		Footprint: xxx xxx
 		Dimensions: 3,2
+	Valued:
+		Cost: 2000
 	Health:
 		HP: 400
 	Armor:
@@ -283,7 +290,6 @@ BIO:
 	Tooltip:
 		Name: Biological Lab
 
-
 OILB:
 	Inherits: ^TechBuilding
 	Selectable:
@@ -292,7 +298,7 @@ OILB:
 		Footprint: xx xx
 		Dimensions: 2,2
 	Health:
-		HP: 400
+		HP: 1000
 	Armor:
 		Type: Wood
 	Bib:
@@ -304,7 +310,8 @@ OILB:
 	-MustBeDestroyed:
 	CashTrickler:
 		Period: 250
-		Amount: 50
+		Amount: 100
+		CaptureAmount: 500
 	Tooltip:
 		Name: Oil Derrick
 
@@ -315,6 +322,9 @@ BR1:
 		DamagedTemplate: 236
 		DestroyedTemplate: 237
 		SouthOffset: 0,2
+	FreeActor:
+		Actor: bridgehut
+		SpawnOffset: 2,0
 
 BR2:
 	Inherits: ^Bridge
@@ -323,6 +333,9 @@ BR2:
 		DamagedTemplate: 239
 		DestroyedTemplate: 240
 		NorthOffset: 3,0
+	FreeActor:
+		Actor: bridgehut
+		SpawnOffset: 1,1
 
 BR3:
 	Inherits: ^Bridge
@@ -347,6 +360,12 @@ BRIDGE1:
 	Building:
 		Footprint: _____ _____ _____
 		Dimensions: 5,3
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 2,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 0,1
 
 BRIDGE2:
 	Inherits: ^Bridge
@@ -357,6 +376,12 @@ BRIDGE2:
 	Building:
 		Footprint: _____ _____
 		Dimensions: 5,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 0,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 2,1
 
 SBRIDGE1:
 	Inherits: ^SVBridge
@@ -367,6 +392,13 @@ SBRIDGE1:
 	Building:
 		Footprint: ___ ___
 		Dimensions: 3,2
+	FreeActor@north:
+		Actor: bridgehut.small
+		SpawnOffset: 1,0
+	FreeActor@south:
+		Actor: bridgehut.small
+		SpawnOffset: 1,1
+
 SBRIDGE2:
 	Inherits: ^SHBridge
 	Bridge:
@@ -376,6 +408,13 @@ SBRIDGE2:
 	Building:
 		Footprint: __ __ __
 		Dimensions: 2,3
+	FreeActor@west:
+		Actor: bridgehut.small
+		SpawnOffset: 0,1
+	FreeActor@east:
+		Actor: bridgehut.small
+		SpawnOffset: 1,1
+
 SBRIDGE3:
 	Inherits: ^STDBridge
 	Bridge:
@@ -385,6 +424,13 @@ SBRIDGE3:
 	Building:
 		Footprint: ____ ____
 		Dimensions: 4,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 2,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 0,1
+
 SBRIDGE4:
 	Inherits: ^STDBridge
 	Bridge:
@@ -394,6 +440,34 @@ SBRIDGE4:
 	Building:
 		Footprint: ____ ____
 		Dimensions: 4,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 0,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 2,1
+
+BRIDGEHUT:
+	Building:
+		Footprint: __ __
+		Dimensions: 2,2
+	Selectable:
+		Selectable: false
+		Bounds: 48,48
+	BridgeHut:
+	TargetableBuilding:
+		TargetTypes: BridgeHut
+
+BRIDGEHUT.small:
+	Building:
+		Footprint: _
+		Dimensions: 1,1
+	Selectable:
+		Selectable: false
+		Bounds: 24,24
+	BridgeHut:
+	TargetableBuilding:
+		TargetTypes: BridgeHut
 
 #Desert Terrain Expansion
 V20:

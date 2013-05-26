@@ -14,6 +14,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using OpenRA.FileFormats;
 using OpenRA.FileFormats.Graphics;
@@ -54,7 +55,7 @@ namespace OpenRA.Utility
 				ShpWriter.Write(destStream, width, srcImage.Height,
 					srcImage.ToFrames(width));
 
-			Console.WriteLine(dest+" saved");
+			Console.WriteLine(dest+" saved.");
 		}
 
 		static IEnumerable<byte[]> ToFrames(this Bitmap bitmap, int width)
@@ -107,10 +108,11 @@ namespace OpenRA.Utility
 
 					x += srcImage.Width;
 
-					bitmap.UnlockBits( data );
+					bitmap.UnlockBits(data);
 				}
 
 				bitmap.Save(dest);
+				Console.WriteLine(dest+" saved");
 			}
 		}
 
@@ -174,7 +176,8 @@ namespace OpenRA.Utility
 					Console.WriteLine("FrameCount: {0}", FrameCount);
 				}
 			}
-			else if (args.Contains("--vehicle")) //resorting to RA/CnC compatible counter-clockwise frame order
+			//resorting to RA/CnC compatible counter-clockwise frame order
+			else if (args.Contains("--vehicle") || args.Contains("--projectile"))
 			{
 				frame = srcImage[startFrame];
 
@@ -295,11 +298,6 @@ namespace OpenRA.Utility
 						OffsetX = frame.FrameWidth/2 - frame.Width/2;
 						OffsetY = frame.FrameHeight/2 - frame.Height/2;
 					}
-					else if (args.Contains("--projectile"))
-					{
-						OffsetX = frame.FrameWidth/2 - frame.OffsetX;
-						OffsetY = frame.FrameHeight/2 - frame.OffsetY;
-					}
 					else if (args.Contains("--building"))
 					{
 						if (frame.OffsetX < 0) { frame.OffsetX = 0 - frame.OffsetX; }
@@ -351,8 +349,8 @@ namespace OpenRA.Utility
 				if (template.Value == null)
 					throw new InvalidOperationException("No such template '{0}'".F(templateName));
 
-				using( var image = tileset.RenderTemplate(template.Value.Id, palette) )
-					image.Save( Path.ChangeExtension( templateName, ".png" ) );
+				using (var image = tileset.RenderTemplate(template.Value.Id, palette))
+					image.Save(Path.ChangeExtension(templateName, ".png"));
 			}
 		}
 
@@ -362,17 +360,17 @@ namespace OpenRA.Utility
 			var dest = args[2];
 
 			Dune2ShpReader srcImage = null;
-			using( var s = File.OpenRead( src ) )
+			using(var s = File.OpenRead(src))
 				srcImage = new Dune2ShpReader(s);
 
 			var size = srcImage.First().Size;
 
-			if (!srcImage.All( im => im.Size == size ))
+			if (!srcImage.All(im => im.Size == size))
 				throw new InvalidOperationException("All the frames must be the same size to convert from Dune2 to RA");
 
-			using( var destStream = File.Create(dest) )
+			using (var destStream = File.Create(dest))
 				ShpWriter.Write(destStream, size.Width, size.Height,
-					srcImage.Select( im => im.Image ));
+					srcImage.Select(im => im.Image));
 		}
 
 		public static void ExtractFiles(string[] args)
@@ -383,14 +381,18 @@ namespace OpenRA.Utility
 			var manifest = new Manifest(mods);
 			FileSystem.LoadFromManifest(manifest);
 
-			foreach( var f in files )
+			foreach (var f in files)
 			{
+				if (f == "--userdir")
+					break;
+
 				var src = FileSystem.Open(f);
 				if (src == null)
 					throw new InvalidOperationException("File not found: {0}".F(f));
 				var data = src.ReadAllBytes();
-
-				File.WriteAllBytes( f, data );
+				var output = args.Contains("--userdir") ? Platform.SupportDir+f : f;
+				File.WriteAllBytes(output, data);
+				Console.WriteLine(output+" saved.");
 			}
 		}
 
@@ -474,6 +476,60 @@ namespace OpenRA.Utility
 			using( var destStream = File.Create(args[2]) )
 				ShpWriter.Write(destStream, srcImage.Width, srcImage.Height,
 					destFrames.Select(f => f.Image));
+		}
+
+		static string FriendlyTypeName(Type t)
+		{
+			if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+				return "Dictionary<{0},{1}>".F(t.GetGenericArguments().Select(FriendlyTypeName).ToArray());
+
+			return t.Name;
+		}
+
+		public static void ExtractTraitDocs(string[] args)
+		{
+			Game.modData = new ModData(args[1]);
+			FileSystem.LoadFromManifest(Game.modData.Manifest);
+			Rules.LoadRules(Game.modData.Manifest, new Map());
+
+			Console.WriteLine("## Documentation");
+			Console.WriteLine(
+				"This documentation is aimed at modders and contributors of OpenRA. It displays all traits with default values and developer commentary. " +
+				"Please do not edit it directly, but add new `[Desc(\"String\")]` tags to the source code. This file has been automatically generated on {0}. " +
+				"Type `make docs` to create a new one. A copy of this is uploaded to https://github.com/OpenRA/OpenRA/wiki/Traits " +
+				"as well as compiled to HTML and shipped with every release during the automated packaging process.", DateTime.Now);
+			Console.WriteLine();
+			Console.WriteLine("```yaml");
+			Console.WriteLine();
+
+			foreach (var t in Game.modData.ObjectCreator.GetTypesImplementing<ITraitInfo>())
+			{
+				if (t.ContainsGenericParameters || t.IsAbstract)
+					continue; // skip helpers like TraitInfo<T>
+
+				var traitName = t.Name.EndsWith("Info") ? t.Name.Substring(0, t.Name.Length - 4) : t.Name;
+				var traitDescLines = t.GetCustomAttributes<DescAttribute>(false).SelectMany(d => d.Lines);
+				Console.WriteLine("\t{0}:{1}", traitName, traitDescLines.Count() == 1 ? " # " + traitDescLines.First() : "");
+				if (traitDescLines.Count() >= 2)
+					foreach (var line in traitDescLines)
+						Console.WriteLine("\t\t# {0}", line);
+
+				var liveTraitInfo = Game.modData.ObjectCreator.CreateBasic(t);
+
+				foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy))
+				{
+					var fieldDescLines = f.GetCustomAttributes<DescAttribute>(true).SelectMany(d => d.Lines);
+					var fieldType = FriendlyTypeName(f.FieldType);
+					var defaultValue = FieldSaver.SaveField(liveTraitInfo, f.Name).Value.Value;
+					Console.WriteLine("\t\t{0}: {1} # Type: {2}{3}", f.Name, defaultValue, fieldType, fieldDescLines.Count() == 1 ? ". " + fieldDescLines.First() : "");
+					if (fieldDescLines.Count() >= 2)
+						foreach (var line in fieldDescLines)
+							Console.WriteLine("\t\t# {0}", line);
+				}
+			}
+
+			Console.WriteLine();
+			Console.WriteLine("```");
 		}
 	}
 }

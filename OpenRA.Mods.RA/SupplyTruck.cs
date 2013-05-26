@@ -13,12 +13,15 @@ using System.Drawing;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Mods.RA.Orders;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Donate money to building if it has the AcceptSupplies: trait.")]
 	class SupplyTruckInfo : ITraitInfo
 	{
+		[Desc("The amount of cash the owner of the building recieves.")]
 		public readonly int Payload = 500;
 		public object Create(ActorInitializer init) { return new SupplyTruck(this); }
 	}
@@ -56,12 +59,11 @@ namespace OpenRA.Mods.RA
 			{
 				self.SetTargetLine(Target.FromOrder(order), Color.Yellow);
 				self.CancelActivity();
-				self.QueueActivity(new Enter(order.TargetActor));
-				self.QueueActivity(new DonateSupplies(order.TargetActor, Info.Payload));
+				self.QueueActivity(new Enter(order.TargetActor, new DonateSupplies(order.TargetActor, Info.Payload)));
 			}
 		}
 
-		class SupplyTruckOrderTargeter : UnitTraitOrderTargeter<Building>
+		class SupplyTruckOrderTargeter : UnitOrderTargeter
 		{
 			public SupplyTruckOrderTargeter()
 				: base("DeliverSupplies", 5, "enter", false, true)
@@ -70,9 +72,14 @@ namespace OpenRA.Mods.RA
 
 			public override bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
 			{
-				if (!base.CanTargetActor(self, target, forceAttack, forceQueued, ref cursor)) return false;
-				if (target.AppearsHostileTo(self)) return false;
-				if (!target.HasTrait<AcceptsSupplies>()) return false;
+				if (!base.CanTargetActor(self, target, forceAttack, forceQueued, ref cursor))
+					return false;
+
+				if (target.AppearsHostileTo(self))
+					return false;
+
+				if (!target.HasTrait<AcceptsSupplies>())
+					return false;
 
 				IsQueued = forceQueued;
 				return true;

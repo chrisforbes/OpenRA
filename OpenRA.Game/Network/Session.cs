@@ -37,23 +37,34 @@ namespace OpenRA.Network
 			return Slots.FirstOrDefault(s => !s.Value.Closed && ClientInSlot(s.Key) == null).Key;
 		}
 
+		public bool IsSinglePlayer
+		{
+			get { return Clients.Count(c => c.Bot == null) == 1; }
+		}
+
 		public enum ClientState { NotReady, Ready, Disconnected = 1000 }
 
 		public class Client
 		{
 			public int Index;
-			public ColorRamp PreferredColorRamp; // Color that the client normally uses from settings.yaml.
-			public ColorRamp ColorRamp; // Actual color that the client is using.
-										// Usually the same as PreferredColorRamp but can be different on maps with locked colors.
+			public HSLColor PreferredColor; // Color that the client normally uses from settings.yaml.
+			public HSLColor Color; // Actual color that the client is using.
+								   // Usually the same as PreferredColor but can be different on maps with locked colors.
 			public string Country;
 			public int SpawnPoint;
 			public string Name;
+			public string IpAddress;
 			public ClientState State;
 			public int Team;
 			public string Slot;	// slot ID, or null for observer
 			public string Bot; // Bot type, null for real clients
+			public int BotControllerClientIndex; // who added the bot to the slot
 			public bool IsAdmin;
 			public bool IsReady { get { return State == ClientState.Ready; } }
+			public bool IsObserver { get { return Slot == null; } }
+			public int Latency = -1;
+			public int LatencyJitter = -1;
+			public int[] LatencyHistory = {};
 		}
 
 		public class Slot
@@ -75,13 +86,14 @@ namespace OpenRA.Network
 			public string Map;
 			public string[] Ban;
 			public string[] Mods = { "ra" };	// mod names
-			public int OrderLatency = 3;
+			public int OrderLatency = 3;		// net tick frames (x 120 = ms)
 			public int RandomSeed = 0;
-			public bool LockTeams = true;	// don't allow team changes after game start.
+			public bool FragileAlliances = false;	// Allow diplomatic stance changes after game start.
 			public bool AllowCheats = false;
 			public bool Dedicated;
 			public string Difficulty;
 			public bool Crates = true;
+			public bool AllowVersionMismatch;
 		}
 
 		public Session(string[] mods)

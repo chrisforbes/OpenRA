@@ -28,6 +28,8 @@ namespace OpenRA
 		Lazy<IOccupySpace> occupySpace;
 		IHasLocation HasLocation;
 		Lazy<IMove> Move;
+		Lazy<IFacing> Facing;
+
 		public Cached<Rectangle> Bounds;
 		public Cached<Rectangle> ExtendedBounds;
 
@@ -44,7 +46,26 @@ namespace OpenRA
 				return HasLocation.PxPosition;
 			}
 		}
-		
+
+		public WPos CenterPosition
+		{
+			get
+			{
+				var altitude = Move.Value != null ? Move.Value.Altitude : 0;
+				return CenterLocation.ToWPos(altitude);
+			}
+		}
+
+		public WRot Orientation
+		{
+			get
+			{
+				// TODO: Support non-zero pitch/roll in IFacing (IOrientation?)
+				var facing = Facing.Value != null ? Facing.Value.Facing : 0;
+				return new WRot(WAngle.Zero, WAngle.Zero, WAngle.FromFacing(facing));
+			}
+		}
+
 		public Shroud.ActorVisibility Sight;
 
 		[Sync] public Player Owner;
@@ -74,6 +95,7 @@ namespace OpenRA
 			}
 
 			Move = Lazy.New(() => TraitOrDefault<IMove>());
+			Facing = Lazy.New(() => TraitOrDefault<IFacing>());
 
 			Size = Lazy.New(() =>
 			{
@@ -121,9 +143,9 @@ namespace OpenRA
 		OpenRA.FileFormats.Lazy<int2> Size;
 
 		// note: these delegates are cached to avoid massive allocation.
-		Func<IRender, WorldRenderer, IEnumerable<Renderable>> ApplyIRender;
-		Func<IEnumerable<Renderable>, IRenderModifier, WorldRenderer, IEnumerable<Renderable>> ApplyRenderModifier;
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		Func<IRender, WorldRenderer, IEnumerable<IRenderable>> ApplyIRender;
+		Func<IEnumerable<IRenderable>, IRenderModifier, WorldRenderer, IEnumerable<IRenderable>> ApplyRenderModifier;
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
 			var mods = TraitsImplementing<IRenderModifier>();
 			var sprites = TraitsImplementing<IRender>().SelectMany(x => ApplyIRender(x, wr));
@@ -240,7 +262,7 @@ namespace OpenRA
 			} );
 		}
 
-		// todo: move elsewhere.
+		// TODO: move elsewhere.
 		public void ChangeOwner(Player newOwner)
 		{
 			World.AddFrameEndTask(w =>

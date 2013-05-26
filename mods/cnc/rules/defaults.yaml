@@ -27,10 +27,12 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
 	AcceptsCloakCrate:
 	WithSmoke:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Tank:
 	AppearsOnRadar:
@@ -61,13 +63,15 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
 	AcceptsCloakCrate:
 	WithSmoke:
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Helicopter:
 	AppearsOnRadar:
@@ -89,7 +93,10 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
+	DebugMuzzlePositions:
 
 ^Infantry:
 	AppearsOnRadar:
@@ -105,7 +112,7 @@
 		Crushes: crate
 		SharesCell: true
 		TerrainSpeeds:
-			Clear: 90
+			Clear: 100
 			Rough: 80
 			Road: 100
 			Tiberium: 70
@@ -121,7 +128,7 @@
 	Buildable:
 		Queue: Infantry
 	TakeCover:
-		BarrelOffset: 0,-2,0,4
+		ProneSpeed: 0.6
 	RenderInfantryProne:
 	AttackMove:
 	Passenger:
@@ -132,13 +139,16 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	SpawnViceroid:
 		Probability: 2
 	CrushableInfantry:
+		WarnProbability: 60
 	RepairableNear:
 		Buildings: hosp
 		CloseEnough: 1
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^CivInfantry:
 	Inherits: ^Infantry
@@ -161,13 +171,14 @@
 		HP: 25
 	RevealsShroud:
 		Range: 2
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ActorLostNotification:
-		Notification: civdead1.aud
+		Notification: CivilianKilled
 		NotifyAll: true
 	ScaredyCat:
-	RenderInfantryPanic:	
+	RenderInfantryPanic:
 	AttackMove:
 		JustMove: yes
 	CrushableInfantry:
@@ -185,7 +196,7 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	DebugMuzzlePositions:
 
 ^Ship:
 	AppearsOnRadar:
@@ -203,8 +214,10 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
 
 ^Building:
 	AppearsOnRadar:
@@ -212,13 +225,15 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Armor:
 		Type: Wood
 	RepairableBuilding:
 		RepairPercent: 40
 		RepairStep: 14
 	Building:
+		Adjacent: 4
+		RequiresBaseProvider: true
 		Dimensions: 1,1
 		Footprint: x
 		BuildSounds: constru2.aud, hvydoor1.aud
@@ -237,14 +252,10 @@
 		ActorTypes: e6,e1
 	MustBeDestroyed:
 	GivesExperience:
-	CaptureNotification@GDI:
-		Race: gdi
-		Notification: gdicapt1.aud
-	CaptureNotification@NOD:
-		Race: nod
-		Notification: nodcapt1.aud
+	CaptureNotification:
+		Notification: BuildingCaptured
 	ActorLostNotification:
-		Notification: strclost.aud
+		Notification: BuildingLost
 	EditorAppearance:
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
@@ -252,7 +263,9 @@
 	Sellable:
 	Capturable:
 	CapturableBar:
-	C4Demolishable:
+	DebugMuzzlePositions:
+	Guardable:
+		Range: 3
 
 ^CivBuilding:
 	Inherits: ^Building
@@ -323,7 +336,7 @@
 		Adjacent: 7
 		TerrainTypes: Clear,Road
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Wall:
 		CrushClasses: wall
 		CrushSound: sandbag2.aud
@@ -340,7 +353,7 @@
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
 	Sellable:
-	C4Demolishable:
+	Guardable:
 
 ^Tree:
 	Tooltip:
@@ -360,8 +373,6 @@
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
 
 ^Rock:
@@ -391,6 +402,7 @@
 	TargetableUnit:
 	TransformOnCapture:
 		ForceHealthPercentage: 25
+	BelowUnits:
 #	Capturable:
 #		Type: husk
 #		AllowAllies: true
@@ -408,6 +420,3 @@
 	SoundOnDamageTransition:
 		DamagedSound: xplos.aud
 		DestroyedSound: xplobig4.aud
-	Building:
-		Footprint: ______ ______ ______ ______
-		Dimensions: 6,4

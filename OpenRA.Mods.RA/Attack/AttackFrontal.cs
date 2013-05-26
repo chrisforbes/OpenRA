@@ -9,10 +9,12 @@
 #endregion
 
 using System;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Unit got to face the target")]
 	public class AttackFrontalInfo : AttackBaseInfo
 	{
 		public readonly int FacingTolerance = 1;
@@ -42,10 +44,10 @@ namespace OpenRA.Mods.RA
 
 		public override Activity GetAttackActivity(Actor self, Target newTarget, bool allowMove)
 		{
-			var weapon = ChooseWeaponForTarget(newTarget);
-			if( weapon == null )
+			var weapon = ChooseArmamentForTarget(newTarget);
+			if (weapon == null)
 				return null;
-			return new Activities.Attack(newTarget, Math.Max(0, (int)weapon.Info.Range), allowMove);
+			return new Activities.Attack(newTarget, Math.Max(0, (int)weapon.Weapon.Range), allowMove);
 		}
 	}
 }

@@ -13,10 +13,12 @@ using System.Drawing;
 using OpenRA.Effects;
 using OpenRA.GameRules;
 using OpenRA.Graphics;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
+	[Desc("Not a sprite, but an engine effect.")]
 	class LaserZapInfo : IProjectileInfo
 	{
 		public readonly int BeamRadius = 1;
@@ -27,7 +29,7 @@ namespace OpenRA.Mods.RA.Effects
 
 		public IEffect Create(ProjectileArgs args)
 		{
-			var c = UsePlayerColor ? args.firedBy.Owner.ColorRamp.GetColor(0) : Color;
+			var c = UsePlayerColor ? args.firedBy.Owner.Color.RGB : Color;
 			return new LaserZap(args, this, c);
 		}
 	}
@@ -74,20 +76,22 @@ namespace OpenRA.Mods.RA.Effects
 					world.AddFrameEndTask(w => w.Remove(this));
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
 			if (explosion != null)
-				yield return new Renderable(explosion.Image, args.dest.ToFloat2() - .5f * explosion.Image.size,
-				                            wr.Palette("effect"), (int)args.dest.Y);
+				yield return new SpriteRenderable(explosion.Image, args.dest.ToFloat2(),
+				                                  wr.Palette("effect"), (int)args.dest.Y);
 
 			if (ticks >= info.BeamDuration)
 				yield break;
 
 			var rc = Color.FromArgb((info.BeamDuration - ticks)*255/info.BeamDuration, color);
 
+			var src = new PPos(args.src.X, args.src.Y - args.srcAltitude);
+			var dest = new PPos(args.dest.X, args.dest.Y - args.destAltitude);
 			var wlr = Game.Renderer.WorldLineRenderer;
 			wlr.LineWidth = info.BeamRadius * 2;
-			wlr.DrawLine(args.src.ToFloat2(), args.dest.ToFloat2(), rc, rc);
+			wlr.DrawLine(src.ToFloat2(), dest.ToFloat2(), rc, rc);
 			wlr.Flush();
 			wlr.LineWidth = 1f;
 		}

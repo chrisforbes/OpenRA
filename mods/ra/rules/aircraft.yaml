@@ -3,7 +3,7 @@ BADR:
 		LZRange: 4
 	Inherits: ^Plane
 	Health:
-		HP: 60
+		HP: 300
 	Armor:
 		Type: Light
 	Plane:
@@ -20,18 +20,18 @@ BADR:
 	Tooltip:
 		Name: Badger
 	Contrail@1:
-		ContrailOffset: 11, -11
+		Offset: -469,469,0
 	Contrail@2:
-		ContrailOffset: -11, -11
+		Offset: -469,-469,0
 	FallsToEarth:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged@0:
-		Offset: 11, -11
+		Offset: -469,469,0
 		Interval: 2
 	SmokeTrailWhenDamaged@1:
-		Offset: -11, -11
+		Offset: -469,-469,0
 		Interval: 2
 	-EjectOnDeath:
 	-GpsDot:
@@ -42,7 +42,7 @@ BADR.bomber:
 		Weapon: ParaBomb
 	Inherits: ^Plane
 	Health:
-		HP: 60
+		HP: 300
 	Armor:
 		Type: Light
 	Plane:
@@ -59,18 +59,18 @@ BADR.bomber:
 	Tooltip:
 		Name: Badger
 	Contrail@1:
-		ContrailOffset: 11, -11
+		Offset: 469,469,0
 	Contrail@2:
-		ContrailOffset: -11, -11
+		Offset: 469,-469,0
 	FallsToEarth:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged@0:
-		Offset: 11, -11
+		Offset: -469,469,0
 		Interval: 2
 	SmokeTrailWhenDamaged@1:
-		Offset: -11, -11
+		Offset: -469,-469,0
 		Interval: 2
 	-EjectOnDeath:
 	-GpsDot:
@@ -95,9 +95,11 @@ MIG:
 		Type: Light
 	RevealsShroud:
 		Range: 12
+	Armament:
+		Weapon: Maverick
+		LocalOffset: 0,-640,0, 0,640,0
+		LocalYaw: -40, 24
 	AttackPlane:
-		PrimaryWeapon: Maverick
-		PrimaryLocalOffset: -15,0,0,0,-10, 15,0,0,0,6
 		FacingTolerance: 20
 	Plane:
 		InitialFacing: 192
@@ -105,6 +107,7 @@ MIG:
 		Speed: 20
 		RearmBuildings: afld
 	RenderUnit:
+		CameraPitch: 99
 	WithShadow:
 	LimitedAmmo:
 		Ammo: 8
@@ -113,15 +116,15 @@ MIG:
 	Selectable:
 		Bounds: 44,40,0,0
 	Contrail@1:
-		ContrailOffset: 16,-14
+		Offset: -598,-683,0
 	Contrail@2:
-		ContrailOffset: -16,-14
+		Offset: -598,683,0
 	FallsToEarth:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged:
-		Offset: 0,-20,0,-4
+		Offset: -853,0,171
 		Interval: 2
 
 YAK:
@@ -144,11 +147,13 @@ YAK:
 		Type: Light
 	RevealsShroud:
 		Range: 10
+	Armament@PRIMARY:
+		Weapon: ChainGun.Yak
+		LocalOffset: 256,-213,0
+	Armament@SECONDARY:
+		Weapon: ChainGun.Yak
+		LocalOffset: 256,213,0
 	AttackPlane:
-		PrimaryWeapon: ChainGun.Yak
-		SecondaryWeapon: ChainGun.Yak
-		PrimaryOffset: -5,-6,0,0
-		SecondaryOffset: 5,-6,0,0
 		FacingTolerance: 20
 	Plane:
 		RearmBuildings: afld
@@ -156,6 +161,7 @@ YAK:
 		ROT: 5
 		Speed: 16
 	RenderUnit:
+		CameraPitch: 99
 	WithShadow:
 	LimitedAmmo:
 		Ammo: 18
@@ -165,13 +171,13 @@ YAK:
 	ReturnOnIdle:
 	WithMuzzleFlash:
 	Contrail:
-		ContrailOffset: 0, -20
+		Offset: -853,0,0
 	FallsToEarth:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged:
-		Offset: 0, -20
+		Offset: -853,0,0
 		Interval: 2
 		
 
@@ -203,10 +209,10 @@ TRAN:
 		LandableTerrainTypes: Clear,Rough,Road,Ore,Beach
 	RenderUnit:
 	WithRotor@PRIMARY:
-		Offset: 0,14,0,-8
+		Offset: -597,0,341
 	WithRotor@SECONDARY:
 		Id: rotor_2
-		Offset: 0,-14,0,-5
+		Offset: 597,0,213
 	WithShadow:
 	Cargo:
 		Types: Infantry
@@ -250,11 +256,13 @@ HELI:
 		Type: Light
 	RevealsShroud:
 		Range: 12
+	Armament@PRIMARY:
+		Weapon: HellfireAA
+		LocalOffset: 0,-213,-85
+	Armament@SECONDARY:
+		Weapon: HellfireAG
+		LocalOffset: 0,213,-85
 	AttackHeli:
-		PrimaryWeapon: HellfireAG
-		SecondaryWeapon: HellfireAA
-		PrimaryOffset: -5,0,0,2
-		SecondaryOffset: 5,0,0,2
 		FacingTolerance: 20
 	Helicopter:
 		RearmBuildings: hpad
@@ -264,7 +272,7 @@ HELI:
 		Speed: 16
 	RenderUnit:
 	WithRotor:
-		Offset: 0,0,0,-2
+		Offset: 0,0,85
 	WithShadow:
 	LimitedAmmo:
 		Ammo: 8
@@ -272,7 +280,7 @@ HELI:
 	FallsToEarth:
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged:
-		Offset: 0,-10
+		Offset: -427,0,0
 
 HIND:
 	Inherits: ^Helicopter
@@ -294,11 +302,13 @@ HIND:
 		Type: Light
 	RevealsShroud:
 		Range: 10
+	Armament@PRIMARY:
+		Weapon: ChainGun
+		LocalOffset: 85,-213,-85
+	Armament@SECONDARY:
+		Weapon: ChainGun
+		LocalOffset: 85,213,-85
 	AttackHeli:
-		PrimaryWeapon: ChainGun
-		SecondaryWeapon: ChainGun
-		PrimaryOffset: -5,-2,0,2
-		SecondaryOffset: 5,-2,0,2
 		FacingTolerance: 20
 	Helicopter:
 		RearmBuildings: hpad
@@ -320,7 +330,7 @@ HIND:
 	FallsToEarth:
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged:
-		Offset: 0,-10
+		Offset: -427,0,0
 
 U2:
 	Inherits: ^Plane
@@ -337,13 +347,13 @@ U2:
 	-Selectable:
 	-GainsExperience:
 	Contrail@1:
-		ContrailOffset: 16, -17
+		Offset: -725,683,0
 	Contrail@2:
-		ContrailOffset: -16, -17
+		Offset: -725,-683,0
 	FallsToEarth:
 		Spins: no
 		Moves: yes
 		Explosion: UnitExplode
 	SmokeTrailWhenDamaged:
-		Offset: 0,-25
+		Offset: -1c43,0,0
 		Interval: 2

@@ -10,11 +10,12 @@
 
 using System;
 using System.Drawing;
+using System.Linq;
 using OpenRA.Graphics;
 
 namespace OpenRA.Widgets
 {
-	public interface ILayout { void AdjustChild(Widget w); }
+	public interface ILayout { void AdjustChild(Widget w); void AdjustChildren(); }
 
 	public class ScrollPanelWidget : Widget
 	{
@@ -25,6 +26,7 @@ namespace OpenRA.Widgets
 		public string Background = "scrollpanel-bg";
 		public int ContentHeight = 0;
 		public ILayout Layout;
+		public int MinimumThumbSize = 10;
 		protected float ListOffset = 0;
 		protected bool UpPressed = false;
 		protected bool DownPressed = false;
@@ -50,6 +52,25 @@ namespace OpenRA.Widgets
 			base.AddChild(child);
 		}
 
+		public override void RemoveChild(Widget child)
+		{
+			base.RemoveChild(child);
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
+		public void ReplaceChild(Widget oldChild, Widget newChild)
+		{
+
+			oldChild.Removed();
+			newChild.Parent = this;
+			Children[Children.IndexOf(oldChild)] = newChild;
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
+
+
 		public override void DrawOuter()
 		{
 			if (!IsVisible())
@@ -59,7 +80,7 @@ namespace OpenRA.Widgets
 
 			var ScrollbarHeight = rb.Height - 2 * ScrollbarWidth;
 
-			var thumbHeight = ContentHeight == 0 ? 0 : (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f));
+			var thumbHeight = ContentHeight == 0 ? 0 : Math.Max(MinimumThumbSize, (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f)));
 			var thumbOrigin = rb.Y + ScrollbarWidth + (int)((ScrollbarHeight - thumbHeight)*(-1f*ListOffset/(ContentHeight - rb.Height)));
 			if (thumbHeight == ScrollbarHeight)
 				thumbHeight = 0;
@@ -124,6 +145,25 @@ namespace OpenRA.Widgets
 			ListOffset = 0;
 		}
 
+		public void ScrollToItem(string itemKey)
+		{
+			var item = Children.FirstOrDefault(c =>
+			{
+				var si = c as ScrollItemWidget;
+				return si != null && si.ItemKey == itemKey;
+			});
+
+			if (item == null)
+				return;
+
+			// Scroll the item to be visible
+			if (item.Bounds.Top + ListOffset < 0)
+				ListOffset = ItemSpacing - item.Bounds.Top;
+
+			if (item.Bounds.Bottom + ListOffset > RenderBounds.Height)
+				ListOffset = RenderBounds.Height - item.Bounds.Bottom - ItemSpacing;
+		}
+
 		public override void Tick ()
 		{
 			if (UpPressed) Scroll(1);
@@ -167,7 +207,7 @@ namespace OpenRA.Widgets
 			{
 				var rb = RenderBounds;
 				var ScrollbarHeight = rb.Height - 2 * ScrollbarWidth;
-				var thumbHeight = ContentHeight == 0 ? 0 : (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f));
+				var thumbHeight = ContentHeight == 0 ? 0 : Math.Max(MinimumThumbSize, (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f)));
 				var oldOffset = ListOffset;
 				ListOffset += (int)((lastMouseLocation.Y - mi.Location.Y)*(ContentHeight - rb.Height)*1f/(ScrollbarHeight - thumbHeight));
 				ListOffset = Math.Min(0,Math.Max(rb.Height - ContentHeight, ListOffset));

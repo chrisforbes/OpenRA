@@ -61,6 +61,8 @@ namespace OpenRA.Mods.Cnc.Widgets
 	class ProductionTabsWidget : Widget
 	{
 		public readonly string PaletteWidget = null;
+		public readonly string TypesContainer = null;
+
 		public readonly float ScrollVelocity = 4f;
 		public readonly int TabWidth = 30;
 		public readonly int ArrowWidth = 20;
@@ -156,7 +158,7 @@ namespace OpenRA.Mods.Cnc.Widgets
 			{
 				var rect = new Rectangle(origin.X + ContentWidth, origin.Y, TabWidth, rb.Height);
 				var hover = !leftHover && !rightHover && Ui.MouseOverWidget == this && rect.Contains(Viewport.LastMousePos);
-				var baseName = tab.Queue == CurrentQueue ? "button-toggled" : "button";
+				var baseName = tab.Queue == CurrentQueue ? "button-highlighted" : "button";
 				ButtonWidget.DrawBackground(baseName, rect, false, false, hover, false);
 				ContentWidth += TabWidth - 1;
 
@@ -227,13 +229,13 @@ namespace OpenRA.Mods.Cnc.Widgets
 			}
 
 			if (mi.Button != MouseButton.Left)
-				return false;
+				return true;
 
 			if (mi.Event == MouseInputEvent.Down && !TakeFocus(mi))
-				return false;
+				return true;
 
 			if (!Focused)
-				return false;
+				return true;
 
 			if (Focused && mi.Event == MouseInputEvent.Up)
 				return LoseFocus(mi);
@@ -257,10 +259,9 @@ namespace OpenRA.Mods.Cnc.Widgets
 			{
 				CurrentQueue = Groups[queueGroup].Tabs[offsetloc.X/(TabWidth - 1)].Queue;
 				Sound.PlayNotification(null, "Sounds", "ClickSound", null);
-				return true;
 			}
 
-			return leftPressed || rightPressed;
+			return true;
 		}
 
 		public override bool HandleKeyPress(KeyInput e)
