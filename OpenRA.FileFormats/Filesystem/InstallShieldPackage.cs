@@ -87,6 +87,7 @@ namespace OpenRA.FileFormats
 			var FileName = new String(reader.ReadChars(NameLength));
 
 			var hash = PackageEntry.HashFilename(FileName, PackageHashType.Classic);
+			// Filename can appear more than once in nested folders
 			if(!index.ContainsKey(hash))
 				index.Add(hash, new PackageEntry(hash,AccumulatedData, CompressedSize));
 			filenames.Add(FileName);
