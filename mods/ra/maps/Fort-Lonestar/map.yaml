@@ -755,7 +755,7 @@ Rules:
 			Description: Elite commando infantry, armed with 	\nmodular cannons and grenade launcher.\n  Strong vs 	Vehicles, Infantry\n  Weak vs Aircraft
 			Icon: e1icon
 		Selectable:
-			Voice: VolkovVoice
+			Voice: GenericVoice
 			Bounds: 12,17,0,-9
 		Health:
 			HP: 200
