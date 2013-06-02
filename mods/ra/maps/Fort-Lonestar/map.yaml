@@ -741,41 +741,6 @@ Rules:
 			Prerequisites: barr,oilb
 		Valued:
 			Cost: 750
-	E8:
-		Inherits: ^Infantry
-		Buildable:
-			Queue: Infantry
-			BuildPaletteOrder: 110
-			Prerequisites: stek
-			Owner: None
-		Valued:
-			Cost: 1800
-		Tooltip:
-			Name: Volkov
-			Description: Elite commando infantry, armed with 	\nmodular cannons and grenade launcher.\n  Strong vs 	Vehicles, Infantry\n  Weak vs Aircraft
-		Selectable:
-			Voice: VolkovVoice
-			Bounds: 12,17,0,-9
-		Health:
-			HP: 200
-		Armor:
-			Type: Heavy
-		Mobile:
-			Speed: 5
-		RevealsShroud:
-			Range: 7
-		Passenger:
-			PipType: Red
-		AttackFrontal:
-			PrimaryWeapon: VolkNapalm
-		Explodes:
-			Weapon: UnitExplodeSmall
-			Chance: 100
-		TakeCover:
-		-RenderInfantry:
-		RenderInfantryProne:
-			IdleAnimations: idle1
-		-CrushableInfantry:
 	MECH:
 		Buildable:
 			Owner: None
@@ -890,7 +855,8 @@ Rules:
 			PrimaryRecoil: 8
 			PrimaryRecoilRecovery: 0.7
 			SecondaryRecoil: 2
-		RenderUnitTurreted:
+		RenderUnit:
+		WithTurret:
 		AutoTarget:
 		Explodes:
 			Weapon: napalm
@@ -940,20 +906,10 @@ Rules:
 		-GainsExperience:
 		Tooltip:
 			Name: Badger
-		Contrail@1:
-			ContrailOffset: 11, -11
-		Contrail@2:
-			ContrailOffset: -11, -11
 		FallsToEarth:
 			Spins: no
 			Moves: yes
 			Explosion: UnitExplode
-		SmokeTrailWhenDamaged@0:
-			Offset: 11, -11
-			Interval: 2
-		SmokeTrailWhenDamaged@1:
-			Offset: -11, -11
-			Interval: 2
 		-EjectOnDeath:
 		-GpsDot:
 

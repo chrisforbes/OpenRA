@@ -36,8 +36,8 @@ namespace OpenRA.Mods.RA.Missions
         Actor paradrop3;
         Actor paradrop4;
 
-        Actor baseA;
-        Actor baseB;
+ //       Actor baseA;
+ //     Actor baseB;
 
         World world;
         
@@ -46,7 +46,7 @@ namespace OpenRA.Mods.RA.Missions
         const string ShortEvacuateTemplate = "Wave {0}";
         static readonly string[] PatrolA = { "e1", "e2", "e1" };
         static readonly string[] Infantry = { "e4", "e1", "e1", "e2", "e1", "e2" };
-        static readonly string[] InfantryAdvanced = { "e4", "e1", "e1", "shok", "e1", "e2", "e4" };
+//        static readonly string[] InfantryAdvanced = { "e4", "e1", "e1", "shok", "e1", "e2", "e4" };
         static readonly string[] Vehicles = { "arty", "ftrk", "ftrk", "jeep", "jeep", "jeep", "apc", "apc", };
         static readonly string[] Volkov = { "e8" };
         const string boss = "4tnk";
@@ -87,7 +87,7 @@ namespace OpenRA.Mods.RA.Missions
             {
                 for (int i = 1; i <= VehicleSquadCount; i++)
                 {
-                    var enemies = world.Actors.Where(u => u.IsInWorld && !u.IsDead() && (u.Owner == soviets)
+                    world.Actors.Where(u => u.IsInWorld && !u.IsDead() && (u.Owner == soviets)
                         && !u.HasTrait<Mobile>());
                     var route = world.SharedRandom.Next(sovietEntryPoints.Length);
                     var spawnPoint = sovietEntryPoints[route];
@@ -107,19 +107,10 @@ namespace OpenRA.Mods.RA.Missions
             {
                 for (int i = 1; i <= AttackSquadCount; i++)
                 {
-                    var enemies = world.Actors.Where(u => u.IsInWorld && !u.IsDead() && (u.Owner == soviets)
+                    world.Actors.Where(u => u.IsInWorld && !u.IsDead() && (u.Owner == soviets)
                         && !u.HasTrait<Mobile>());
                     var route = world.SharedRandom.Next(sovietEntryPoints.Length);
                     var spawnPoint = sovietEntryPoints[route];
-                    IEnumerable<string> units;
-                    if (world.FrameNumber >= 1500 * 10)
-                    {
-                        units = InfantryAdvanced;
-                    }
-                    else
-                    {
-                        units = Infantry;
-                    }
                     for (int r = 1; r < AttackSquad; r++)
                     {
                         var squad = world.CreateActor(Infantry.Random(world.SharedRandom),
@@ -400,8 +391,8 @@ namespace OpenRA.Mods.RA.Missions
             paradrop2 = actors["Paradrop2"];
             paradrop3 = actors["Paradrop3"];
             paradrop4 = actors["Paradrop4"];
-            baseA = actors["BaseA"];
-            baseB = actors["BaseB"];
+//            baseA = actors["BaseA"];
+  //          baseB = actors["BaseB"];
             MissionUtils.PlayMissionMusic();
             Game.AddChatLine(Color.Cyan, "Mission", "Defend Fort LoneStar At All costs!");
         }
