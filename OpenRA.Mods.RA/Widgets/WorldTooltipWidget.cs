@@ -31,9 +31,10 @@ namespace OpenRA.Mods.RA.Widgets
 				return;
 
 			var cell = Game.viewport.ViewToWorld(Viewport.LastMousePos);
-			if (!world.Map.IsInMap(cell)) return;
+			if (!world.Map.IsInMap(cell))
+				return;
 
-			if (world.LocalPlayer != null && !world.RenderedShroud.IsExplored(cell))
+			if (world.ShroudObscures(cell))
 			{
 				var utext = "Unexplored Terrain";
 				var usz = Game.Renderer.Fonts["Bold"].Measure(utext) + new int2(20, 24);
@@ -79,7 +80,7 @@ namespace OpenRA.Mods.RA.Widgets
 			if (ownerText != "")
 			{
 				Game.Renderer.Fonts["Regular"].DrawText(ownerText,
-					new float2(Viewport.LastMousePos.X + 65, Viewport.LastMousePos.Y + 50), actor.Owner.ColorRamp.GetColor(0));
+					new float2(Viewport.LastMousePos.X + 65, Viewport.LastMousePos.Y + 50), actor.Owner.Color.RGB);
 
 				Game.Renderer.Fonts["Regular"].DrawText(stanceText,
 					new float2(Viewport.LastMousePos.X + 65 + ownerSize.X, Viewport.LastMousePos.Y + 50), Color.White);

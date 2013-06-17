@@ -9,10 +9,12 @@
 #endregion
 
 using System.Collections.Generic;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Used to waypoint units after production or repair is finished.")]
 	public class RallyPointInfo : ITraitInfo
 	{
 		public readonly int[] RallyPoint = { 1, 3 };
@@ -56,12 +58,12 @@ namespace OpenRA.Mods.RA
 			public string OrderID { get { return "SetRallyPoint"; } }
 			public int OrderPriority { get { return 0; } }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 			{
 				return false;
 			}
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, TargetModifiers modifiers, ref string cursor)
 			{
 				if (self.World.Map.IsInMap(location))
 				{

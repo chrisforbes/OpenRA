@@ -128,13 +128,7 @@ namespace OpenRA.Graphics
 			{
 				Ui.Draw();
 				var cursorName = Ui.Root.GetCursorOuter(Viewport.LastMousePos) ?? "default";
-				var cursorSequence = CursorProvider.GetCursorSequence(cursorName);
-				var cursorSprite = cursorSequence.GetSprite((int)cursorFrame);
-
-				renderer.SpriteRenderer.DrawSprite(cursorSprite,
-					Viewport.LastMousePos - cursorSequence.Hotspot,
-					wr.Palette(cursorSequence.Palette).Index,
-					cursorSprite.size);
+				CursorProvider.DrawCursor(renderer, cursorName, Viewport.LastMousePos, (int)cursorFrame);
 			}
 
 			using( new PerfSample("render_flip") )
@@ -170,7 +164,7 @@ namespace OpenRA.Graphics
 			var avgPos = actors
 				.Select(a => (PVecInt)a.CenterLocation)
 				.Aggregate((a, b) => a + b) / actors.Count();
-			scrollPosition = NormalizeScrollPosition(((PVecFloat)avgPos - (PVecFloat)(1f / (2 * Zoom) * screenSize.ToFloat2())).ToInt2());
+			scrollPosition = NormalizeScrollPosition((avgPos.ToFloat2() - (1f / (2 * Zoom) * screenSize.ToFloat2())).ToInt2());
 		}
 
 		// Rectangle (in viewport coords) that contains things to be drawn
@@ -202,7 +196,7 @@ namespace OpenRA.Graphics
 				cachedScroll = scrollPosition;
 			}
 
-			var b = world.RenderedShroud.Bounds;
+			var b = world.VisibleBounds;
 			return (b.HasValue) ? Rectangle.Intersect(cachedRect, b.Value) : cachedRect;
 		}
 	}

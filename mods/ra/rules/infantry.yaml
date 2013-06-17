@@ -20,9 +20,9 @@ DOG:
 		Speed: 7
 	RevealsShroud:
 		Range: 5
-	AutoTarget:
+	Armament:
+		Weapon: DogJaw
 	AttackLeap:
-		PrimaryWeapon: DogJaw
 		CanAttackGround: no
 	RenderInfantry:
 		IdleAnimations: idle1,idle2
@@ -46,8 +46,9 @@ E1:
 		HP: 50
 	Mobile:
 		Speed: 4
+	Armament:
+		Weapon: M1Carbine
 	AttackFrontal:
-		PrimaryWeapon: M1Carbine
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
@@ -60,7 +61,7 @@ E2:
 		BuildPaletteOrder: 10
 		Owner: soviet
 		Prerequisites: barr
-		Hotkey: g
+		Hotkey: n
 	Valued:
 		Cost: 160
 	Tooltip:
@@ -72,10 +73,11 @@ E2:
 		HP: 50
 	Mobile:
 		Speed: 5
-	AttackFrontal:
-		PrimaryWeapon: Grenade
-		PrimaryOffset: 0,0,0,-13
+	Armament:
+		Weapon: Grenade
+		LocalOffset: 0,0,555
 		FireDelay: 15
+	AttackFrontal:
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
@@ -102,10 +104,13 @@ E3:
 		HP: 45
 	Mobile:
 		Speed: 3
+	Armament@PRIMARY:
+		Weapon: RedEye
+		LocalOffset: 0,0,555
+	Armament@SECONDARY:
+		Weapon: Dragon
+		LocalOffset: 0,0,555
 	AttackFrontal:
-		PrimaryWeapon: RedEye
-		SecondaryWeapon: Dragon
-		PrimaryOffset: 0,0,0,-13
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
@@ -130,10 +135,11 @@ E4:
 		HP: 40
 	Mobile:
 		Speed: 3
-	AttackFrontal:
-		PrimaryWeapon: Flamer
-		PrimaryOffset: 0,-10,0,-8
+	Armament:
+		Weapon: Flamer
+		LocalOffset: 427,0,341
 		FireDelay: 8
+	AttackFrontal:
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
@@ -161,6 +167,7 @@ E6:
 	Passenger:
 		PipType: Yellow
 	EngineerRepair:
+	RepairsBridges:
 	Captures:
 	TakeCover:
 	-AutoTarget:
@@ -204,8 +211,9 @@ SPY:
 	-RenderInfantry:
 	RenderSpy:
 		IdleAnimations: idle1,idle2
+	Armament:
+		Weapon: SilencedPPK
 	AttackFrontal:
-		PrimaryWeapon: SilencedPPK
 
 E7:
 	Inherits: ^Infantry
@@ -234,54 +242,15 @@ E7:
 		C4Delay: 45
 	Passenger:
 		PipType: Red
+	Armament@PRIMARY:
+		Weapon: Colt45
+	Armament@SECONDARY:
+		Weapon: Colt45
 	AttackFrontal:
-		PrimaryWeapon: Colt45
-		SecondaryWeapon: Colt45
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
-
-E8:
-	Inherits: ^Infantry
-	Buildable:
-		Queue: Infantry
-		BuildPaletteOrder: 110
-		Prerequisites: stek
-		Owner: soviet
-		Hotkey: v
-		BuildLimit: 1
-	Valued:
-		Cost: 1800
-	Tooltip:
-		Name: Volkov
-		Description: Elite commando cyborg, armed with \nmodular cannons and grenade launcher.\n  Strong vs Vehicles, Infantry\n  Weak vs Aircraft\n\nMaximum 1 can be trained
-	Selectable:
-		Voice: VolkovVoice
-		Bounds: 12,17,0,-9
-	Health:
-		HP: 200
-	Armor:
-		Type: Cybernetic
-	Mobile:
-		Speed: 5
-		Crushes: atmine, crate
-	RevealsShroud:
-		Range: 4
-	Passenger:
-		PipType: Red
-	AttackFrontal:
-		PrimaryWeapon: VolkAT
-		SecondaryWeapon: VolkNapalm
-	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
-		IdleAnimations: idle1
-	CrushableInfantry:
-		CrushSound: crunchy2.aud
-	RepairableNear:
-		Buildings: fix
-		CloseEnough: 1
 
 MEDI:
 	Inherits: ^Infantry
@@ -308,8 +277,10 @@ MEDI:
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Heal
 	AttackMedic:
-		PrimaryWeapon: Heal
+		Cursor: heal
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
@@ -343,8 +314,10 @@ MECH:
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Repair
 	AttackMedic:
-		PrimaryWeapon: Repair
+		Cursor: repair
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
@@ -440,6 +413,7 @@ SHOK:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
+		BuildPaletteOrder: 70
 		Prerequisites: stek,tsla
 		Owner: soviet
 		Hotkey: l
@@ -457,9 +431,10 @@ SHOK:
 		Speed: 3
 	RevealsShroud:
 		Range: 4
+	Armament:
+		Weapon: PortaTesla
+		LocalOffset: 427,0,341
 	AttackFrontal:
-		PrimaryWeapon: PortaTesla
-		PrimaryOffset: 0,-10,0,-8
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
@@ -476,7 +451,7 @@ SNIPER:
 		Description: Elite sniper infantry unit.\n  Strong vs Infantry\n  Weak vs Vehicles
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 50
+		BuildPaletteOrder: 80
 		Owner: soviet
 		Prerequisites: dome
 		Hotkey: n
@@ -492,8 +467,9 @@ SNIPER:
 		Range: 6
 	AutoTarget:
 		InitialStance: HoldFire
+	Armament:
+		Weapon: Sniper
 	AttackFrontal:
-		PrimaryWeapon: Sniper
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:

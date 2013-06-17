@@ -42,15 +42,12 @@ namespace OpenRA.Graphics
 		{
 			this.world = world;
 			palette = new HardwarePalette();
-			foreach (var p in CursorProvider.Palettes)
-				palette.AddPalette(p.Key, p.Value, false);
 
 			palettes = new Cache<string, PaletteReference>(CreatePaletteReference);
 			foreach (var pal in world.traitDict.ActorsWithTraitMultiple<IPalette>(world))
-				pal.Trait.InitPalette( this );
+				pal.Trait.InitPalette(this);
 
-			// Generate initial palette texture
-			palette.Update(new IPaletteModifier[] {});
+			palette.Initialize();
 
 			terrainRenderer = new TerrainRenderer(world, this);
 			shroudRenderer = new ShroudRenderer(world);
@@ -68,30 +65,23 @@ namespace OpenRA.Graphics
 		public PaletteReference Palette(string name) { return palettes[name]; }
 		public void AddPalette(string name, Palette pal, bool allowModifiers) { palette.AddPalette(name, pal, allowModifiers); }
 
-		class SpriteComparer : IComparer<Renderable>
-		{
-			public int Compare(Renderable x, Renderable y)
-			{
-				return (x.Z + x.ZOffset).CompareTo(y.Z + y.ZOffset);
-			}
-		}
-
-		IEnumerable<Renderable> SpritesToRender()
+		void DrawRenderables()
 		{
 			var bounds = Game.viewport.WorldBounds(world);
-			var comparer = new SpriteComparer();
+			var comparer = new RenderableComparer(this);
 
 			var actors = world.FindUnits(
 				bounds.TopLeftAsCPos().ToPPos(),
-				bounds.BottomRightAsCPos().ToPPos()
-			);
+				bounds.BottomRightAsCPos().ToPPos());
 
-			var renderables = actors.SelectMany(a => a.Render(this))
-				.OrderBy(r => r, comparer);
+			actors.SelectMany(a => a.Render(this))
+				.OrderBy(r => r, comparer)
+				.Do(rr => rr.Render(this));
 
-			var effects = world.Effects.SelectMany(e => e.Render(this));
-
-			return renderables.Concat(effects);
+			// Effects are drawn on top of all actors
+			// TODO: Allow effects to be interleaved with actors
+			world.Effects.SelectMany(e => e.Render(this))
+				.Do(rr => rr.Render(this));
 		}
 
 		public void Draw()
@@ -107,7 +97,7 @@ namespace OpenRA.Graphics
 			terrainRenderer.Draw(this, Game.viewport);
 			foreach (var a in world.traitDict.ActorsWithTraitMultiple<IRenderAsTerrain>(world))
 				foreach (var r in a.Trait.RenderAsTerrain(this, a.Actor))
-					r.Sprite.DrawAt(r.Pos, r.Palette.Index, r.Scale);
+					r.Render(this);
 
 			foreach (var a in world.Selection.Actors)
 				if (!a.Destroyed)
@@ -119,8 +109,7 @@ namespace OpenRA.Graphics
 			if (world.OrderGenerator != null)
 				world.OrderGenerator.RenderBeforeWorld(this, world);
 
-			foreach (var image in SpritesToRender())
-				image.Sprite.DrawAt(image.Pos, image.Palette.Index, image.Scale);
+			DrawRenderables();
 
 			// added for contrails
 			foreach (var a in world.ActorsWithTrait<IPostRender>())
@@ -130,7 +119,8 @@ namespace OpenRA.Graphics
 			if (world.OrderGenerator != null)
 				world.OrderGenerator.RenderAfterWorld(this, world);
 
-			shroudRenderer.Draw( this );
+			var renderShroud = world.RenderPlayer != null ? world.RenderPlayer.Shroud : null;
+			shroudRenderer.Draw(this, renderShroud);
 			Game.Renderer.DisableScissor();
 
 			foreach (var g in world.Selection.Actors.Where(a => !a.Destroyed)
@@ -199,9 +189,36 @@ namespace OpenRA.Graphics
 			}
 		}
 
+		public void DrawRangeCircleWithContrast(Color fg, float2 location, float range, Color bg, int offset)
+		{
+			if (offset > 0) {
+				DrawRangeCircle(bg, location, range + (float) offset/Game.CellSize);
+				DrawRangeCircle(bg, location, range - (float) offset/Game.CellSize);
+			}
+
+			DrawRangeCircle(fg, location, range);
+		}
+
 		public void RefreshPalette()
 		{
-			palette.Update( world.WorldActor.TraitsImplementing<IPaletteModifier>() );
+			palette.ApplyModifiers(world.WorldActor.TraitsImplementing<IPaletteModifier>());
+			Game.Renderer.SetPalette(palette);
 		}
+
+		// Conversion between world and screen coordinates
+		public float2 ScreenPosition(WPos pos)
+		{
+			var c = Game.CellSize/1024f;
+			return new float2(c*pos.X, c*(pos.Y - pos.Z));
+		}
+
+		public int2 ScreenPxPosition(WPos pos)
+		{
+			// Round to nearest pixel
+			var px = ScreenPosition(pos);
+			return new int2((int)Math.Round(px.X), (int)Math.Round(px.Y));
+		}
+
+		public float ScreenZPosition(WPos pos, int zOffset) { return (pos.Y + pos.Z + zOffset)*Game.CellSize/1024f; }
 	}
 }

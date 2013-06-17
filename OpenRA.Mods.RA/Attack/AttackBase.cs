@@ -19,70 +19,40 @@ namespace OpenRA.Mods.RA
 {
 	public abstract class AttackBaseInfo : ITraitInfo
 	{
-		[WeaponReference]
-		public readonly string PrimaryWeapon = null;
-		[WeaponReference]
-		public readonly string SecondaryWeapon = null;
-		public readonly int PrimaryRecoil = 0;
-		public readonly int SecondaryRecoil = 0;
-		public readonly float PrimaryRecoilRecovery = 0.2f;
-		public readonly float SecondaryRecoilRecovery = 0.2f;
-		public readonly int[] PrimaryLocalOffset = { };
-		public readonly int[] SecondaryLocalOffset = { };
-		public readonly int[] PrimaryOffset = { 0, 0 };
-		public readonly int[] SecondaryOffset = null;
-		public readonly int FireDelay = 0;
-
-		public readonly bool AlignIdleTurrets = false;
 		public readonly bool CanAttackGround = true;
-
-		public readonly int MinimumScanTimeInterval = 30;
-		public readonly int MaximumScanTimeInterval = 60;
+		public readonly string Cursor = "attack";
 
 		public abstract object Create(ActorInitializer init);
-
-		public float GetMaximumRange()
-		{
-			var priRange = PrimaryWeapon != null ? Rules.Weapons[PrimaryWeapon.ToLowerInvariant()].Range : 0;
-			var secRange = SecondaryWeapon != null ? Rules.Weapons[SecondaryWeapon.ToLowerInvariant()].Range : 0;
-
-			return Math.Max(priRange, secRange);
-		}
 	}
 
-	public abstract class AttackBase : IIssueOrder, IResolveOrder, ITick, IExplodeModifier, IOrderVoice
+	public abstract class AttackBase : IIssueOrder, IResolveOrder, ITick, IExplodeModifier, IOrderVoice, ISync
 	{
-		public bool IsAttacking { get; internal set; }
-
-		public List<Weapon> Weapons = new List<Weapon>();
-		public List<Turret> Turrets = new List<Turret>();
+		[Sync] public bool IsAttacking { get; internal set; }
 
 		readonly Actor self;
+
+		Lazy<IEnumerable<Armament>> armaments;
+		protected IEnumerable<Armament> Armaments { get { return armaments.Value; } }
 
 		public AttackBase(Actor self)
 		{
 			this.self = self;
-			var info = self.Info.Traits.Get<AttackBaseInfo>();
-
-			Turrets.Add(new Turret(info.PrimaryOffset, info.PrimaryRecoilRecovery));
-			if (info.SecondaryOffset != null)
-				Turrets.Add(new Turret(info.SecondaryOffset, info.SecondaryRecoilRecovery));
-
-			if (info.PrimaryWeapon != null)
-				Weapons.Add(new Weapon(info.PrimaryWeapon,
-					Turrets[0], info.PrimaryLocalOffset, info.PrimaryRecoil));
-
-			if (info.SecondaryWeapon != null)
-				Weapons.Add(new Weapon(info.SecondaryWeapon,
-					info.SecondaryOffset != null ? Turrets[1] : Turrets[0], info.SecondaryLocalOffset, info.SecondaryRecoil));
+			armaments = Lazy.New(() => self.TraitsImplementing<Armament>());
 		}
 
 		protected virtual bool CanAttack(Actor self, Target target)
 		{
-			if (!self.IsInWorld) return false;
-			if (!target.IsValid) return false;
-			if (Weapons.All(w => w.IsReloading)) return false;
-			if (self.IsDisabled()) return false;
+			if (!self.IsInWorld)
+				return false;
+
+			if (!target.IsValid)
+				return false;
+
+			if (Armaments.All(a => a.IsReloading))
+				return false;
+
+			if (self.IsDisabled())
+				return false;
 
 			if (target.IsActor && target.Actor.HasTrait<ITargetable>() &&
 				!target.Actor.Trait<ITargetable>().TargetableBy(target.Actor,self))
@@ -93,15 +63,12 @@ namespace OpenRA.Mods.RA
 
 		public bool ShouldExplode(Actor self) { return !IsReloading(); }
 
-		public bool IsReloading() { return Weapons.Any(w => w.IsReloading); }
+		public bool IsReloading() { return Armaments.Any(a => a.IsReloading); }
 
 		List<Pair<int, Action>> delayedActions = new List<Pair<int, Action>>();
 
 		public virtual void Tick(Actor self)
 		{
-			foreach (var w in Weapons)
-				w.Tick();
-
 			for (var i = 0; i < delayedActions.Count; i++)
 			{
 				var x = delayedActions[i];
@@ -126,30 +93,31 @@ namespace OpenRA.Mods.RA
 
 			var move = self.TraitOrDefault<IMove>();
 			var facing = self.TraitOrDefault<IFacing>();
-			foreach (var w in Weapons)
-				w.CheckFire(self, this, move, facing, target);
+			foreach (var a in Armaments)
+				a.CheckFire(self, this, move, facing, target);
 		}
-
-		public virtual int FireDelay( Actor self, Target target, AttackBaseInfo info )
-		{
-			return info.FireDelay;
-		}
-
-		bool IsHeal { get { return Weapons[ 0 ].Info.Warheads[ 0 ].Damage < 0; } }
 
 		public IEnumerable<IOrderTargeter> Orders
 		{
-			get { yield return new AttackOrderTargeter( "Attack", 6, IsHeal ); }
+			get
+			{
+				if (Armaments.Count() == 0)
+					yield break;
+
+				var negativeDamage = (Armaments.First().Weapon.Warheads[0].Damage < 0);
+
+				yield return new AttackOrderTargeter("Attack", 6, negativeDamage);
+			}
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order is AttackOrderTargeter )
+			if (order is AttackOrderTargeter)
 			{
-				if( target.IsActor )
+				if (target.IsActor)
 					return new Order("Attack", self, queued) { TargetActor = target.Actor };
 				else
-					return new Order( "Attack", self, queued ) { TargetLocation = target.CenterLocation.ToCPos() };
+					return new Order("Attack", self, queued) { TargetLocation = target.CenterLocation.ToCPos() };
 			}
 			return null;
 		}
@@ -162,12 +130,6 @@ namespace OpenRA.Mods.RA
 				self.SetTargetLine(target, Color.Red);
 				AttackTarget(target, order.Queued, order.OrderString == "Attack");
 			}
-			else
-			{
-				/* hack */
-				if (self.HasTrait<Turreted>() && self.Info.Traits.Get<AttackBaseInfo>().AlignIdleTurrets)
-					self.Trait<Turreted>().desiredFacing = null;
-			}
 		}
 
 		public string VoicePhraseForOrder(Actor self, Order order)
@@ -177,59 +139,76 @@ namespace OpenRA.Mods.RA
 
 		public abstract Activity GetAttackActivity(Actor self, Target newTarget, bool allowMove);
 
-		public bool HasAnyValidWeapons(Target t) { return Weapons.Any(w => w.IsValidAgainst(self.World, t)); }
-		public float GetMaximumRange() { return Weapons.Max(w => w.Info.Range); }
+		public bool HasAnyValidWeapons(Target t) { return Armaments.Any(a => a.IsValidAgainst(self.World, t)); }
+		public float GetMaximumRange() { return Armaments.Select(a => a.Weapon.Range).Aggregate(0f, Math.Max); }
 
-		public Weapon ChooseWeaponForTarget(Target t) { return Weapons.FirstOrDefault(w => w.IsValidAgainst(self.World, t)); }
+		public Armament ChooseArmamentForTarget(Target t) { return Armaments.FirstOrDefault(a => a.IsValidAgainst(self.World, t)); }
 
-		public void AttackTarget( Target target, bool queued, bool allowMove )
+		public void AttackTarget(Target target, bool queued, bool allowMove)
 		{
-			if( !target.IsValid ) return;
-			if (!queued) self.CancelActivity();
+			if (!target.IsValid)
+				return;
+
+			if (!queued)
+				self.CancelActivity();
+
 			self.QueueActivity(GetAttackActivity(self, target, allowMove));
 		}
 
 		class AttackOrderTargeter : IOrderTargeter
 		{
-			readonly bool isHeal;
+			readonly bool negativeDamage;
 
-			public AttackOrderTargeter( string order, int priority, bool isHeal )
+			public AttackOrderTargeter(string order, int priority, bool negativeDamage)
 			{
 				this.OrderID = order;
 				this.OrderPriority = priority;
-				this.isHeal = isHeal;
+				this.negativeDamage = negativeDamage;
 			}
 
 			public string OrderID { get; private set; }
 			public int OrderPriority { get; private set; }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 			{
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 
-				cursor = isHeal ? "heal" : "attack";
-				if( self == target ) return false;
-				if( !self.Trait<AttackBase>().HasAnyValidWeapons( Target.FromActor( target ) ) ) return false;
-				if (forceAttack) return true;
+				cursor = self.Info.Traits.Get<AttackBaseInfo>().Cursor;
 
-				var targetableRelationship = isHeal ? Stance.Ally : Stance.Enemy;
+				if (self == target)
+					return false;
 
-				return self.Owner.Stances[ target.Owner ] == targetableRelationship;
+				if (!self.Trait<AttackBase>().HasAnyValidWeapons(Target.FromActor(target)))
+					return false;
+
+				if (modifiers.HasModifier(TargetModifiers.ForceAttack))
+					return true;
+
+				if (modifiers.HasModifier(TargetModifiers.ForceMove))
+					return false;
+
+				var targetableRelationship = negativeDamage ? Stance.Ally : Stance.Enemy;
+
+				return self.Owner.Stances[target.Owner] == targetableRelationship;
 			}
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, TargetModifiers modifiers, ref string cursor)
 			{
 				if (!self.World.Map.IsInMap(location))
 					return false;
 
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 
-				cursor = isHeal ? "heal" : "attack";
-				if( isHeal ) return false;
-				if( !self.Trait<AttackBase>().HasAnyValidWeapons( Target.FromCell( location ) ) ) return false;
+				cursor = self.Info.Traits.Get<AttackBaseInfo>().Cursor;
 
-				if( forceAttack )
-					if( self.Info.Traits.Get<AttackBaseInfo>().CanAttackGround )
+				if (negativeDamage)
+					return false;
+
+				if (!self.Trait<AttackBase>().HasAnyValidWeapons(Target.FromCell(location)))
+					return false;
+
+				if (modifiers.HasModifier(TargetModifiers.ForceAttack))
+					if (self.Info.Traits.Get<AttackBaseInfo>().CanAttackGround)
 						return true;
 
 				return false;

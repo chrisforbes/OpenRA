@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,6 +8,7 @@
  */
 #endregion
 
+using System.Drawing;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Traits;
 
@@ -18,13 +19,14 @@ namespace OpenRA.Mods.RA
 		public readonly bool ExplodeInstead = false;
 	}
 
-	public class Chronoshiftable : ITick, ISync
+	public class Chronoshiftable : ITick, ISync, ISelectionBar
 	{
 		// Return-to-sender logic
 		[Sync] CPos chronoshiftOrigin;
 		[Sync] int chronoshiftReturnTicks = 0;
 		Actor chronosphere;
 		bool killCargo;
+		int TotalTicks;
 
 		public void Tick(Actor self)
 		{
@@ -38,7 +40,7 @@ namespace OpenRA.Mods.RA
 			if (chronoshiftReturnTicks == 0)
 			{
 				self.CancelActivity();
-				// Todo: need a new Teleport method that will move to the closest available cell
+				// TODO: need a new Teleport method that will move to the closest available cell
 				self.QueueActivity(new Teleport(chronosphere, chronoshiftOrigin, killCargo));
 			}
 		}
@@ -46,7 +48,7 @@ namespace OpenRA.Mods.RA
 		// Can't be used in synced code, except with ignoreVis.
 		public virtual bool CanChronoshiftTo(Actor self, CPos targetLocation)
 		{
-			// Todo: Allow enemy units to be chronoshifted into bad terrain to kill them
+			// TODO: Allow enemy units to be chronoshifted into bad terrain to kill them
 			return (self.HasTrait<ITeleportable>() && self.Trait<ITeleportable>().CanEnterCell(targetLocation));
 		}
 
@@ -66,6 +68,7 @@ namespace OpenRA.Mods.RA
 			/// Set up return-to-sender info
 			chronoshiftOrigin = self.Location;
 			chronoshiftReturnTicks = duration;
+			TotalTicks = duration;
 			this.chronosphere = chronosphere;
 			this.killCargo = killCargo;
 
@@ -75,5 +78,15 @@ namespace OpenRA.Mods.RA
 
 			return true;
 		}
+
+		// Show the remaining time as a bar
+		public float GetValue()
+		{
+			if (chronoshiftReturnTicks == 0) // otherwise an empty bar is rendered all the time
+				return 0f;
+
+			return (float)chronoshiftReturnTicks / TotalTicks;
+		}
+		public Color GetColor() { return Color.White; }
 	}
 }

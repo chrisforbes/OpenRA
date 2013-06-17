@@ -8,14 +8,16 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Traits;
-using System;
+using OpenRA.Mods.RA;
 
 namespace OpenRA.Mods.RA.Render
 {
-	class WithMuzzleFlashInfo : ITraitInfo, Requires<RenderSimpleInfo>, Requires<AttackBaseInfo>
+	class WithMuzzleFlashInfo : ITraitInfo, Requires<RenderSpritesInfo>, Requires<AttackBaseInfo>
 	{
 		public object Create(ActorInitializer init) { return new WithMuzzleFlash(init.self); }
 	}
@@ -27,26 +29,26 @@ namespace OpenRA.Mods.RA.Render
 
 		public WithMuzzleFlash(Actor self)
 		{
-			var attack = self.Trait<AttackBase>();
-			var render = self.Trait<RenderSimple>();
+			var render = self.Trait<RenderSprites>();
 			var facing = self.TraitOrDefault<IFacing>();
-			var turreted = self.TraitOrDefault<Turreted>();
-			var getFacing = turreted != null ? () => turreted.turretFacing :
-							facing != null ? (Func<int>)(() => facing.Facing) : () => 0;
 
-			foreach (var w in attack.Weapons)
-				foreach( var b in w.Barrels )
+			var arms = self.TraitsImplementing<Armament>();
+			foreach (var a in arms)
+				foreach(var b in a.Barrels)
 				{
 					var barrel = b;
-					var turret = w.Turret;
+					var turreted = self.TraitsImplementing<Turreted>()
+						.FirstOrDefault(t => t.Name ==  a.Info.Turret);
+					var getFacing = turreted != null ? () => turreted.turretFacing :
+						facing != null ? (Func<int>)(() => facing.Facing) : () => 0;
 
 					var muzzleFlash = new Animation(render.GetImage(self), getFacing);
 					muzzleFlash.Play("muzzle");
 
-					muzzleFlashes.Add("muzzle{0}".F(muzzleFlashes.Count), new AnimationWithOffset(
-						muzzleFlash,
-						() => Combat.GetBarrelPosition(self, facing, turret, barrel).ToFloat2(),
-						() => !isShowing));
+					muzzleFlashes.Add("muzzle{0}".F(muzzleFlashes.Count),
+				    	new AnimationWithOffset(muzzleFlash,
+							() => a.MuzzleOffset(self, barrel),
+							() => !isShowing));
 				}
 		}
 
@@ -57,11 +59,11 @@ namespace OpenRA.Mods.RA.Render
 				mf.Animation.PlayThen("muzzle", () => isShowing = false);
 		}
 
-		public IEnumerable<Renderable> Render(Actor self, WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr)
 		{
 			foreach (var a in muzzleFlashes.Values)
 				if (a.DisableFunc == null || !a.DisableFunc())
-					yield return a.Image(self, wr.Palette("effect"));
+					yield return a.Image(self, wr, wr.Palette("effect"));
 		}
 
 		public void Tick(Actor self)

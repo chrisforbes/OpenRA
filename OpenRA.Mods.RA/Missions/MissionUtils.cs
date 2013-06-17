@@ -8,6 +8,10 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using OpenRA.FileFormats;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Air;
@@ -15,10 +19,6 @@ using OpenRA.Mods.RA.Buildings;
 using OpenRA.Mods.RA.Move;
 using OpenRA.Network;
 using OpenRA.Traits;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 
 namespace OpenRA.Mods.RA.Missions
 {
@@ -116,14 +116,16 @@ namespace OpenRA.Mods.RA.Missions
 				.Select(a => a.Trait);
 		}
 
+		public static void StartProduction(World world, Player player, string category, string item)
+		{
+			var queue = FindQueues(world, player, category).FirstOrDefault(q => q.CurrentItem() == null);
+			if (queue != null)
+				queue.ResolveOrder(queue.self, Order.StartProduction(queue.self, item, 1));
+		}
+
 		public static Actor UnitContaining(this World world, Actor actor)
 		{
 			return world.Actors.FirstOrDefault(a => a.HasTrait<Cargo>() && a.Trait<Cargo>().Passengers.Contains(actor));
-		}
-
-		public static bool IsSingleClient(World world)
-		{
-			return world.LobbyInfo.Clients.Count() == 1;
 		}
 
 		public static void PlayMissionMusic()
@@ -230,11 +232,11 @@ namespace OpenRA.Mods.RA.Missions
 		}
 	}
 
-	class InfiltrateForMissionObjective : IAcceptInfiltrator
+	class InfiltrateAction : IAcceptInfiltrator
 	{
 		Action<Actor> a;
 
-		public InfiltrateForMissionObjective(Action<Actor> a)
+		public InfiltrateAction(Action<Actor> a)
 		{
 			this.a = a;
 		}

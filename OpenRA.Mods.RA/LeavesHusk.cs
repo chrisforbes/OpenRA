@@ -10,8 +10,9 @@
 
 using System.Linq;
 using OpenRA.FileFormats;
-using OpenRA.Traits;
+using OpenRA.Mods.RA.Air;
 using OpenRA.Mods.RA.Move;
+using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
@@ -35,11 +36,11 @@ namespace OpenRA.Mods.RA
 		{
 			self.World.AddFrameEndTask(w =>
 			{
-				var td = new TypeDictionary()
+				var td = new TypeDictionary
 				{
-					new LocationInit( self.Location ),
+					new LocationInit(self.Location),
 					new CenterLocationInit(self.CenterLocation),
-					new OwnerInit( self.Owner ),
+					new OwnerInit(self.Owner),
 					new SkipMakeAnimsInit()
 				};
 
@@ -51,11 +52,17 @@ namespace OpenRA.Mods.RA
 					td.Add(new HuskSpeedInit(mobile.MovementSpeedForCell(self, self.Location)));
 				}
 
+				var aircraft = self.TraitOrDefault<Aircraft>();
+				if (aircraft != null)
+					td.Add(new AltitudeInit(aircraft.Altitude));
+
 				var facing = self.TraitOrDefault<IFacing>();
 				if (facing != null)
 					td.Add(new FacingInit( facing.Facing ));
 
-				var turreted = self.TraitOrDefault<Turreted>();
+				// TODO: This will only take the first turret if there are multiple
+				// This isn't a problem with the current units, but may be a problem for mods
+				var turreted = self.TraitsImplementing<Turreted>().FirstOrDefault();
 				if (turreted != null)
 					td.Add( new TurretFacingInit(turreted.turretFacing) );
 

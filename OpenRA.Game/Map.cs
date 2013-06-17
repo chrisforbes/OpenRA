@@ -59,6 +59,7 @@ namespace OpenRA
 
 		[FieldLoader.Ignore] public List<MiniYamlNode> Rules = new List<MiniYamlNode>();
 		[FieldLoader.Ignore] public List<MiniYamlNode> Sequences = new List<MiniYamlNode>();
+		[FieldLoader.Ignore] public List<MiniYamlNode> VoxelSequences = new List<MiniYamlNode>();
 		[FieldLoader.Ignore] public List<MiniYamlNode> Weapons = new List<MiniYamlNode>();
 		[FieldLoader.Ignore] public List<MiniYamlNode> Voices = new List<MiniYamlNode>();
 		[FieldLoader.Ignore] public List<MiniYamlNode> Notifications = new List<MiniYamlNode>();
@@ -104,7 +105,7 @@ namespace OpenRA
 		public Map(string path)
 		{
 			Path = path;
-			Container = FileSystem.OpenPackage(path, int.MaxValue);
+			Container = FileSystem.OpenPackage(path, null, int.MaxValue);
 
 			AssertExists("map.yaml");
 			AssertExists("map.bin");
@@ -150,6 +151,7 @@ namespace OpenRA
 
 			Rules = NodesOrEmpty(yaml, "Rules");
 			Sequences = NodesOrEmpty(yaml, "Sequences");
+			VoxelSequences = NodesOrEmpty(yaml, "VoxelSequences");
 			Weapons = NodesOrEmpty(yaml, "Weapons");
 			Voices = NodesOrEmpty(yaml, "Voices");
 			Notifications = NodesOrEmpty(yaml, "Notifications");
@@ -206,6 +208,7 @@ namespace OpenRA
 			root.Add(new MiniYamlNode("Smudges", MiniYaml.FromList<SmudgeReference>( Smudges.Value )));
 			root.Add(new MiniYamlNode("Rules", null, Rules));
 			root.Add(new MiniYamlNode("Sequences", null, Sequences));
+			root.Add(new MiniYamlNode("VoxelSequences", null, VoxelSequences));
 			root.Add(new MiniYamlNode("Weapons", null, Weapons));
 			root.Add(new MiniYamlNode("Voices", null, Voices));
 			root.Add(new MiniYamlNode("Notifications", null, Notifications));
@@ -229,44 +232,27 @@ namespace OpenRA
 			Container.Write(entries);
 		}
 
-		static byte ReadByte(Stream s)
-		{
-			int ret = s.ReadByte();
-			if (ret == -1)
-				throw new NotImplementedException();
-			return (byte)ret;
-		}
-
-		static ushort ReadWord(Stream s)
-		{
-			ushort ret = ReadByte(s);
-			ret |= (ushort)(ReadByte(s) << 8);
-
-			return ret;
-		}
-
 		public TileReference<ushort, byte>[,] LoadMapTiles()
 		{
 			var tiles = new TileReference<ushort, byte>[MapSize.X, MapSize.Y];
 			using (var dataStream = Container.GetContent("map.bin"))
 			{
-				if (ReadByte(dataStream) != 1)
+				if (dataStream.ReadUInt8() != 1)
 					throw new InvalidDataException("Unknown binary map format");
 
 				// Load header info
-				var width = ReadWord(dataStream);
-				var height = ReadWord(dataStream);
+				var width = dataStream.ReadUInt16();
+				var height = dataStream.ReadUInt16();
 
 				if (width != MapSize.X || height != MapSize.Y)
 					throw new InvalidDataException("Invalid tile data");
-
 
 				// Load tile data
 				for (int i = 0; i < MapSize.X; i++)
 					for (int j = 0; j < MapSize.Y; j++)
 					{
-						ushort tile = ReadWord(dataStream);
-						byte index = ReadByte(dataStream);
+						var tile = dataStream.ReadUInt16();
+						var index = dataStream.ReadUInt8();
 						if (index == byte.MaxValue)
 							index = (byte)(i % 4 + (j % 4) * 4);
 
@@ -282,26 +268,25 @@ namespace OpenRA
 
 			using (var dataStream = Container.GetContent("map.bin"))
 			{
-				if (ReadByte(dataStream) != 1)
+				if (dataStream.ReadUInt8() != 1)
 					throw new InvalidDataException("Unknown binary map format");
 
 				// Load header info
-				var width = ReadWord(dataStream);
-				var height = ReadWord(dataStream);
+				var width = dataStream.ReadUInt16();
+				var height = dataStream.ReadUInt16();
 
 				if (width != MapSize.X || height != MapSize.Y)
 					throw new InvalidDataException("Invalid tile data");
 
 				// Skip past tile data
-				for (var i = 0; i < 3*MapSize.X*MapSize.Y; i++)
-					ReadByte(dataStream);
+				dataStream.Seek(3*MapSize.X*MapSize.Y, SeekOrigin.Current);
 
 				// Load resource data
 				for (var i = 0; i < MapSize.X; i++)
 					for (var j = 0; j < MapSize.Y; j++)
 				{
-					byte type = ReadByte(dataStream);
-					byte index = ReadByte(dataStream);
+					var type = dataStream.ReadUInt8();
+					var index = dataStream.ReadUInt8();
 					resources[i, j] = new TileReference<byte, byte>(type, index);
 				}
 			}

@@ -1,6 +1,7 @@
 ^MCV:
 	Inherits: ^Vehicle
 	Buildable:
+		Prerequisites: repair
 		Queue: Armor
 		BuildPaletteOrder: 110
 		Hotkey: m
@@ -14,14 +15,14 @@
 		Priority: 3
 		Bounds: 42,42
 	Health:
-		HP: 600
+		HP: 800
 	Armor:
 		Type: Light
 	Mobile:
 		Speed: 6
 		Crushes: crate, infantry
 	RevealsShroud:
-		Range: 4
+		Range: 8
 	MustBeDestroyed:
 	BaseBuilding:
 	-AttackMove:
@@ -47,7 +48,7 @@ HARVESTER:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Armor
-		Prerequisites: Heavy Factory,Spice Refinery
+		Prerequisites: Heavy,Refinery
 		Owner: atreides, harkonnen, ordos
 		BuiltAt: heavya, heavyh, heavyo
 		BuildPaletteOrder: 10
@@ -62,16 +63,16 @@ HARVESTER:
 		Priority: 7
 		Bounds: 42,42
 	Harvester:
-		PipCount: 7
-		Capacity: 14
+		PipCount: 10
+		Capacity: 40
 		Resources: Spice
-		UnloadTicksPerBale: 15
+		UnloadTicksPerBale: 5
 		# How far away from our linked refinery to find resources (in cells):
 		SearchFromProcRadius: 24
 		# How far away from last harvest order location to find more resources (in cells):
 		SearchFromOrderRadius: 12
 	Health:
-		HP: 600
+		HP: 1000
 	Armor:
 		Type: Heavy
 	Mobile:
@@ -101,16 +102,17 @@ HARVESTER.Husk:
 HARVESTER.starport:
 	Inherits: HARVESTER
 	Buildable:
+		Prerequisites: Starport
 		Queue: Starport
 		BuiltAt: starporta, starporth, starporto
 	Valued:
-		Cost: 895
+		Cost: 1500
 
 ^TRIKE:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 15
+		BuildPaletteOrder: 10
 		Hotkey: w
 	Valued:
 		Cost: 250
@@ -125,18 +127,17 @@ HARVESTER.starport:
 	Armor:
 		Type: Light
 	Mobile:
-		ROT: 9
+		ROT: 10
 		Speed: 12
 	RevealsShroud:
-		Range: 8
+		Range: 7
 	RenderUnit:
 	WithMuzzleFlash:
+	Armament:
+		Weapon: HMG
+		LocalOffset: 256,0,128
 	AttackFrontal:
-		PrimaryWeapon: M60mg
-		PrimaryOffset: 0,-6,0,-3
-		#PrimaryLocalOffset: 1,-1,0,-3,0, -1,-1,0,-3,0
 	AutoTarget:
-		InitialStance: Defend
 	Explodes:
 		Weapon: UnitExplodeTiny
 		EmptyWeapon: UnitExplodeTiny
@@ -150,9 +151,9 @@ QUAD:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		Prerequisites: Light Factory
-		Owner: atreides, harkonnen, ordos
-		BuiltAt: lighta, lighth, lighto
+		Prerequisites: Light,Outpost
+		Owner: atreides, ordos
+		BuiltAt: lighta, lighto
 		BuildPaletteOrder: 20
 		Hotkey: q
 	Valued:
@@ -167,16 +168,16 @@ QUAD:
 		Type: Light
 	Mobile:
 		ROT: 8
-		Speed: 10
+		Speed: 9
 	RevealsShroud:
-		Range: 7
+		Range: 8
 	RenderUnit:
 		Image: QUAD
+	Armament:
+		Weapon: QuadRockets
+		LocalOffset: 128,0,85#-4
 	AttackFrontal:
-		PrimaryWeapon: QuadRockets
-		PrimaryLocalOffset: 0,-3,0,-2,0 #-4
 	AutoTarget:
-		InitialStance: Defend
 	Explodes:
 		Weapon: UnitExplodeTiny
 		EmptyWeapon: UnitExplodeTiny
@@ -186,16 +187,17 @@ QUAD:
 QUAD.starport:
 	Inherits: QUAD
 	Buildable:
+		Prerequisites: Starport
 		Queue: Starport
 		BuiltAt: starporta, starporth, starporto
 	Valued:
-		Cost: 295
+		Cost: 500
 
 ^COMBAT:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Armor
-		BuildPaletteOrder: 25
+		BuildPaletteOrder: 40
 		Hotkey: c
 	Valued:
 		Cost: 700
@@ -203,25 +205,27 @@ QUAD.starport:
 		Name: Combat Tank
 		Description: Main Battle Tank\n  Strong vs Tanks\n  Weak vs Infantry, Aircraft\n \n  Atreides:     +Range\n  Harkonnen: +Health\n  Ordos:        +Speed
 	Health:
-		HP: 325
+		HP: 350
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 7
+		Speed: 6
+		ROT: 6
 		Crushes: crate, infantry
 	RevealsShroud:
-		Range: 6
+		Range: 7
 	Turreted:
 		ROT: 6
+		AlignWhenIdle: true
+	Armament:
+		Weapon: 90mm
+		Recoil: 171
+		RecoilRecovery: 34
+		LocalOffset: 85,0,128
 	AttackTurreted:
-		AlignIdleTurrets: true
-		PrimaryWeapon: 90mm
-		PrimaryRecoil: 4
-		PrimaryRecoilRecovery: 0.8
-		PrimaryLocalOffset: 0,-2,0,-3,0
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
-		InitialStance: Defend
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
@@ -234,18 +238,15 @@ QUAD.starport:
 		HP: 100
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 
 SIEGETANK:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Armor
-		Prerequisites: Heavy Factory,Outpost
+		Prerequisites: Outpost
 		Owner: atreides, harkonnen, ordos
 		BuiltAt: heavya, heavyh, heavyo
-		BuildPaletteOrder: 30
+		BuildPaletteOrder: 50
 		Hotkey: t
 	Valued:
 		Cost: 850
@@ -254,24 +255,27 @@ SIEGETANK:
 		Description: Siege Artillery\n  Strong vs Infantry, Buildings\n  Weak vs Tanks, Aircraft
 		Icon: siegetankicon
 	Health:
-		HP: 85
+		HP: 120
 	Armor:
-		Type: Light
+		Type: Heavy
 	Mobile:
 		Speed: 5
 		ROT: 3
 		Crushes: crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 8
 	Turreted:
 		ROT: 3
-	AttackFrontal:
-		PrimaryWeapon: 155mm
-		PrimaryRecoil: 7
-		PrimaryRecoilRecovery: 0.45
-		PrimaryLocalOffset: 0,-4,0,-7,0
-	RenderUnitTurreted:
+		Offset: -220,0,-40
+	Armament:
+		Weapon: 155mm
+		Recoil: 150
+		RecoilRecovery: 19
+		LocalOffset: 171,0,299
+	AttackTurreted:
+	RenderUnit:
 		Image: SIEGETANK
+	WithTurret:
 	Explodes:
 		Weapon: UnitExplodeScale
 		EmptyWeapon: UnitExplodeScale
@@ -288,9 +292,6 @@ SIEGETANK.Husk:
 		Icon: siegetankicon
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 	RenderUnit:
 		Image: SIEGETANK
 
@@ -300,7 +301,7 @@ SIEGETANK.starport:
 		Queue: Starport
 		BuiltAt: starporta, starporth, starporto
 	Valued:
-		Cost: 594
+		Cost: 1075
 
 MISSILETANK:
 	Inherits: ^Tank
@@ -312,25 +313,27 @@ MISSILETANK:
 		Icon: missiletankicon
 	Buildable:
 		Queue: Armor
-		Prerequisites: Heavy Factory,High Tech Facility
-		Owner: atreides, harkonnen
+		Prerequisites: Hitech
+		Owner: atreides, harkonnen, ordos
 		BuiltAt: heavya, heavyh
-		BuildPaletteOrder: 40
+		BuildPaletteOrder: 60
 		Hotkey: r
 	Mobile:
 		Speed: 6
-		ROT: 3
+		ROT: 5
 	Health:
-		HP: 110
+		HP: 90
 	Armor:
 		Type: Light
 	RevealsShroud:
-		Range: 6
+		Range: 9
 	RenderUnit:
 		Image: MISSILETANK
+	Armament:
+		Weapon: 227mm
+		LocalOffset: -213,128,171, -213,-256,171
+		FireDelay: 15		
 	AttackFrontal:
-		PrimaryWeapon: 227mm
-		PrimaryLocalOffset: 3,5,0,-4,0, -6,5,0,-4,0
 	AutoTarget:
 		InitialStance: Defend
 	Explodes:
@@ -351,8 +354,9 @@ MISSILETANK.Husk:
 MISSILETANK.starport:
 	Inherits: MISSILETANK
 	Buildable:
+		Prerequisites: Hitech
 		Queue: Starport
 		Owner: atreides, harkonnen, ordos
 		BuiltAt: starporta, starporth, starporto
 	Valued:
-		Cost: 699
+		Cost: 1250

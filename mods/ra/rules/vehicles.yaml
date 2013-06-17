@@ -19,8 +19,9 @@ V2RL:
 		Speed: 7
 	RevealsShroud:
 		Range: 5
+	Armament:
+		Weapon: SCUD
 	AttackFrontal:
-		PrimaryWeapon: SCUD
 	RenderUnitReload:
 	AutoTarget:
 	Explodes:
@@ -33,7 +34,7 @@ V2RL:
 		Queue: Vehicle
 		BuildPaletteOrder: 40
 		Owner: allies
-		Hotkey: g
+		Hotkey: l
 	Valued:
 		Cost: 700
 	Tooltip:
@@ -49,11 +50,13 @@ V2RL:
 		Range: 4
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 25mm
+		Recoil: 85
+		RecoilRecovery: 25
 	AttackTurreted:
-		PrimaryWeapon: 25mm
-		PrimaryRecoil: 2
-		PrimaryRecoilRecovery: 0.5
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -68,7 +71,7 @@ V2RL:
 		BuildPaletteOrder: 60
 		Prerequisites: fix
 		Owner: allies
-		Hotkey: f
+		Hotkey: m
 	Valued:
 		Cost: 850
 	Tooltip:
@@ -85,11 +88,13 @@ V2RL:
 		Range: 5
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 90mm
+		Recoil: 128
+		RecoilRecovery: 38
 	AttackTurreted:
-		PrimaryWeapon: 90mm
-		PrimaryRecoil: 3
-		PrimaryRecoilRecovery: 0.9
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -123,12 +128,14 @@ V2RL:
 		Range: 5
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 105mm
+		Recoil: 128
+		RecoilRecovery: 38
+		LocalOffset: 0,85,0, 0,-85,0
 	AttackTurreted:
-		PrimaryWeapon: 105mm
-		PrimaryRecoil: 3
-		PrimaryRecoilRecovery: 0.9
-		PrimaryLocalOffset: 2,0,0,0,0, -2,0,0,0,0
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -161,16 +168,20 @@ V2RL:
 	RevealsShroud:
 		Range: 6
 	Turreted:
-		ROT: 1
+		ROT: 2
+	Armament@PRIMARY:
+		Weapon: 120mm
+		LocalOffset: 800,180,340, 800,-180,340
+		Recoil: 171
+		RecoilRecovery: 30
+	Armament@SECONDARY:
+		Weapon: MammothTusk
+		LocalOffset: -85,384,340, -85,-384,340
+		LocalYaw: -100,100
+		Recoil: 43
 	AttackTurreted:
-		PrimaryWeapon: 120mm
-		SecondaryWeapon: MammothTusk
-		PrimaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-		SecondaryLocalOffset: -7,2,0,0,25, 7,2,0,0,-25
-		PrimaryRecoil: 4
-		PrimaryRecoilRecovery: 0.7
-		SecondaryRecoil: 1
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -207,12 +218,13 @@ ARTY:
 		Speed: 6
 	RevealsShroud:
 		Range: 5
+	Armament:
+		Weapon: 155mm
 	AttackFrontal:
-		PrimaryWeapon: 155mm
 	RenderUnit:
 	Explodes:
 		Weapon: UnitExplode
-		Chance: 75  
+		Chance: 75
 	AutoTarget:
 
 HARV:
@@ -319,11 +331,13 @@ JEEP:
 		Range: 8
 	Turreted:
 		ROT: 10
+		Offset: 0,0,85
+	Armament:
+		Weapon: M60mg
 	AttackTurreted:
-		PrimaryWeapon: M60mg
-		PrimaryOffset: 0,0,0,-2
 	WithMuzzleFlash:
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Cargo:
 		Types: Infantry
@@ -351,9 +365,10 @@ APC:
 		Speed: 10
 	RevealsShroud:
 		Range: 5
+	Armament:
+		Weapon: M60mg
+		LocalOffset: 0,0,171
 	AttackFrontal:
-		PrimaryWeapon: M60mg
-		PrimaryOffset: 0,0,0,-4
 	RenderUnit:
 	WithMuzzleFlash:
 	AutoTarget:
@@ -394,6 +409,9 @@ MNLY.AP:
 		Ammo: 5
 	AttackMove:
 		JustMove: true
+	DetectCloaked:
+		Range: 5
+	RenderDetectionCircle:
 
 MNLY.AT:
 	Inherits: ^Tank
@@ -426,6 +444,9 @@ MNLY.AT:
 		Ammo: 3
 	AttackMove:
 		JustMove: true
+	DetectCloaked:
+		Range: 5
+	RenderDetectionCircle:
 
 TRUK:
 	Inherits: ^Vehicle
@@ -458,10 +479,10 @@ MGG:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 150
+		BuildPaletteOrder: 160
 		Prerequisites: atek
 		Owner: allies
-		Hotkey: s
+		Hotkey: y
 	Valued:
 		Cost: 1500
 	Tooltip:
@@ -475,8 +496,9 @@ MGG:
 		Speed: 6
 	RevealsShroud:
 		Range: 6
-	RenderUnitSpinner:
-		Offset: 0,6
+	RenderUnit:
+	WithSpinner:
+		Offset: -299,0,171
 	AttackMove:
 		JustMove: yes
 	CreatesShroud:
@@ -496,10 +518,7 @@ MGG.Husk:
 		Image: mgg
 	ThrowsParticle@spinner:
 		Anim: spinner-idle
-		Spread: 3,3
-		Speed: 6
-		AnimKey: spinner-idle
-		Offset: 0,6
+		Offset: -299,0,171
 
 MRJ:
 	Inherits: ^Vehicle
@@ -507,6 +526,13 @@ MRJ:
 		Cost: 1000
 	Tooltip:
 		Name: Mobile Radar Jammer
+		Description: Jams nearby enemy radar domes\nand deflects incoming missiles.\n  Unarmed
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 150
+		Prerequisites: atek
+		Owner: allies
+		Hotkey: k
 	Health:
 		HP: 200
 	Armor:
@@ -515,13 +541,19 @@ MRJ:
 		Speed: 6
 	RevealsShroud:
 		Range: 6
-	RenderUnitSpinner:
-		Offset: 0,6
+	RenderUnit:
+	WithSpinner:
+		Offset: -256,0,256
 	AttackMove:
 		JustMove: yes
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	JamsRadar:
+		Range: 15
+	JamsMissiles:
+		Range: 3
+	RenderJammerCircle:
 
 1TNK.Husk:
 	Inherits: ^Husk
@@ -531,9 +563,6 @@ MRJ:
 		Image: 1tnk
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 
 2TNK.Husk:
 	Inherits: ^Husk
@@ -543,9 +572,6 @@ MRJ:
 		Image: 2tnk
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 
 3TNK.Husk:
 	Inherits: ^Husk
@@ -555,9 +581,6 @@ MRJ:
 		Image: 3tnk
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 
 4TNK.Husk:
 	Inherits: ^Husk
@@ -567,9 +590,6 @@ MRJ:
 		Image: 4tnk
 	ThrowsParticle@turret:
 		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
 
 HARV.FullHusk:
 	Inherits: ^Husk
@@ -597,16 +617,16 @@ TTNK:
 	Buildable:
 		Queue: Vehicle
 		BuildPaletteOrder: 130
-		Prerequisites: stek,tsla
+		Prerequisites: tsla,stek
 		Owner: soviet
-		Hotkey: l
+		Hotkey: t
 	Valued:
 		Cost: 1350
 	Tooltip:
 		Name: Tesla Tank
-		Description: Tank with mounted tesla coil.\n  Strong vs Infantry, Light Vehicles\n  and Buildings  \n  Weak vs Tanks, Aircraft
+		Description: Tank with mounted tesla coil.\n  Strong vs Infantry, Vehicles\n  and Buildings  \n  Weak vs Aircraft
 	Health:
-		HP: 150
+		HP: 400
 	Armor:
 		Type: Light
 	Mobile:
@@ -614,10 +634,12 @@ TTNK:
 		Crushes: wall, atmine, crate, infantry
 	RevealsShroud:
 		Range: 7
+	Armament:
+		Weapon: TTankZap
+		LocalOffset: 0,0,213
 	AttackFrontal:
-		PrimaryWeapon: TTankZap
-		PrimaryOffset: 0,0,0,-5
-	RenderUnitSpinner:
+	RenderUnit:
+	WithSpinner:
 	Selectable:
 		Bounds: 28,28,0,0
 	AutoTarget:
@@ -645,11 +667,13 @@ FTRK:
 		Range: 4
 	Turreted:
 		ROT: 5
+		Offset: -298,0,298
+	Armament:
+		Weapon: FLAK-23
+		Recoil: 85
 	AttackTurreted:
-		PrimaryWeapon: FLAK-23
-		PrimaryOffset: 0,5,0,-4
-		PrimaryRecoil: 2
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -694,29 +718,34 @@ CTNK:
 	Buildable:
 		Queue: Vehicle
 		BuildPaletteOrder: 140
-		Prerequisites: atek
+		Prerequisites: atek,pdox
 		Owner: allies
 		Hotkey: j
 	Valued:
-		Cost: 1200
+		Cost: 1350
 	Tooltip:
 		Name: Chrono Tank
-		Description: Chrono Tank, teleports to areas within range.\n  Strong vs Vehicles, Buildings\n  Weak vs Tanks
+		Description: Chrono Tank, teleports to areas within range.\n  Strong vs Vehicles, Buildings\n  Weak vs Aircraft
 	Selectable:
 		Bounds: 28,28
 	Health:
-		HP: 260
+		HP: 400
 	Armor:
 		Type: Light
 	Mobile:
 		Speed: 8
+		Crushes: wall, atmine, crate, infantry
 	RevealsShroud:
 		Range: 6
 	RenderUnit:
 	AutoTarget:
+	Armament@PRIMARY:
+		Weapon: ChronoTusk
+		LocalOffset: 0,-171,0
+		LocalYaw: 100
+	Armament@SECONDARY:
+		Weapon: ChronoTusk
+		LocalOffset: 0,171,0
+		LocalYaw: -100
 	AttackFrontal:
-		PrimaryWeapon: ChronoTusk
-		SecondaryWeapon: ChronoTusk
-		PrimaryLocalOffset: -4,0,0,0,0, -4,0,0,0,0
-		SecondaryLocalOffset: 4,0,0,0,25, 4,0,0,0,-25
 	ChronoshiftDeploy:

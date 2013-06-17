@@ -27,10 +27,13 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
 	AcceptsCloakCrate:
 	WithSmoke:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
+	BodyOrientation:
 
 ^Tank:
 	AppearsOnRadar:
@@ -61,13 +64,16 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
 	AcceptsCloakCrate:
 	WithSmoke:
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
+	BodyOrientation:
 
 ^Helicopter:
 	AppearsOnRadar:
@@ -89,7 +95,11 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
+	DebugMuzzlePositions:
+	BodyOrientation:
 
 ^Infantry:
 	AppearsOnRadar:
@@ -105,7 +115,7 @@
 		Crushes: crate
 		SharesCell: true
 		TerrainSpeeds:
-			Clear: 90
+			Clear: 100
 			Rough: 80
 			Road: 100
 			Tiberium: 70
@@ -121,7 +131,7 @@
 	Buildable:
 		Queue: Infantry
 	TakeCover:
-		BarrelOffset: 0,-2,0,4
+		ProneSpeed: 0.6
 	RenderInfantryProne:
 	AttackMove:
 	Passenger:
@@ -132,13 +142,17 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	SpawnViceroid:
 		Probability: 2
 	CrushableInfantry:
+		WarnProbability: 60
 	RepairableNear:
 		Buildings: hosp
 		CloseEnough: 1
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
+	BodyOrientation:
 
 ^CivInfantry:
 	Inherits: ^Infantry
@@ -161,13 +175,14 @@
 		HP: 25
 	RevealsShroud:
 		Range: 2
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ActorLostNotification:
-		Notification: civdead1.aud
+		Notification: CivilianKilled
 		NotifyAll: true
 	ScaredyCat:
-	RenderInfantryPanic:	
+	RenderInfantryPanic:
 	AttackMove:
 		JustMove: yes
 	CrushableInfantry:
@@ -185,7 +200,8 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	DebugMuzzlePositions:
+	BodyOrientation:
 
 ^Ship:
 	AppearsOnRadar:
@@ -203,8 +219,11 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
+	DebugMuzzlePositions:
+	Guard:
+	Guardable:
+	BodyOrientation:
 
 ^Building:
 	AppearsOnRadar:
@@ -212,13 +231,15 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Armor:
 		Type: Wood
 	RepairableBuilding:
 		RepairPercent: 40
 		RepairStep: 14
 	Building:
+		Adjacent: 4
+		RequiresBaseProvider: true
 		Dimensions: 1,1
 		Footprint: x
 		BuildSounds: constru2.aud, hvydoor1.aud
@@ -237,22 +258,20 @@
 		ActorTypes: e6,e1
 	MustBeDestroyed:
 	GivesExperience:
-	CaptureNotification@GDI:
-		Race: gdi
-		Notification: gdicapt1.aud
-	CaptureNotification@NOD:
-		Race: nod
-		Notification: nodcapt1.aud
+	CaptureNotification:
+		Notification: BuildingCaptured
 	ActorLostNotification:
-		Notification: strclost.aud
+		Notification: BuildingLost
 	EditorAppearance:
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
 	ShakeOnDeath:
 	Sellable:
-	Capturable:
-	CapturableBar:
-	C4Demolishable:
+	LegacyCapturable:
+	DebugMuzzlePositions:
+	Guardable:
+		Range: 3
+	BodyOrientation:
 
 ^CivBuilding:
 	Inherits: ^Building
@@ -267,8 +286,7 @@
 	RenderBuilding:
 	WithBuildingExplosion:
 	-RepairableBuilding:
-	-Capturable:
-	-CapturableBar:
+	-LegacyCapturable:
 	-Sellable:
 	Tooltip:
 		Name: Civilian Building
@@ -283,11 +301,11 @@
 		RelativeToTopLeft: yes
 	Tooltip:
 		Name: Civilian Building (Destroyed)
+	BodyOrientation:
 
 ^TechBuilding:
 	Inherits: ^CivBuilding
-	Capturable:
-	CapturableBar:
+	LegacyCapturable:
 	RepairableBuilding:
 	RevealsShroud:
 		Range: 3
@@ -313,6 +331,7 @@
 	Tooltip:
 		Name: Field (Destroyed)
 	BelowUnits:
+	BodyOrientation:
 
 ^Wall:
 	AppearsOnRadar:
@@ -323,7 +342,7 @@
 		Adjacent: 7
 		TerrainTypes: Clear,Road
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Wall:
 		CrushClasses: wall
 		CrushSound: sandbag2.aud
@@ -340,7 +359,8 @@
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
 	Sellable:
-	C4Demolishable:
+	Guardable:
+	BodyOrientation:
 
 ^Tree:
 	Tooltip:
@@ -360,9 +380,8 @@
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
+	BodyOrientation:
 
 ^Rock:
 	Tooltip:
@@ -377,6 +396,7 @@
 		Terrain: Tree
 	EditorAppearance:
 		RelativeToTopLeft: yes
+	BodyOrientation:
 
 ^Husk:
 	Health:
@@ -391,11 +411,25 @@
 	TargetableUnit:
 	TransformOnCapture:
 		ForceHealthPercentage: 25
+	BelowUnits:
+	BodyOrientation:
 #	Capturable:
 #		Type: husk
 #		AllowAllies: true
 #		AllowNeutral: true
 #		AllowEnemies: true
+
+^HelicopterHusk:
+	Inherits: ^Husk
+	-Husk:
+	-Burns:
+	FallsToEarth:
+		Spins: True
+		Moves: False
+		Explosion: HeliCrash
+	-BelowUnits:
+	-TransformOnCapture:
+	-TargetableUnit:
 
 ^Bridge:
 	Tooltip:
@@ -408,6 +442,4 @@
 	SoundOnDamageTransition:
 		DamagedSound: xplos.aud
 		DestroyedSound: xplobig4.aud
-	Building:
-		Footprint: ______ ______ ______ ______
-		Dimensions: 6,4
+	BodyOrientation:

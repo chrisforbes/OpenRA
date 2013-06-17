@@ -10,9 +10,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using OpenRA.Effects;
 using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Network;
 using OpenRA.Orders;
 using OpenRA.Support;
@@ -39,31 +41,38 @@ namespace OpenRA
 
 		public void AddPlayer(Player p) { Players.Add(p); }
 		public Player LocalPlayer { get; private set; }
-		public readonly Shroud LocalShroud;
 
-		public Player RenderedPlayer;
-		public Shroud RenderedShroud {
-			get {
-				if(RenderedPlayer == null)
-				{
-					return LocalShroud;
-				}else{
-					return RenderedPlayer.Shroud;
-				}
+		Player renderPlayer;
+		public bool ObserveAfterWinOrLose;
+		public Player RenderPlayer
+		{
+			get { return renderPlayer == null || (ObserveAfterWinOrLose && renderPlayer.WinState != WinState.Undefined)? null : renderPlayer; }
+			set { renderPlayer = value; }
+		}
+
+		public bool FogObscures(Actor a) { return RenderPlayer != null && !RenderPlayer.Shroud.IsVisible(a); }
+		public bool FogObscures(CPos p) { return RenderPlayer != null && !RenderPlayer.Shroud.IsVisible(p); }
+		public bool ShroudObscures(Actor a) { return RenderPlayer != null && !RenderPlayer.Shroud.IsExplored(a); }
+		public bool ShroudObscures(CPos p) { return RenderPlayer != null && !RenderPlayer.Shroud.IsExplored(p); }
+
+		public Rectangle? VisibleBounds
+		{
+			get
+			{
+				if (RenderPlayer == null)
+					return null;
+
+				return RenderPlayer.Shroud.ExploredBounds;
 			}
 		}
-		
 
 		public void SetLocalPlayer(string pr)
 		{
-			if (!(orderManager.Connection is ReplayConnection))
-			{
-	 			LocalPlayer = Players.FirstOrDefault(p => p.InternalName == pr);
-				RenderedPlayer = LocalPlayer;
-			}else{
-				
-			}
-				
+			if (orderManager.Connection is ReplayConnection)
+				return;
+
+	 		LocalPlayer = Players.FirstOrDefault(p => p.InternalName == pr);
+			RenderPlayer = LocalPlayer;
 		}
 
 		public readonly Actor WorldActor;
@@ -102,8 +111,9 @@ namespace OpenRA
 			}
 		}
 
-		internal World(Manifest manifest, Map map, OrderManager orderManager)
+		internal World(Manifest manifest, Map map, OrderManager orderManager, bool isShellmap)
 		{
+			IsShellmap = isShellmap;
 			this.orderManager = orderManager;
 			orderGenerator_ = new UnitOrderGenerator();
 			Map = map;
@@ -114,7 +124,6 @@ namespace OpenRA
 			SharedRandom = new XRandom(orderManager.LobbyInfo.GlobalSettings.RandomSeed);
 
 			WorldActor = CreateActor( "World", new TypeDictionary() );
-			LocalShroud = WorldActor.Trait<Shroud>();
 			ActorMap = new ActorMap(this);
 
 			// Add players
@@ -168,42 +177,46 @@ namespace OpenRA
 		public event Action<Actor> ActorAdded = _ => { };
 		public event Action<Actor> ActorRemoved = _ => { };
 
-		// Will do bad things in multiplayer games
-		public bool EnableTick = true;
+		public bool Paused { get; internal set; }
+		public bool PredictedPaused { get; internal set; }
 		public bool IsShellmap = false;
 
-		bool ShouldTick()
+		public void SetPauseState(bool paused)
 		{
-			if (!EnableTick) return false;
-			return !IsShellmap || Game.Settings.Game.ShowShellmap;
+			IssueOrder(Order.PauseGame(paused));
+			PredictedPaused = paused;
 		}
 
 		public void Tick()
 		{
-			// Todo: Expose this as an order so it can be synced
-			if (ShouldTick())
+			if (!Paused && (!IsShellmap || Game.Settings.Game.ShowShellmap))
 			{
-				using( new PerfSample("tick_idle") )
-					foreach( var ni in ActorsWithTrait<INotifyIdle>() )
+				using (new PerfSample("tick_idle"))
+					foreach (var ni in ActorsWithTrait<INotifyIdle>())
 						if (ni.Actor.IsIdle)
 							ni.Trait.TickIdle(ni.Actor);
 
-				using( new PerfSample("tick_activities") )
-					foreach( var a in actors )
+				using (new PerfSample("tick_activities"))
+					foreach(var a in actors)
 						a.Tick();
 
-				ActorsWithTrait<ITick>().DoTimed( x =>
-				{
-					x.Trait.Tick( x.Actor );
-				}, "[{2}] Trait: {0} ({1:0.000} ms)", Game.Settings.Debug.LongTickThreshold );
+				ActorsWithTrait<ITick>().DoTimed(x => x.Trait.Tick(x.Actor),
+					"[{2}] Trait: {0} ({1:0.000} ms)",
+				    Game.Settings.Debug.LongTickThreshold);
 
-				effects.DoTimed( e => e.Tick( this ), "[{2}] Effect: {0} ({1:0.000} ms)",
-					Game.Settings.Debug.LongTickThreshold );
+				effects.DoTimed(e => e.Tick(this),
+					"[{2}] Effect: {0} ({1:0.000} ms)",
+					Game.Settings.Debug.LongTickThreshold);
 			}
 
 			while (frameEndActions.Count != 0)
 				frameEndActions.Dequeue()(this);
-			
+		}
+
+		// For things that want to update their render state once per tick, ignoring pause state
+		public void TickRender(WorldRenderer wr)
+		{
+			ActorsWithTrait<ITickRender>().Do(x => x.Trait.TickRender(wr, x.Actor));
 		}
 
 		public IEnumerable<Actor> Actors { get { return actors; } }

@@ -15,30 +15,22 @@
 	Helicopter:
 		InitialFacing: 0
 		ROT: 4
-		Speed: 20
+		Speed: 30
 		LandableTerrainTypes: Sand, Rock, Transition, Spice, Dune
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 		MinimalLandAltitude: 25
-	SmokeTrailWhenDamaged@0:
-		Offset: 15, -12
-		Interval: 3
-	SmokeTrailWhenDamaged@1:
-		Offset: -15, -12
-		Interval: 3
 	RenderUnit:
-	RenderCargo:
-		RelativeAltitude: 20
+	WithCargo:
+		LocalOffset: 0,0,-854
 	WithShadow:
 	Cargo:
 		Types: Vehicle
 		MaxWeight: 1
 		PipCount: 1
 		minimalUnloadAltitude: 25
-	FallsToEarth:
-		Spins: no
-		Moves: yes
-		Explosion: UnitExplodeScale
+	LeavesHusk:
+		HuskActor: CARRYALL.Husk
 
 FRIGATE:
 	ParaDrop:
@@ -49,7 +41,7 @@ FRIGATE:
 		Description: Supply spacecraft
 	Plane:
 		ROT: 5
-		Speed: 30
+		Speed: 50
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	Health:
@@ -82,27 +74,24 @@ ORNI:
 		Type: Light
 	RevealsShroud:
 		Range: 10
+	Armament:
+		Weapon: ChainGun
+		LocalOffset: 85,-213,-85
 	AttackHeli:
-		PrimaryWeapon: ChainGun
-		PrimaryOffset: -5,-2,0,2
 		FacingTolerance: 20
 	Helicopter:
 		LandWhenIdle: false
 		InitialFacing: 20
 		ROT: 6
-		Speed: 30
+		Speed: 40
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	RenderUnit:
 	WithShadow:
 	Selectable:
 		Bounds: 38,32,0,0
-	FallsToEarth:
-		Spins: no
-		Moves: yes
-		Explosion: UnitExplodeScale
-	SmokeTrailWhenDamaged:
-		Offset: 0,-10
+	LeavesHusk:
+		HuskActor: ORNI.Husk
 
 ORNI.bomber:
 	CarpetBomb:
@@ -113,9 +102,11 @@ ORNI.bomber:
 		HP: 100
 	Armor:
 		Type: Light
+	RevealsShroud:
+		Range: 10
 	Plane:
 		ROT: 5
-		Speed: 35
+		Speed: 50
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
 	LimitedAmmo:
@@ -127,32 +118,25 @@ ORNI.bomber:
 	-GainsExperience:
 	Tooltip:
 		Name: Ornithopter
-	FallsToEarth:
-		Spins: no
-		Moves: yes
-		Explosion: UnitExplodeScale
-	SmokeTrailWhenDamaged:
-		Offset: 0,-10
+	LeavesHusk:
+		HuskActor: ORNI.bomber.Husk
 
 CARRYALL.infantry:
 	ParaDrop:
 		LZRange: 5
+		ChuteSound:
 	Inherits: ^Plane
 	Health:
 		HP: 200
 	Armor:
 		Type: Light
+	RevealsShroud:
+		Range: 12
 	Plane:
 		ROT: 4
-		Speed: 25
+		Speed: 40
 		RepairBuildings: repair
 		RearmBuildings: starporta,starporto,starporth
-	SmokeTrailWhenDamaged@0:
-		Offset: 15, -12
-		Interval: 3
-	SmokeTrailWhenDamaged@1:
-		Offset: -15, -12
-		Interval: 3
 	RenderUnit:
 		Image: carryall
 	WithShadow:
@@ -163,10 +147,8 @@ CARRYALL.infantry:
 	-GainsExperience:
 	Tooltip:
 		Name: Carryall
-	FallsToEarth:
-		Spins: no
-		Moves: yes
-		Explosion: UnitExplodeScale
+	LeavesHusk:
+		HuskActor: CARRYALL.infantry.Husk
 
 BADR:
 	Inherits: CARRYALL.infantry
@@ -174,3 +156,70 @@ BADR:
 		LZRange: 4
 	Tooltip:
 		Name: Crate Carryall
+	LeavesHusk:
+		HuskActor: BADR.Husk
+
+CARRYALL.Husk:
+	Inherits: ^AircraftHusk
+	Tooltip:
+		Name: Carryall
+	Helicopter:
+		ROT: 4
+		Speed: 30
+		RepairBuildings: repair
+		RearmBuildings: starporta,starporto,starporth
+	RenderUnit:
+		Image: carryall
+	WithShadow:
+
+ORNI.Husk:
+	Inherits: ^AircraftHusk
+	Tooltip:
+		Name: Ornithopter
+	Helicopter:
+		ROT: 6
+		Speed: 40
+		RepairBuildings: repair
+		RearmBuildings: starporta,starporto,starporth
+	RenderUnit:
+		Image: orni
+	WithShadow:
+
+ORNI.bomber.Husk:
+	Inherits: ^AircraftHusk
+	Tooltip:
+		Name: Ornithopter
+	Plane:
+		ROT: 5
+		Speed: 50
+		RepairBuildings: repair
+		RearmBuildings: starporta,starporto,starporth
+	RenderUnit:
+		Image: orni
+	WithShadow:
+
+CARRYALL.infantry.Husk:
+	Inherits: ^AircraftHusk
+	Tooltip:
+		Name: Carryall
+	Plane:
+		ROT: 4
+		Speed: 40
+		RepairBuildings: repair
+		RearmBuildings: starporta,starporto,starporth
+	RenderUnit:
+		Image: carryall
+	WithShadow:
+
+BADR.Husk:
+	Inherits: ^AircraftHusk
+	Tooltip:
+		Name: Crate Carryall
+	Plane:
+		ROT: 4
+		Speed: 40
+		RepairBuildings: repair
+		RearmBuildings: starporta,starporto,starporth
+	RenderUnit:
+		Image: carryall
+	WithShadow:

@@ -62,7 +62,8 @@ namespace OpenRA.Mods.RA
 					}
 					else
 					{
-						if (!self.World.CanPlaceBuilding(order.TargetString, buildingInfo, order.TargetLocation, null))
+						if (!self.World.CanPlaceBuilding(order.TargetString, buildingInfo, order.TargetLocation, null)
+							|| !buildingInfo.IsCloseEnoughToBase(self.World, order.Player, order.TargetString, order.TargetLocation))
 						{
 							return;
 						}
@@ -79,6 +80,22 @@ namespace OpenRA.Mods.RA
 					PlayBuildAnim( self, unit );
 
 					queue.FinishProduction();
+
+					if (buildingInfo.RequiresBaseProvider)
+					{
+						var center = buildingInfo.CenterLocation(order.TargetLocation);
+						foreach (var bp in w.ActorsWithTrait<BaseProvider>())
+						{
+							if (bp.Actor.Owner.Stances[self.Owner] != Stance.Ally || !bp.Trait.Ready())
+								continue;
+
+							if (Combat.IsInRange(center, bp.Trait.Info.Range, bp.Actor.CenterLocation))
+							{
+								bp.Trait.BeginCooldown();
+								break;
+							}
+						}
+					}
 
 					if (GetNumBuildables(self.Owner) > prevItems)
 						w.Add(new DelayedAction(10,

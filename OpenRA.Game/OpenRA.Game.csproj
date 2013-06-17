@@ -60,15 +60,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-    </Reference>
+    <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Tao.FreeType, Version=2.3.5.0, Culture=neutral, PublicKeyToken=e499629dc69cd531">
+    <Reference Include="SharpFont">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\thirdparty\Tao\Tao.FreeType.dll</HintPath>
+      <HintPath>..\thirdparty\SharpFont.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Nat, Version=1.1.0.0, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+      <Package>mono.nat</Package>
+      <HintPath>..\thirdparty\Mono.Nat.dll</HintPath>
     </Reference>
     <Reference Include="Tao.OpenAl, Version=1.1.0.1, Culture=neutral, PublicKeyToken=a7579dda88828311">
       <SpecificVersion>False</SpecificVersion>
@@ -84,7 +89,6 @@
     <Compile Include="PSubVec.cs" />
     <Compile Include="PSubPos.cs" />
     <Compile Include="PVecInt.cs" />
-    <Compile Include="PVecFloat.cs" />
     <Compile Include="PPos.cs" />
     <Compile Include="Download.cs" />
     <Compile Include="Effects\DelayedAction.cs" />
@@ -152,7 +156,6 @@
     <Compile Include="Server\Server.cs" />
     <Compile Include="Server\ServerOrder.cs" />
     <Compile Include="Server\TraitInterfaces.cs" />
-    <Compile Include="Server\UPnP.cs" />
     <Compile Include="Sound.cs" />
     <Compile Include="Support\Arguments.cs" />
     <Compile Include="Support\PerfHistory.cs" />
@@ -179,7 +182,6 @@
     <Compile Include="Traits\ValidateOrder.cs" />
     <Compile Include="Traits\Waypoint.cs" />
     <Compile Include="Traits\World\Country.cs" />
-    <Compile Include="Traits\World\Fog.cs" />
     <Compile Include="Traits\World\PlayerColorPalette.cs" />
     <Compile Include="Traits\World\ResourceLayer.cs" />
     <Compile Include="Traits\World\ResourceType.cs" />
@@ -218,6 +220,19 @@
     <Compile Include="World.cs" />
     <Compile Include="WorldUtils.cs" />
     <Compile Include="Network\ReplayRecorderConnection.cs" />
+    <Compile Include="Widgets\TooltipContainerWidget.cs" />
+    <Compile Include="Traits\DebugPauseState.cs" />
+    <Compile Include="Network\UPnP.cs" />
+    <Compile Include="Widgets\ClientTooltipRegionWidget.cs" />
+    <Compile Include="Graphics\Renderable.cs" />
+    <Compile Include="Traits\Render\RenderSprites.cs" />
+    <Compile Include="Graphics\Voxel.cs" />
+    <Compile Include="Graphics\VoxelRenderer.cs" />
+    <Compile Include="Graphics\VoxelLoader.cs" />
+    <Compile Include="Graphics\VoxelProvider.cs" />
+    <Compile Include="Traits\BodyOrientation.cs" />
+    <Compile Include="Graphics\VoxelAnimation.cs" />
+    <Compile Include="Graphics\VoxelRenderable.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">

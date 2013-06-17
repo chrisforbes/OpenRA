@@ -76,7 +76,7 @@ namespace OpenRA.Mods.RA
 			var mins = CPos.Min(start, end);
 			var maxs = CPos.Max(start, end);
 
-			/* todo: proper endcaps, if anyone cares (which won't happen unless depth is large) */
+			/* TODO: proper endcaps, if anyone cares (which won't happen unless depth is large) */
 
 			var p = end - start;
 			var q = new float2(p.Y, -p.X);
@@ -140,7 +140,7 @@ namespace OpenRA.Mods.RA
 
 			public void RenderBeforeWorld(WorldRenderer wr, World world) { }
 
-			public string GetCursor(World world, CPos xy, MouseInput mi) { lastMousePos = xy; return "ability"; }	/* todo */
+			public string GetCursor(World world, CPos xy, MouseInput mi) { lastMousePos = xy; return "ability"; }	/* TODO */
 		}
 
 		public void RenderAfterWorld(WorldRenderer wr)
@@ -157,20 +157,20 @@ namespace OpenRA.Mods.RA
 			public string OrderID { get { return "BeginMinefield"; } }
 			public int OrderPriority { get { return 5; } }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 			{
 				return false;
 			}
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, TargetModifiers modifiers, ref string cursor)
 			{
 				if (!self.World.Map.IsInMap(location))
 					return false;
 
 				cursor = "ability";
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 
-				return (actorsAtLocation.Count == 0 && forceAttack);
+				return (actorsAtLocation.Count == 0 && modifiers.HasModifier(TargetModifiers.ForceAttack));
 			}
 			public bool IsQueued { get; protected set; }
 		}

@@ -19,6 +19,7 @@ Speech:
 		BaseAttack: ATACK
 		HarvesterAttack: HATTK
 		Leave: ABORT
+		StartGame:
 		UnitReady: UNRDY
 		NoRoom: NROOM
 		Training: TRAIN
@@ -28,6 +29,9 @@ Speech:
 		BuildingReady: BDRDY
 		OrderPlaced: ORDER
 		Reinforce: REINF
+		UnitLost: ULOST
+		BuildingLost: BLOST
+		BuildingCaptured: CAPT
 
 Sounds:
 	Notifications:

@@ -1,3 +1,8 @@
+fb4:
+	idle:
+		Start: 0
+		Length: 4
+
 fire:
 	1: fire1
 		Start: 0
@@ -193,12 +198,6 @@ crate-effects:
 		Length: *
 		Tick: 200
 
-miss:
-	idle:
-		Start: 0
-	damaged-idle:
-		Start: 2
-
 atomicup:
 	idle:
 		Start: 0
@@ -259,13 +258,35 @@ pips:
 		Length: *
 
 overlay:
-	build-valid:
+	build-valid-desert:
+		Start: 0
+	build-valid-snow:
+		Start: 2
+	build-valid-temperat:
+		Start: 0
+	build-valid-winter:
 		Start: 0
 	build-invalid:
 		Start: 1
 	target-select:
+		Start: 3
+	target-valid-desert:
+		Start: 0
+	target-valid-snow:
 		Start: 2
-	target-valid:
+	target-valid-temperat:
+		Start: 0
+	target-valid-winter:
 		Start: 0
 	target-invalid:
 		Start: 1
+
+powerdown:
+	disabled: speed
+		Start: 3
+
+poweroff:
+	offline:
+		Start: 0
+		Length: *
+		Tick: 160

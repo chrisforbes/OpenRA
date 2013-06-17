@@ -8,15 +8,18 @@
  */
 #endregion
 
+using OpenRA.FileFormats;
 using OpenRA.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Render
 {
-	public class WithRotorInfo : ITraitInfo, Requires<RenderSimpleInfo>
+	public class WithRotorInfo : ITraitInfo, Requires<RenderSpritesInfo>, Requires<IBodyOrientationInfo>
 	{
+		[Desc("Position relative to body")]
+		public readonly WVec Offset = WVec.Zero;
+
 		public readonly string Id = "rotor";
-		public readonly int[] Offset = { 0, 0 };
 		public object Create(ActorInitializer init) { return new WithRotor(init.self, this); }
 	}
 
@@ -25,15 +28,14 @@ namespace OpenRA.Mods.RA.Render
 		public Animation rotorAnim;
 		public WithRotor(Actor self, WithRotorInfo info)
 		{
-			var rs = self.Trait<RenderSimple>();
-			var facing = self.Trait<IFacing>();
+			var rs = self.Trait<RenderSprites>();
+			var body = self.Trait<IBodyOrientation>();
 
 			rotorAnim = new Animation(rs.GetImage(self));
 			rotorAnim.PlayRepeating("rotor");
-			rs.anims.Add(info.Id, new AnimationWithOffset(
-				rotorAnim,
-				() => Combat.GetTurretPosition( self, facing, new Turret(info.Offset)).ToFloat2(),
-				null ) { ZOffset = 1 } );
+			rs.anims.Add(info.Id, new AnimationWithOffset(rotorAnim,
+				() => body.LocalToWorld(info.Offset.Rotate(body.QuantizeOrientation(self, self.Orientation))),
+				null, p => WithTurret.ZOffsetFromCenter(self, p, 1)));
 		}
 
 		public void Tick(Actor self)

@@ -18,17 +18,22 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Move
 {
+	[Desc("Unit is able to move.")]
 	public class MobileInfo : ITraitInfo, IFacingInfo, UsesInit<FacingInit>, UsesInit<LocationInit>, UsesInit<SubCellInit>
 	{
 		[FieldLoader.LoadUsing("LoadSpeeds")]
+		[Desc("Set Water: 0 for ground units and lower the value on rough terrain.")]
 		public readonly Dictionary<string, TerrainInfo> TerrainSpeeds;
+		[Desc("e.g. crate, wall, infantry")]
 		public readonly string[] Crushes;
-		public readonly int WaitAverage = 60;
-		public readonly int WaitSpread = 20;
+		public readonly int WaitAverage = 5;
+		public readonly int WaitSpread = 2;
 		public readonly int InitialFacing = 128;
+		[Desc("Rate of Turning")]
 		public readonly int ROT = 255;
 		public readonly int Speed = 1;
 		public readonly bool OnRails = false;
+		[Desc("Allow multiple (infantry) units in one cell.")]
 		public readonly bool SharesCell = false;
 		public readonly int Altitude;
 
@@ -122,6 +127,8 @@ namespace OpenRA.Mods.RA.Move
 
 			return true;
 		}
+
+		public int GetInitialFacing() { return InitialFacing; }
 	}
 
 	public class Mobile : IIssueOrder, IResolveOrder, IOrderVoice, IOccupySpace, IMove, IFacing, ISync
@@ -145,7 +152,6 @@ namespace OpenRA.Mods.RA.Move
 		[Sync] public int Altitude { get; set; }
 
 		public int ROT { get { return Info.ROT; } }
-		public int InitialFacing { get { return Info.InitialFacing; } }
 
 		[Sync] public PPos PxPosition { get; set; }
 		[Sync] public CPos fromCell { get { return __fromCell; } }
@@ -470,20 +476,20 @@ namespace OpenRA.Mods.RA.Move
 			public int OrderPriority { get { return 4; } }
 			public bool IsQueued { get; protected set; }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 			{
 				return false;
 			}
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, TargetModifiers modifiers, ref string cursor)
 			{
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 				cursor = "move";
 
-				if (self.World.LocalPlayer.Shroud.IsExplored(location))
+				if (self.Owner.Shroud.IsExplored(location))
 					cursor = self.World.GetTerrainInfo(location).CustomCursor ?? cursor;
 
-				if (!self.World.Map.IsInMap(location) || (self.World.LocalPlayer.Shroud.IsExplored(location) &&
+				if (!self.World.Map.IsInMap(location) || (self.Owner.Shroud.IsExplored(location) &&
 						unitType.MovementCostForCell(self.World, location) == int.MaxValue))
 					cursor = "move-blocked";
 

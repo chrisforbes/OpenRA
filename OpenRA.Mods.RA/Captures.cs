@@ -16,14 +16,18 @@ using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This actor can capture other actors which have the Capturable: trait.")]
 	class CapturesInfo : ITraitInfo
 	{
-		public string[] CaptureTypes = {"building"};
-		public bool WastedAfterwards = true;
-		public bool Sabotage = false;
+		[Desc("Types of actors that it can capture, as long as the type also exists in the Capturable Type: trait.")]
+		public readonly string[] CaptureTypes = { "building" };
+		[Desc("Destroy the unit after capturing.")]
+		public readonly bool ConsumeActor = false;
+
 		public object Create(ActorInitializer init) { return new Captures(init.self, this); }
 	}
 
@@ -42,13 +46,13 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new CaptureOrderTargeter(Info.CaptureTypes, target => CanCapture(target));
+				yield return new CaptureOrderTargeter(CanCapture);
 			}
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order.OrderID == "CaptureActor" )
+			if (order.OrderID == "CaptureActor")
 				return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
 
 			return null;
@@ -56,60 +60,51 @@ namespace OpenRA.Mods.RA
 
 		public string VoicePhraseForOrder(Actor self, Order order)
 		{
-			return (order.OrderString == "CaptureActor"
-					&& CanCapture(order.TargetActor)) ? "Attack" : null;
+			return (order.OrderString == "CaptureActor" && CanCapture(order.TargetActor)) ? "Attack" : null;
 		}
 
 		public void ResolveOrder(Actor self, Order order)
 		{
 			if (order.OrderString == "CaptureActor")
 			{
-				if (!CanCapture(order.TargetActor)) return;
+				if (!CanCapture(order.TargetActor))
+					return;
 
 				self.SetTargetLine(Target.FromOrder(order), Color.Red);
 
 				self.CancelActivity();
-				self.QueueActivity(new CaptureActor(order.TargetActor));
+				self.QueueActivity(new CaptureActor(Target.FromOrder(order)));
 			}
 		}
 
 		bool CanCapture(Actor target)
 		{
 			var c = target.TraitOrDefault<Capturable>();
-			return c != null && ( !c.CaptureInProgress || c.Captor.Owner.Stances[self.Owner] != Stance.Ally );
+			return c != null && c.CanBeTargetedBy(self);
 		}
 	}
 
-	class CaptureOrderTargeter : UnitTraitOrderTargeter<Capturable>
+	class CaptureOrderTargeter : UnitOrderTargeter
 	{
-		readonly string[] captureTypes;
-		readonly Func<Actor, bool> useEnterCursor;
+		readonly Func<Actor, bool> useCaptureCursor;
 
-		public CaptureOrderTargeter(string[] captureTypes, Func<Actor, bool> useEnterCursor)
-			: base( "CaptureActor", 6, "enter", true, true)
+		public CaptureOrderTargeter(Func<Actor, bool> useCaptureCursor)
+			: base("CaptureActor", 6, "enter", true, true)
 		{
-			this.captureTypes = captureTypes;
-			this.useEnterCursor = useEnterCursor;
+			this.useCaptureCursor = useCaptureCursor;
 		}
 
-		public override bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+		public override bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 		{
-			if( !base.CanTargetActor( self, target, forceAttack, forceQueued, ref cursor ) ) return false;
+			if (!base.CanTargetActor(self, target, modifiers, ref cursor))
+				return false;
 
-			var ci = target.Info.Traits.Get<CapturableInfo>();
-			var playerRelationship = self.Owner.Stances[ target.Owner ];
+			var canTargetActor = useCaptureCursor(target);
+			cursor = canTargetActor ? "ability" : "move-blocked";
 
-			if( playerRelationship == Stance.Ally && !ci.AllowAllies ) return false;
-			if( playerRelationship == Stance.Enemy && !ci.AllowEnemies ) return false;
-			if( playerRelationship == Stance.Neutral && !ci.AllowNeutral ) return false;
-
-			IsQueued = forceQueued;
-
-			var Info = self.Info.Traits.Get<CapturesInfo>();
-
-			if (captureTypes.Contains(ci.Type))
+			if (canTargetActor)
 			{
-				cursor = (Info.WastedAfterwards) ? (useEnterCursor(target) ? "enter" : "enter-blocked") : "attack";
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 				return true;
 			}
 

@@ -10,21 +10,30 @@
 
 using OpenRA.Traits;
 using OpenRA.Mods.RA.Effects;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Lets the actor generate cash in a set periodic time.")]
 	class CashTricklerInfo : ITraitInfo
 	{
+		[Desc("Amount of money to give each time.")]
 		public readonly int Period = 50;
+		[Desc("Number of ticks to wait between giving money.")]
 		public readonly int Amount = 15;
+		[Desc("Whether to show the cash tick indicators (+$15 rising from actor).")]
 		public readonly bool ShowTicks = true;
+		[Desc("How long the cash tick indicator should be shown for.")]
 		public readonly int TickLifetime = 30;
+		[Desc("Pixels/tick upward movement of the cash tick indicator.")]
 		public readonly int TickVelocity = 1;
+		[Desc("Amount of money awarded for capturing the actor.")]
+		public readonly int CaptureAmount = 0;
 
 		public object Create (ActorInitializer init) { return new CashTrickler(this); }
 	}
 
-	class CashTrickler : ITick, ISync
+	class CashTrickler : ITick, ISync, INotifyCapture
 	{
 		[Sync] int ticks;
 		CashTricklerInfo Info;
@@ -37,11 +46,25 @@ namespace OpenRA.Mods.RA
 		{
 			if (--ticks < 0)
 			{
-				self.Owner.PlayerActor.Trait<PlayerResources>().GiveCash(Info.Amount);
 				ticks = Info.Period;
-				if (Info.ShowTicks)
-					self.World.AddFrameEndTask(w => w.Add(new CashTick(Info.Amount, Info.TickLifetime, Info.TickVelocity, self.CenterLocation, self.Owner.ColorRamp.GetColor(0))));
+				self.Owner.PlayerActor.Trait<PlayerResources>().GiveCash(Info.Amount);
+				MaybeAddCashTick(self, Info.Amount);
 			}
+		}
+
+		public void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner)
+		{
+			if (Info.CaptureAmount > 0)
+			{
+				newOwner.PlayerActor.Trait<PlayerResources>().GiveCash(Info.CaptureAmount);
+				MaybeAddCashTick(self, Info.CaptureAmount);
+			}
+		}
+
+		void MaybeAddCashTick(Actor self, int amount)
+		{
+			if (Info.ShowTicks)
+				self.World.AddFrameEndTask(w => w.Add(new CashTick(amount, Info.TickLifetime, Info.TickVelocity, self.CenterLocation, self.Owner.Color.RGB)));
 		}
 	}
 }

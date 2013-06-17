@@ -29,7 +29,7 @@ namespace OpenRA.Mods.RA
 		public object Create( ActorInitializer init ) { return new Cargo( init, this ); }
 	}
 
-	public class Cargo : IPips, IIssueOrder, IResolveOrder, IOrderVoice, INotifyKilled
+	public class Cargo : IPips, IIssueOrder, IResolveOrder, IOrderVoice, INotifyKilled, INotifyCapture
 	{
 		readonly Actor self;
 		readonly CargoInfo info;
@@ -96,7 +96,7 @@ namespace OpenRA.Mods.RA
 			if (move != null && move.Altitude > info.minimalUnloadAltitude)
 				return false;
 
-			// Todo: Check if there is a free tile to unload to
+			// TODO: Check if there is a free tile to unload to
 			return true;
 		}
 
@@ -179,6 +179,18 @@ namespace OpenRA.Mods.RA
 			foreach( var c in cargo )
 				c.Destroy();
 			cargo.Clear();
+		}
+
+		public void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner)
+		{
+			if (cargo == null)
+				return;
+
+			self.World.AddFrameEndTask(w =>
+			{
+				foreach (var p in Passengers)
+					p.Owner = newOwner;
+			});
 		}
 	}
 

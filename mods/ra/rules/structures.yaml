@@ -12,6 +12,7 @@ MSLO:
 		Prerequisites: techcenter
 		Owner: soviet,allies
 		BuildLimit: 1
+		Hotkey: m
 	Building:
 		Power: -100
 		Footprint: xx
@@ -33,11 +34,11 @@ MSLO:
 		SelectTargetSound: slcttgt1.aud
 		LaunchSound: alaunch1.aud
 		MissileWeapon: atomic
-		SpawnOffset: 10,0
+		SpawnOffset: 0,427,0
 	CanPowerDown:
 	RequiresPower:
 	SupportPowerChargeBar:
-	
+
 GAP:
 	Inherits: ^Building
 	RequiresPower:
@@ -52,6 +53,7 @@ GAP:
 		BuildPaletteOrder: 100
 		Prerequisites: atek
 		Owner: allies
+		Hotkey: g
 	Building:
 		Power: -60
 		Footprint: _ x
@@ -78,7 +80,7 @@ SPEN:
 		Description: Produces and repairs submarines and \ntransports
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 30
+		BuildPaletteOrder: 50
 		Prerequisites: anypower
 		Owner: soviet
 		Hotkey: y
@@ -128,7 +130,7 @@ SYRD:
 		Proxy: powerproxy.sonarpulse
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 40
+		BuildPaletteOrder: 50
 		Prerequisites: anypower
 		Owner: allies
 		Hotkey: y
@@ -282,16 +284,18 @@ TSLA:
 	RevealsShroud:
 		Range: 8
 	RenderBuildingCharge:
+	Armament:
+		Weapon: TeslaZap
+		LocalOffset: 0,0,427
 	AttackTesla:
-		PrimaryWeapon: TeslaZap
 		ReloadTime: 120
-		PrimaryOffset: 0,0,0,-10
 	AutoTarget:
 	IronCurtainable:
 	-RenderBuilding:
 	RenderRangeCircle:
 	-AcceptsSupplies:
 	DrawLineToTarget:
+	-AutoTargetIgnore:
 
 AGUN:
 	Inherits: ^Building
@@ -302,7 +306,7 @@ AGUN:
 		BuildPaletteOrder: 50
 		Prerequisites: dome
 		Owner: allies
-		Hotkey: g
+		Hotkey: y
 	Valued:
 		Cost: 800
 	Tooltip:
@@ -323,9 +327,11 @@ AGUN:
 		ROT: 15
 		InitialFacing: 224
 	RenderBuildingTurreted:
+	Armament@PRIMARY:
+		Weapon: ZSU-23
+	Armament@SECONDARY:
+		Weapon: ZSU-23
 	AttackTurreted:
-		PrimaryWeapon: ZSU-23
-		SecondaryWeapon: ZSU-23
 	AutoTarget:
 	IronCurtainable:
 	-RenderBuilding:
@@ -333,6 +339,7 @@ AGUN:
 		RangeCircleType: aa
 	-AcceptsSupplies:
 	DrawLineToTarget:
+	-AutoTargetIgnore:
 
 DOME:
 	RequiresPower:
@@ -340,7 +347,7 @@ DOME:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 60
+		BuildPaletteOrder: 80
 		Prerequisites: proc
 		Owner: allies,soviet
 		Hotkey: r
@@ -383,6 +390,8 @@ PBOX:
 	-AcceptsSupplies:
 	Turreted:
 		ROT: 255
+	RenderBuilding:
+		QuantizedFacings: 8
 	Cargo:
 		Types: Infantry
 		MaxWeight: 1
@@ -442,12 +451,14 @@ PBOX.E1:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Vulcan
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Vulcan
-		PrimaryLocalOffset: 0,-11,0,0,0
 	WithMuzzleFlash:
 	Cargo:
 		InitialUnits: e1
+	-AutoTargetIgnore:
 
 #PBOX.E2:
 #	Inherits: PBOX
@@ -464,9 +475,11 @@ PBOX.E3:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Dragon
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Dragon
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 PBOX.E4:
 	Inherits: PBOX
@@ -476,9 +489,11 @@ PBOX.E4:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Flamer
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Flamer
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 PBOX.E7:
 	Inherits: PBOX
@@ -488,9 +503,11 @@ PBOX.E7:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Colt45
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Colt45
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 PBOX.SHOK:
 	Inherits: PBOX
@@ -500,9 +517,11 @@ PBOX.SHOK:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: PortaTesla
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: PortaTesla
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 PBOX.SNIPER:
 	Inherits: PBOX
@@ -512,9 +531,11 @@ PBOX.SNIPER:
 		Image: PBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Sniper
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Sniper
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 HBOX:
 	Inherits: ^Building
@@ -540,6 +561,8 @@ HBOX:
 	-AcceptsSupplies:
 	Turreted:
 		ROT: 255
+	RenderBuilding:
+		QuantizedFacings: 8
 	Cargo:
 		Types: Infantry
 		MaxWeight: 1
@@ -590,7 +613,7 @@ HBOX.E1:
 		BuildPaletteOrder: 20
 		Prerequisites: tent
 		Owner: allies
-		Hotkey: p
+		Hotkey: l
 	Tooltip:
 		Name: Camo Pillbox (Guns)
 		Description: Hidden defensive structure.\n  Strong vs Infantry, Light Vehicles\n  Weak vs Tanks, Aircraft
@@ -599,12 +622,14 @@ HBOX.E1:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Vulcan
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Vulcan
-		PrimaryLocalOffset: 0,-11,0,0,0
 	WithMuzzleFlash:
 	Cargo:
 		InitialUnits: e1
+	-AutoTargetIgnore:
 
 #HBOX.E2:
 #	Inherits: HBOX
@@ -621,9 +646,11 @@ HBOX.E3:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Dragon
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Dragon
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 HBOX.E4:
 	Inherits: HBOX
@@ -633,9 +660,11 @@ HBOX.E4:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Flamer
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Flamer
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 HBOX.E7:
 	Inherits: HBOX
@@ -645,9 +674,11 @@ HBOX.E7:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Colt45
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Colt45
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 HBOX.SHOK:
 	Inherits: HBOX
@@ -657,9 +688,11 @@ HBOX.SHOK:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: PortaTesla
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: PortaTesla
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 HBOX.SNIPER:
 	Inherits: HBOX
@@ -669,9 +702,11 @@ HBOX.SNIPER:
 		Image: HBOX
 	RenderRangeCircle:
 	AutoTarget:
+	Armament:
+		Weapon: Sniper
+		LocalOffset: 469,0,0
 	AttackTurreted:
-		PrimaryWeapon: Sniper
-		PrimaryLocalOffset: 0,-11,0,0,0
+	-AutoTargetIgnore:
 
 GUN:
 	Inherits: ^Building
@@ -699,14 +734,16 @@ GUN:
 		ROT: 12
 		InitialFacing: 50
 	RenderBuildingTurreted:
+	Armament:
+		Weapon: TurretGun
 	AttackTurreted:
-		PrimaryWeapon: TurretGun
 	AutoTarget:
 	IronCurtainable:
 	-RenderBuilding:
 	RenderRangeCircle:
 	-AcceptsSupplies:
 	DrawLineToTarget:
+	-AutoTargetIgnore:
 
 FTUR:
 	Inherits: ^Building
@@ -732,15 +769,19 @@ FTUR:
 		Range: 6
 	Turreted:
 		ROT: 255
+		Offset: 0,0,85
+	Armament:
+		Weapon: FireballLauncher
+		LocalOffset: 512,0,0
 	AttackTurreted:
-		PrimaryWeapon: FireballLauncher
-		PrimaryOffset: 0,0,0,-2
-		PrimaryLocalOffset: 0,-12,0,0,0
+	RenderBuilding:
+		QuantizedFacings: 8
 	AutoTarget:
 	IronCurtainable:
 	RenderRangeCircle:
 	-AcceptsSupplies:
 	DrawLineToTarget:
+	-AutoTargetIgnore:
 
 SAM:
 	Inherits: ^Building
@@ -770,8 +811,9 @@ SAM:
 		ROT: 30
 		InitialFacing: 0
 	RenderBuildingTurreted:
+	Armament:
+		Weapon: Nike
 	AttackTurreted:
-		PrimaryWeapon: Nike
 	WithMuzzleFlash:
 	AutoTarget:
 	IronCurtainable:
@@ -782,6 +824,7 @@ SAM:
 	CanPowerDown:
 	-AcceptsSupplies:
 	DrawLineToTarget:
+	-AutoTargetIgnore:
 
 ATEK:
 	Inherits: ^Building
@@ -824,7 +867,7 @@ WEAP:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 50
+		BuildPaletteOrder: 70
 		Prerequisites: proc
 		Owner: soviet,allies
 		Hotkey: w
@@ -848,8 +891,8 @@ WEAP:
 	RenderBuildingWarFactory:
 	RallyPoint:
 	Exit@1:
-		SpawnOffset: 5,0
-		ExitCell: 1,1
+		SpawnOffset: 5,-3
+		ExitCell: 1,2
 	Production:
 		Produces: Vehicle
 	PrimaryBuilding:
@@ -890,7 +933,8 @@ FACT:
 		Facing: 96
 	ProductionBar:
 	-Sellable:
-		
+	DeadBuildingState:
+
 PROC:
 	Inherits: ^Building
 	Buildable:
@@ -932,12 +976,13 @@ PROC:
 		Percentage: 50
 		Minimum: 500
 		SoundToVictim: credit1.aud
+	DeadBuildingState:
 
 SILO:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 40
+		BuildPaletteOrder: 60
 		Prerequisites: proc
 		Owner: allies,soviet
 		Hotkey: o
@@ -956,6 +1001,7 @@ SILO:
 	RevealsShroud:
 		Range: 4
 	RenderBuildingSilo:
+		FillSteps: 89
 	StoresOre:
 		PipCount: 5
 		Capacity: 1500
@@ -1002,10 +1048,10 @@ AFLD:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 50
+		BuildPaletteOrder: 90
 		Prerequisites: dome
 		Owner: soviet
-		Hotkey: g
+		Hotkey: i
 	Valued:
 		Cost: 500
 	Tooltip:
@@ -1048,7 +1094,7 @@ AFLD:
 	ProductionBar:
 	SupportPowerChargeBar:
 	PrimaryBuilding:
-	
+
 POWR:
 	Inherits: ^Building
 	Buildable:
@@ -1075,6 +1121,7 @@ POWR:
 		Range: 4
 	Bib:
 	IronCurtainable:
+	DeadBuildingState:
 
 APWR:
 	Inherits: ^Building
@@ -1103,12 +1150,13 @@ APWR:
 		Range: 4
 	Bib:
 	IronCurtainable:
+	DeadBuildingState:
 
 STEK:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 60
+		BuildPaletteOrder: 100
 		Prerequisites: weap,dome
 		Owner: soviet
 		Hotkey: t
@@ -1227,10 +1275,10 @@ FIX:
 	Inherits: ^Building
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 30
+		BuildPaletteOrder: 40
 		Prerequisites: weap
 		Owner: allies,soviet
-		Hotkey: d
+		Hotkey: m
 	Valued:
 		Cost: 1200
 	Tooltip:
@@ -1255,13 +1303,16 @@ FIX:
 
 FACF:
 	Inherits: ^Building
-#	Buildable:
-#		BuildPaletteOrder: 900
-#		Owner: allies
-#		Cost: 50
-#		Description: Fake Construction Yard
-#		LongDesc: Looks like a Construction Yard.
-#		Hotkey: c
+	Valued:
+		Cost: 50
+	Buildable:
+		BuildPaletteOrder: 900
+		Owner: None
+		Hotkey: c
+		Queue: Defense
+	Tooltip:
+		Name: Fake Construction Yard
+		Description: Looks like a Construction Yard.
 	Building:
 		Power: -2
 		Footprint: xxx xxx xxx
@@ -1280,14 +1331,17 @@ FACF:
 
 WEAF:
 	Inherits: ^Building
-#	Buildable:
-#		BuildPaletteOrder: 900
-#		Prerequisites: proc
-#		Owner: allies
-#		Cost: 50
-#		Description: Fake War Factory
-#		LongDesc: Looks like a War Factory.
-#		Hotkey: x
+	Valued:
+		Cost: 50
+	Buildable:
+		BuildPaletteOrder: 900
+		Prerequisites: proc
+		Owner: None
+		Hotkey: x
+		Queue: Defense
+	Tooltip:
+		Name: Fake War Factory
+		Description: Looks like a War Factory.
 	Building:
 		Power: -2
 		Footprint: xxx xxx
@@ -1309,16 +1363,15 @@ SYRF:
 	Inherits: ^Building
 	Valued:
 		Cost: 50
+	Buildable:
+		BuildPaletteOrder: 900
+		Prerequisites: anypower
+		Owner: None
+		Hotkey: z
+		Queue: Defense
 	Tooltip:
 		Name: Fake Shipyard
-#	Buildable:
-#		BuildPaletteOrder: 900
-#		Prerequisites: anypower
-#		Owner: allies
-#		Cost: 50
-#		Description: Fake Shipyard
-#		LongDesc: Looks like a Shipyard
-#		Hotkey: z
+		Description: Looks like a Shipyard
 	TargetableBuilding:
 		TargetTypes: Ground, Water
 	Building:
@@ -1339,8 +1392,19 @@ SYRF:
 
 SPEF:
 	Inherits: ^Building
+	Valued:
+		Cost: 50
 	TargetableBuilding:
 		TargetTypes: Ground, Water
+	Buildable:
+		BuildPaletteOrder: 900
+		Prerequisites: anypower
+		Owner: None
+		Hotkey: z
+		Queue: Defense
+	Tooltip:
+		Name: Fake Sub Pen
+		Description: Looks like a Sub Pen
 	Building:
 		Power: -2
 		Footprint: xxx xxx xxx
@@ -1363,14 +1427,13 @@ DOMF:
 		Cost: 50
 	Tooltip:
 		Name: Fake Radar Dome
-#	Buildable:
-#		BuildPaletteOrder: 900
-#		Prerequisites: proc
-#		Owner: allies
-#		Cost: 50
-#		Description: Fake Radar Dome
-#		LongDesc: Looks like a Radar Dome
-#		Hotkey: v
+		Description: Looks like a Radar Dome
+	Buildable:
+		BuildPaletteOrder: 900
+		Prerequisites: proc
+		Owner: None
+		Hotkey: v
+		Queue: Defense
 	Building:
 		Power: -2
 		Footprint: xx xx

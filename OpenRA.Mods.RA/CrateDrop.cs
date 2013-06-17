@@ -20,12 +20,22 @@ namespace OpenRA.Mods.RA
 {
 	public class CrateDropInfo : ITraitInfo
 	{
-		public readonly int Minimum = 1; // Minimum number of crates
-		public readonly int Maximum = 255; // Maximum number of crates
-		public readonly string[] ValidGround = {"Clear", "Rough", "Road", "Ore", "Beach"}; // Which terrain types can we drop on?
+		[Desc("Minimum number of crates")]
+		public readonly int Minimum = 1;
+		[Desc("Maximum number of crates")]
+		public readonly int Maximum = 255;
+		[Desc("Which terrain types can we drop on?")]
+		public readonly string[] ValidGround = {"Clear", "Rough", "Road", "Ore", "Beach"};
+		[Desc("Which terrain types count as water?")]
 		public readonly string[] ValidWater = {"Water"};
-		public readonly int SpawnInterval = 180; // Average time (seconds) between crate spawn
-		public readonly float WaterChance = .2f; // Chance of generating a water crate instead of a land crate
+		[Desc("Average time (seconds) between crate spawn")]
+		public readonly int SpawnInterval = 180;
+		[Desc("Chance of generating a water crate instead of a land crate")]
+		public readonly float WaterChance = .2f;
+		[ActorReference]
+		public readonly string CrateActor = "crate";
+		[ActorReference]
+		public readonly string DeliveryAircraft = "badr";
 
 		public object Create (ActorInitializer init) { return new CrateDrop(this); }
 	}
@@ -44,7 +54,7 @@ namespace OpenRA.Mods.RA
 
 			if (--ticks <= 0)
 			{
-				ticks = Info.SpawnInterval * 25;		// todo: randomize
+				ticks = Info.SpawnInterval * 25;		// TODO: randomize
 
 				crates.RemoveAll(x => !x.IsInWorld);	// BUG: this removes crates that are cargo of a BADR!
 
@@ -85,16 +95,16 @@ namespace OpenRA.Mods.RA
 			var p = pp.Value;	//
 			self.World.AddFrameEndTask(w =>
 				{
-					var crate = w.CreateActor(false, "crate", new TypeDictionary { new OwnerInit(w.WorldActor.Owner) });
+					var crate = w.CreateActor(false, Info.CrateActor, new TypeDictionary { new OwnerInit(w.WorldActor.Owner) });
 					crates.Add(crate);
 
 					var startPos = w.ChooseRandomEdgeCell();
-					var plane = w.CreateActor("badr", new TypeDictionary
+					var plane = w.CreateActor(Info.DeliveryAircraft, new TypeDictionary
 					{
 						new LocationInit( startPos ),
 						new OwnerInit( w.WorldActor.Owner),
 						new FacingInit( Util.GetFacing(p - startPos, 0) ),
-						new AltitudeInit( Rules.Info["badr"].Traits.Get<AircraftInfo>().CruiseAltitude ),
+						new AltitudeInit( Rules.Info[Info.DeliveryAircraft].Traits.Get<AircraftInfo>().CruiseAltitude ),
 					});
 
 					plane.CancelActivity();

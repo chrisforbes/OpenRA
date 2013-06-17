@@ -10,10 +10,12 @@
 
 using System.Drawing;
 using System.Linq;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Visualizes the remaining build time of actor produced here.")]
 	class ProductionBarInfo : ITraitInfo
 	{
 		public object Create(ActorInitializer init) { return new ProductionBar( init.self ); }
@@ -27,7 +29,7 @@ namespace OpenRA.Mods.RA
 		public float GetValue()
 		{
 			// only people we like should see our production status.
-			if (self.World.RenderedPlayer != null && self.Owner.Stances[self.World.RenderedPlayer] != Stance.Ally)
+			if (!self.Owner.IsAlliedWith(self.World.RenderPlayer))
 				return 0;
 
 			var queue = self.TraitsImplementing<ProductionQueue>().FirstOrDefault(q => q.CurrentItem() != null);

@@ -21,6 +21,7 @@ namespace OpenRA
 		public readonly int X, Y;
 
 		public CPos(int x, int y) { X = x; Y = y; }
+		public CPos(WPos a) { X = a.X / 1024; Y = a.Y / 1024; }
 
 		public static readonly CPos Zero = new CPos(0, 0);
 
@@ -41,6 +42,8 @@ namespace OpenRA
 		public float2 ToFloat2() { return new float2(X, Y); }
 		public int2 ToInt2() { return new int2(X, Y); }
 		public PPos ToPPos() { return new PPos(Game.CellSize * X, Game.CellSize * Y); }
+
+		public WPos CenterPosition { get { return new WPos(1024*X + 512, 1024*Y + 512, 0); } }
 
 		public CPos Clamp(Rectangle r)
 		{
