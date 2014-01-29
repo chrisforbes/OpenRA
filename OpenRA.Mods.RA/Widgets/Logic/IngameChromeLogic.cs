@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,104 +8,163 @@
  */
 #endregion
 
-using OpenRA.Traits;
-using System.Linq;
-using OpenRA.Widgets;
 using System.Drawing;
+using System.Linq;
+using OpenRA.Mods.RA.Buildings;
+using OpenRA.Traits;
+using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA.Widgets.Logic
 {
 	public class IngameChromeLogic
 	{
 		Widget gameRoot;
+		Widget playerRoot;
+		World world;
 
 		[ObjectCreator.UseCtor]
 		public IngameChromeLogic(World world)
 		{
-			Game.AddChatLine += AddChatLine;
-			Game.BeforeGameStart += UnregisterEvents;
+			this.world = world;
+			gameRoot = Ui.Root.Get("INGAME_ROOT");
+			playerRoot = gameRoot.Get("PLAYER_ROOT");
 
-			var r = Ui.Root;
-			gameRoot = r.Get("INGAME_ROOT");
-			var optionsBG = gameRoot.Get("INGAME_OPTIONS_BG");
+			InitRootWidgets();
+			if (world.LocalPlayer == null)
+				InitObserverWidgets();
+			else
+				InitPlayerWidgets();
+		}
 
-			r.Get<ButtonWidget>("INGAME_OPTIONS_BUTTON").OnClick = () =>
-				optionsBG.Visible = !optionsBG.Visible;
-			
-			var cheatsButton = gameRoot.Get<ButtonWidget>("CHEATS_BUTTON");
-			cheatsButton.OnClick = () =>
+		void InitRootWidgets()
+		{
+			var cachedPause = false;
+			Widget optionsBG = null;
+			optionsBG = Game.LoadWidget(world, "INGAME_OPTIONS_BG", Ui.Root, new WidgetArgs
 			{
-				Game.OpenWindow("CHEATS_PANEL", new WidgetArgs() {{"onExit", () => {} }});
+				{ "onExit", () =>
+					{
+						optionsBG.Visible = false;
+
+						if (world.LobbyInfo.IsSinglePlayer)
+							world.SetPauseState(cachedPause);
+					}
+				}
+			});
+
+			gameRoot.Get<ButtonWidget>("INGAME_OPTIONS_BUTTON").OnClick = () =>
+			{
+				optionsBG.Visible ^= true;
+				if (optionsBG.Visible)
+				{
+					cachedPause = world.PredictedPaused;
+
+					if (world.LobbyInfo.IsSinglePlayer)
+						world.SetPauseState(true);
+				}
+				else
+					world.SetPauseState(cachedPause);
 			};
-			cheatsButton.IsVisible = () => world.LocalPlayer != null && world.LobbyInfo.GlobalSettings.AllowCheats;
+
+			Game.LoadWidget(world, "CHAT_PANEL", gameRoot, new WidgetArgs());
+		}
+
+		void InitObserverWidgets()
+		{
+			var observerWidgets = Game.LoadWidget(world, "OBSERVER_WIDGETS", playerRoot, new WidgetArgs());
+
+			Game.LoadWidget(world, "OBSERVER_STATS", observerWidgets, new WidgetArgs());
+			observerWidgets.Get<ButtonWidget>("INGAME_STATS_BUTTON").OnClick = () => gameRoot.Get("OBSERVER_STATS").Visible ^= true;
+		}
+
+		enum RadarBinState { Closed, BinAnimating, RadarAnimating, Open };
+		void InitPlayerWidgets()
+		{
+			var playerWidgets = Game.LoadWidget(world, "PLAYER_WIDGETS", playerRoot, new WidgetArgs());
+
+			Widget diplomacy = null;
+			diplomacy = Game.LoadWidget(world, "DIPLOMACY", playerWidgets, new WidgetArgs
+			{
+				{ "onExit", () => diplomacy.Visible = false }
+			});
+			var diplomacyButton = playerWidgets.Get<ButtonWidget>("INGAME_DIPLOMACY_BUTTON");
+			diplomacyButton.OnClick = () => diplomacy.Visible ^= true;
+			int validPlayers = 0;
+			validPlayers = world.Players.Where(a => a != world.LocalPlayer && !a.NonCombatant).Count();
+			diplomacyButton.IsVisible = () => validPlayers > 0;
+
+			Widget cheats = null;
+			cheats = Game.LoadWidget(world, "CHEATS_PANEL", playerWidgets, new WidgetArgs
+			{
+				{ "onExit", () => cheats.Visible = false }
+			});
+			var cheatsButton = playerWidgets.Get<ButtonWidget>("CHEATS_BUTTON");
+			cheatsButton.OnClick = () => cheats.Visible ^= true;
+			cheatsButton.IsVisible = () => world.LobbyInfo.GlobalSettings.AllowCheats;
 
 			var iop = world.WorldActor.TraitsImplementing<IObjectivesPanel>().FirstOrDefault();
 			if (iop != null && iop.ObjectivesPanel != null)
 			{
-				var objectivesButton = gameRoot.Get<ButtonWidget>("OBJECTIVES_BUTTON");
-				var objectivesWidget = Game.LoadWidget(world, iop.ObjectivesPanel, Ui.Root, new WidgetArgs());
-				objectivesWidget.Visible = false;
-				objectivesButton.OnClick += () => objectivesWidget.Visible = !objectivesWidget.Visible;
-				objectivesButton.IsVisible = () => world.LocalPlayer != null;
+				var objectivesButton = playerWidgets.Get<ButtonWidget>("OBJECTIVES_BUTTON");
+				var objectivesWidget = Game.LoadWidget(world, iop.ObjectivesPanel, playerWidgets, new WidgetArgs());
+				objectivesButton.Visible = true;
+				objectivesButton.OnClick += () => objectivesWidget.Visible ^= true;
 			}
 
-			optionsBG.Get<ButtonWidget>("DISCONNECT").OnClick = () => LeaveGame(optionsBG, world);
+			var moneyBin = playerWidgets.Get("INGAME_MONEY_BIN");
+			moneyBin.Get<OrderButtonWidget>("SELL").GetKey = _ => Game.Settings.Keys.SellKey;
+			moneyBin.Get<OrderButtonWidget>("POWER_DOWN").GetKey = _ => Game.Settings.Keys.PowerDownKey;
+			moneyBin.Get<OrderButtonWidget>("REPAIR").GetKey = _ => Game.Settings.Keys.RepairKey;
 
-			optionsBG.Get<ButtonWidget>("SETTINGS").OnClick = () => Ui.OpenWindow("SETTINGS_MENU");
-			optionsBG.Get<ButtonWidget>("MUSIC").OnClick = () => Ui.OpenWindow("MUSIC_MENU");
-			optionsBG.Get<ButtonWidget>("RESUME").OnClick = () => optionsBG.Visible = false;
+			bool radarActive = false;
+			RadarBinState binState = RadarBinState.Closed;
+			var radarBin = playerWidgets.Get<SlidingContainerWidget>("INGAME_RADAR_BIN");
+			radarBin.IsOpen = () => radarActive || binState > RadarBinState.BinAnimating;
+			radarBin.AfterOpen = () => binState = RadarBinState.RadarAnimating;
+			radarBin.AfterClose = () => binState = RadarBinState.Closed;
 
-			optionsBG.Get<ButtonWidget>("SURRENDER").OnClick = () =>
+			var radarMap = radarBin.Get<RadarWidget>("RADAR_MINIMAP");
+			radarMap.IsEnabled = () => radarActive && binState >= RadarBinState.RadarAnimating;
+			radarMap.AfterOpen = () => binState = RadarBinState.Open;
+			radarMap.AfterClose = () => binState = RadarBinState.BinAnimating;
+
+			radarBin.Get<ImageWidget>("RADAR_BIN_BG").GetImageCollection = () => "chrome-"+world.LocalPlayer.Country.Race;
+
+			var powerManager = world.LocalPlayer.PlayerActor.Trait<PowerManager>();
+			var powerBar = radarBin.Get<ResourceBarWidget>("POWERBAR");
+			powerBar.IndicatorCollection = "power-"+world.LocalPlayer.Country.Race;
+			powerBar.GetProvided = () => powerManager.PowerProvided;
+			powerBar.GetUsed = () => powerManager.PowerDrained;
+			powerBar.TooltipFormat = "Power Usage: {0}/{1}";
+			powerBar.GetBarColor = () =>
 			{
-				optionsBG.Visible = false;
-				world.IssueOrder(new Order("Surrender", world.LocalPlayer.PlayerActor, false));
+				if (powerManager.PowerState == PowerState.Critical)
+					return Color.Red;
+				if (powerManager.PowerState == PowerState.Low)
+					return Color.Orange;
+				return Color.LimeGreen;
 			};
 
-			optionsBG.Get("SURRENDER").IsVisible = () => (world.LocalPlayer != null && world.LocalPlayer.WinState == WinState.Undefined);
-
-			var postgameBG = gameRoot.Get("POSTGAME_BG");
-			var postgameText = postgameBG.Get<LabelWidget>("TEXT");
-			var postGameObserve = postgameBG.Get<ButtonWidget>("POSTGAME_OBSERVE");
-
-			var postgameQuit = postgameBG.Get<ButtonWidget>("POSTGAME_QUIT");
-			postgameQuit.OnClick = () => LeaveGame(postgameQuit, world);
-
-			postGameObserve.OnClick = () => postgameQuit.Visible = false;
-			postGameObserve.IsVisible = () => world.LocalPlayer.WinState != WinState.Won;
-
-			postgameBG.IsVisible = () =>
+			var cachedRadarActive = false;
+			var sidebarTicker = playerWidgets.Get<LogicTickerWidget>("SIDEBAR_TICKER");
+			sidebarTicker.OnTick = () =>
 			{
-				return postgameQuit.Visible && world.LocalPlayer != null && world.LocalPlayer.WinState != WinState.Undefined;
+				// Update radar bin
+				radarActive = world.ActorsWithTrait<ProvidesRadar>()
+					.Any(a => a.Actor.Owner == world.LocalPlayer && a.Trait.IsActive);
+
+				if (radarActive != cachedRadarActive)
+					Sound.PlayNotification(null, "Sounds", (radarActive ? "RadarUp" : "RadarDown"), null);
+				cachedRadarActive = radarActive;
+
+				// Switch to observer mode after win/loss
+				if (world.LocalPlayer.WinState != WinState.Undefined)
+					Game.RunAfterTick(() =>
+					{
+						playerRoot.RemoveChildren();
+						InitObserverWidgets();
+					});
 			};
-
-
-			postgameText.GetText = () =>
-			{
-				var state = world.LocalPlayer.WinState;
-				return state == WinState.Undefined ? "" :
-								(state == WinState.Lost ? "YOU ARE DEFEATED" : "YOU ARE VICTORIOUS");
-			};
-		}
-
-		void LeaveGame(Widget pane, World world)
-		{
-			Sound.PlayNotification(null, "Speech", "Leave", world.LocalPlayer.Country.Race);
-			pane.Visible = false;
-			Game.Disconnect();
-			Game.LoadShellMap();
-			Ui.CloseWindow();
-			Ui.OpenWindow("MAINMENU_BG");
-		}
-
-		void UnregisterEvents()
-		{
-			Game.AddChatLine -= AddChatLine;
-			Game.BeforeGameStart -= UnregisterEvents;
-		}
-
-		void AddChatLine(Color c, string from, string text)
-		{
-			gameRoot.Get<ChatDisplayWidget>("CHAT_DISPLAY").AddLine(c, from, text);
 		}
 	}
 }

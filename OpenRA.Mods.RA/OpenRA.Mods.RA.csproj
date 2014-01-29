@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -33,9 +33,9 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -44,23 +44,30 @@
       <CustomCommands>
         <Command type="AfterBuild" command="cp ../thirdparty/FuzzyLogicLibrary.dll ../" workingdir="${ProjectDir}" />
         <Command type="AfterBuild" command="cp ${TargetFile} ../mods/ra" workingdir="${ProjectDir}" />
-        <Command type="AfterBuild" command="mono RALint.exe ra" workingdir="${ProjectDir}/../" />
       </CustomCommands>
     </CustomCommands>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>True</Optimize>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <OutputPath>bin\Release\</OutputPath>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FuzzyLogicLibrary">
       <HintPath>..\thirdparty\FuzzyLogicLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="KopiLua">
+      <HintPath>..\thirdparty\KopiLua.dll</HintPath>
+    </Reference>
+    <Reference Include="NLua">
+      <HintPath>..\thirdparty\NLua.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -69,17 +76,24 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Mono.Nat">
+      <HintPath>..\thirdparty\Mono.Nat.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\thirdparty\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Activities\CaptureActor.cs" />
+    <Compile Include="Activities\Hunt.cs" />
     <Compile Include="AI\AttackOrFleeFuzzy.cs" />
     <Compile Include="AI\BaseBuilder.cs" />
     <Compile Include="AI\HackyAI.cs" />
     <Compile Include="AcceptsSupplies.cs" />
     <Compile Include="Activities\Attack.cs" />
     <Compile Include="Activities\CallFunc.cs" />
-    <Compile Include="Activities\CaptureActor.cs" />
+    <Compile Include="Activities\ExternalCaptureActor.cs" />
     <Compile Include="Activities\DeliverResources.cs" />
     <Compile Include="Activities\Demolish.cs" />
     <Compile Include="Activities\DonateSupplies.cs" />
@@ -109,7 +123,8 @@
     <Compile Include="Air\Aircraft.cs" />
     <Compile Include="Air\AttackHeli.cs" />
     <Compile Include="Air\AttackPlane.cs" />
-    <Compile Include="Air\EjectOnDeath.cs" />
+    <Compile Include="Crates\UnitUpgradeCrateAction.cs" />
+    <Compile Include="EjectOnDeath.cs" />
     <Compile Include="Air\FallsToEarth.cs" />
     <Compile Include="Air\Fly.cs" />
     <Compile Include="Air\FlyAttack.cs" />
@@ -149,7 +164,6 @@
     <Compile Include="BridgeLayer.cs" />
     <Compile Include="Buildable.cs" />
     <Compile Include="BuildingCaptureNotification.cs" />
-    <Compile Include="Buildings\BibLayer.cs" />
     <Compile Include="Buildings\Building.cs" />
     <Compile Include="Buildings\BuildingInfluence.cs" />
     <Compile Include="Buildings\CanPowerDown.cs" />
@@ -167,11 +181,11 @@
     <Compile Include="Buildings\Wall.cs" />
     <Compile Include="Burns.cs" />
     <Compile Include="C4Demolition.cs" />
+    <Compile Include="ExternalCapturable.cs" />
+    <Compile Include="ExternalCapturableBar.cs" />
     <Compile Include="Capturable.cs" />
-    <Compile Include="CapturableBar.cs" />
-    <Compile Include="Captures.cs" />
+    <Compile Include="ExternalCaptures.cs" />
     <Compile Include="Cargo.cs" />
-    <Compile Include="CarpetBomb.cs" />
     <Compile Include="CashTrickler.cs" />
     <Compile Include="ChronoshiftDeploy.cs" />
     <Compile Include="ChronoshiftPaletteEffect.cs" />
@@ -182,7 +196,6 @@
     <Compile Include="ContainsCrate.cs" />
     <Compile Include="Crate.cs" />
     <Compile Include="CrateAction.cs" />
-    <Compile Include="CrateDrop.cs" />
     <Compile Include="CrateSpawner.cs" />
     <Compile Include="Crates\CloakCrateAction.cs" />
     <Compile Include="Crates\ExplodeCrateAction.cs" />
@@ -225,23 +238,29 @@
     <Compile Include="Fake.cs" />
     <Compile Include="FreeActor.cs" />
     <Compile Include="GainsExperience.cs" />
+    <Compile Include="GainsUnitUpgrades.cs" />
     <Compile Include="GivesBounty.cs" />
     <Compile Include="GivesExperience.cs" />
+    <Compile Include="Guard.cs" />
     <Compile Include="Harvester.cs" />
     <Compile Include="HarvesterHuskModifier.cs" />
     <Compile Include="Husk.cs" />
     <Compile Include="InfiltrateForSupportPower.cs" />
-    <Compile Include="InvisibleToEnemy.cs" />
     <Compile Include="Invulnerable.cs" />
     <Compile Include="IronCurtainable.cs" />
+    <Compile Include="JamsMissiles.cs" />
     <Compile Include="LeavesHusk.cs" />
+    <Compile Include="Captures.cs" />
     <Compile Include="LightPaletteRotator.cs" />
     <Compile Include="LimitedAmmo.cs" />
     <Compile Include="Lint\CheckActorReferences.cs" />
-    <Compile Include="Lint\CheckAutotargetWiring.cs" />
     <Compile Include="Lint\CheckSyncAnnotations.cs" />
     <Compile Include="Lint\CheckTraitPrerequisites.cs" />
     <Compile Include="Lint\LintBuildablePrerequisites.cs" />
+    <Compile Include="MadTank.cs" />
+    <Compile Include="Missions\DesertShellmapScript.cs" />
+    <Compile Include="Missions\FortLonestarScript.cs" />
+    <Compile Include="Missions\Survival02Script.cs" />
     <Compile Include="MPStartLocations.cs" />
     <Compile Include="Mine.cs" />
     <Compile Include="Minelayer.cs" />
@@ -266,9 +285,8 @@
     <Compile Include="Move\PathSearch.cs" />
     <Compile Include="NukePaletteEffect.cs" />
     <Compile Include="NullLoadScreen.cs" />
-    <Compile Include="OpenWidgetAtGameStart.cs" />
+    <Compile Include="LoadWidgetAtGameStart.cs" />
     <Compile Include="Orders\DeployOrderTargeter.cs" />
-    <Compile Include="Orders\EnterBuildingOrderTargeter.cs" />
     <Compile Include="Orders\PlaceBuildingOrderGenerator.cs" />
     <Compile Include="Orders\PowerDownOrderGenerator.cs" />
     <Compile Include="Orders\RepairOrderGenerator.cs" />
@@ -292,21 +310,20 @@
     <Compile Include="PrimaryBuilding.cs" />
     <Compile Include="Production.cs" />
     <Compile Include="ProductionBar.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProvidesRadar.cs" />
     <Compile Include="ProximityCaptor.cs" />
     <Compile Include="ProximityCapturable.cs" />
-    <Compile Include="RALoadScreen.cs" />
+    <Compile Include="DefaultLoadScreen.cs" />
     <Compile Include="RadarColorFromTerrain.cs" />
     <Compile Include="RallyPoint.cs" />
     <Compile Include="Reloads.cs" />
     <Compile Include="RenderDetectionCircle.cs" />
+    <Compile Include="RenderJammerCircle.cs" />
     <Compile Include="RenderRangeCircle.cs" />
     <Compile Include="Render\RenderBuilding.cs" />
     <Compile Include="Render\RenderBuildingCharge.cs" />
     <Compile Include="Render\RenderBuildingSilo.cs" />
     <Compile Include="Render\RenderBuildingTurreted.cs" />
-    <Compile Include="Render\RenderBuildingSeparateTurret.cs" />
     <Compile Include="Render\RenderBuildingWall.cs" />
     <Compile Include="Render\RenderBuildingWarFactory.cs" />
     <Compile Include="Render\RenderEditorOnly.cs" />
@@ -317,8 +334,6 @@
     <Compile Include="Render\RenderSpy.cs" />
     <Compile Include="Render\RenderUnit.cs" />
     <Compile Include="Render\RenderUnitReload.cs" />
-    <Compile Include="Render\RenderUnitSpinner.cs" />
-    <Compile Include="Render\RenderUnitTurreted.cs" />
     <Compile Include="Render\WithBuildingExplosion.cs" />
     <Compile Include="Render\WithMuzzleFlash.cs" />
     <Compile Include="Render\WithRotor.cs" />
@@ -329,8 +344,11 @@
     <Compile Include="RepairsUnits.cs" />
     <Compile Include="Reservable.cs" />
     <Compile Include="ScaredyCat.cs" />
+    <Compile Include="Scripting\LuaScriptEvents.cs" />
+    <Compile Include="Scripting\LuaScriptInterface.cs" />
     <Compile Include="Scripting\Media.cs" />
     <Compile Include="Scripting\RASpecialPowers.cs" />
+    <Compile Include="Scripting\LuaScriptContext.cs" />
     <Compile Include="SeedsResource.cs" />
     <Compile Include="SelfHealing.cs" />
     <Compile Include="Sellable.cs" />
@@ -368,16 +386,19 @@
     <Compile Include="Turreted.cs" />
     <Compile Include="Valued.cs" />
     <Compile Include="WaterPaletteRotation.cs" />
-    <Compile Include="Weapon.cs" />
     <Compile Include="Widgets\BuildPaletteWidget.cs" />
+    <Compile Include="Widgets\LogicTickerWidget.cs" />
+    <Compile Include="Widgets\Logic\IngameMenuLogic.cs" />
+    <Compile Include="Widgets\Logic\IrcLogic.cs" />
+    <Compile Include="Widgets\Logic\KickClientLogic.cs" />
     <Compile Include="Widgets\Logic\ModBrowserLogic.cs" />
     <Compile Include="Widgets\Logic\ColorPickerLogic.cs" />
     <Compile Include="Widgets\Logic\ConnectionLogic.cs" />
     <Compile Include="Widgets\Logic\DiplomacyLogic.cs" />
     <Compile Include="Widgets\Logic\DirectConnectLogic.cs" />
     <Compile Include="Widgets\Logic\DownloadPackagesLogic.cs" />
+    <Compile Include="Widgets\Logic\IngameChatLogic.cs" />
     <Compile Include="Widgets\Logic\IngameChromeLogic.cs" />
-    <Compile Include="Widgets\Logic\IngameObserverChromeLogic.cs" />
     <Compile Include="Widgets\Logic\LobbyLogic.cs" />
     <Compile Include="Widgets\Logic\LobbyUtils.cs" />
     <Compile Include="Widgets\Logic\MainMenuButtonsLogic.cs" />
@@ -388,24 +409,19 @@
     <Compile Include="Widgets\Logic\OrderButtonsChromeLogic.cs" />
     <Compile Include="Widgets\Logic\PerfDebugLogic.cs" />
     <Compile Include="Widgets\Logic\RAInstallFromCDLogic.cs" />
-    <Compile Include="Widgets\Logic\RAInstallLogic.cs" />
     <Compile Include="Widgets\Logic\ReplayBrowserLogic.cs" />
     <Compile Include="Widgets\Logic\ServerBrowserLogic.cs" />
     <Compile Include="Widgets\Logic\ServerCreationLogic.cs" />
-    <Compile Include="Widgets\Logic\SettingsMenuLogic.cs" />
     <Compile Include="Widgets\MoneyBinWidget.cs" />
     <Compile Include="Widgets\ObserverProductionIconsWidget.cs" />
     <Compile Include="Widgets\ObserverSupportPowerIconsWidget.cs" />
     <Compile Include="Widgets\OrderButtonWidget.cs" />
-    <Compile Include="Widgets\PowerBinWidget.cs" />
-    <Compile Include="Widgets\RadarBinWidget.cs" />
     <Compile Include="Widgets\RadarWidget.cs" />
     <Compile Include="Widgets\StrategicProgressWidget.cs" />
+    <Compile Include="Widgets\SupportPowerTimerWidget.cs" />
     <Compile Include="Widgets\SupportPowerBinWidget.cs" />
     <Compile Include="Widgets\WorldCommandWidget.cs" />
-    <Compile Include="Widgets\WorldTooltipWidget.cs" />
     <Compile Include="World\ChooseBuildTabOnSelect.cs" />
-    <Compile Include="World\DebugOverlay.cs" />
     <Compile Include="World\ResourceClaim.cs" />
     <Compile Include="World\ResourceClaimLayer.cs" />
     <Compile Include="World\PlayMusicOnMapLoad.cs" />
@@ -418,8 +434,57 @@
     <Compile Include="Widgets\Logic\CheatsLogic.cs" />
     <Compile Include="CloakPaletteEffect.cs" />
     <Compile Include="Widgets\ColorPreviewManagerWidget.cs" />
-    <Compile Include="FogPalette.cs" />
     <Compile Include="Infiltrates.cs" />
+    <Compile Include="Armament.cs" />
+    <Compile Include="Buildings\BaseProvider.cs" />
+    <Compile Include="Widgets\Logic\ObserverShroudSelectorLogic.cs" />
+    <Compile Include="RepairsBridges.cs" />
+    <Compile Include="Activities\RepairBridge.cs" />
+    <Compile Include="BridgeHut.cs" />
+    <Compile Include="Lint\CheckSequences.cs" />
+    <Compile Include="ServerTraits\PlayerPinger.cs" />
+    <Compile Include="Widgets\Logic\SpawnSelectorTooltipLogic.cs" />
+    <Compile Include="Widgets\Logic\ClientTooltipLogic.cs" />
+    <Compile Include="Widgets\ColorMixerWidget.cs" />
+    <Compile Include="Widgets\HueSliderWidget.cs" />
+    <Compile Include="Render\WithTurret.cs" />
+    <Compile Include="Widgets\Logic\AssetBrowserLogic.cs" />
+    <Compile Include="VoxelNormalsPalette.cs" />
+    <Compile Include="Render\RenderVoxels.cs" />
+    <Compile Include="Render\WithVoxelTurret.cs" />
+    <Compile Include="Render\WithVoxelBody.cs" />
+    <Compile Include="Render\WithVoxelBarrel.cs" />
+    <Compile Include="Render\WithVoxelWalkerBody.cs" />
+    <Compile Include="Widgets\Logic\CreditsLogic.cs" />
+    <Compile Include="Render\WithResources.cs" />
+    <Compile Include="Render\WithHarvestAnimation.cs" />
+    <Compile Include="Widgets\SlidingContainerWidget.cs" />
+    <Compile Include="Widgets\ResourceBarWidget.cs" />
+    <Compile Include="Widgets\Logic\SimpleTooltipLogic.cs" />
+    <Compile Include="World\DomainIndex.cs" />
+    <Compile Include="MPStartUnits.cs" />
+    <Compile Include="Orders\SetChronoTankDestination.cs" />
+    <Compile Include="Widgets\Logic\WorldTooltipLogic.cs" />
+    <Compile Include="TeslaZapRenderable.cs" />
+    <Compile Include="Buildings\Bib.cs" />
+    <Compile Include="Orders\EnterAlliedActorTargeter.cs" />
+    <Compile Include="Render\WithIdleOverlay.cs" />
+    <Compile Include="Tooltip.cs" />
+    <Compile Include="AI\Squad.cs" />
+    <Compile Include="AI\States\StateBase.cs" />
+    <Compile Include="AI\States\GroundStates.cs" />
+    <Compile Include="AI\States\ProtectionStates.cs" />
+    <Compile Include="AI\States\AirStates.cs" />
+    <Compile Include="Widgets\Logic\InstallLogic.cs" />
+    <Compile Include="CombatDebugOverlay.cs" />
+    <Compile Include="World\PathfinderDebugOverlay.cs" />
+    <Compile Include="Effects\ContrailFader.cs" />
+    <Compile Include="Widgets\Logic\SettingsLogic.cs" />
+    <Compile Include="AttackBomber.cs" />
+    <Compile Include="Effects\Rank.cs" />
+    <Compile Include="ShroudRenderer.cs" />
+    <Compile Include="Render\WithCrateBody.cs" />
+    <Compile Include="Buildings\Demolishable.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">
@@ -431,6 +496,14 @@
       <Project>{0DFB103F-2962-400F-8C6D-E2C28CCBA633}</Project>
       <Name>OpenRA.Game</Name>
       <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenRA.Irc\OpenRA.Irc.csproj">
+      <Project>{85B48234-8B31-4BE6-AF9C-665CC6866841}</Project>
+      <Name>OpenRA.Irc</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GeoIP\GeoIP.csproj">
+      <Project>{021DDD6A-A608-424C-9A9A-252D8A9989E0}</Project>
+      <Name>GeoIP</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -465,4 +538,5 @@ cd "$(SolutionDir)thirdparty/"
 copy "FuzzyLogicLibrary.dll" "$(SolutionDir)"
 cd "$(SolutionDir)"</PostBuildEvent>
   </PropertyGroup>
+  <ItemGroup />
 </Project>

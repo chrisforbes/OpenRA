@@ -11,26 +11,37 @@
 			Beach: 50
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground
 	Buildable:
 		Queue: Vehicle
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
-	IronCurtainable: 
+	IronCurtainable:
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
-	AcceptsCloakCrate:
 	WithSmoke:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Cloak:
+		RequiresCrate: true
+		InitialDelay: 15
+		CloakDelay: 90
+		CloakSound: trans1.aud
+		UncloakSound: trans1.aud
+	Huntable:
+	LuaScriptEvents:
 
 ^Tank:
 	AppearsOnRadar:
@@ -45,29 +56,40 @@
 			Beach: 70
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground
 	Buildable:
 		Queue: Vehicle
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
-	IronCurtainable: 
+	IronCurtainable:
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
-	AcceptsCloakCrate:
 	WithSmoke:
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Cloak:
+		RequiresCrate: true
+		InitialDelay: 15
+		CloakDelay: 90
+		CloakSound: trans1.aud
+		UncloakSound: trans1.aud
+	Huntable:
+	LuaScriptEvents:
 
 ^Helicopter:
 	AppearsOnRadar:
@@ -89,12 +111,20 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
+	CombatDebugOverlay:
+	AttackMove:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Huntable:
+	LuaScriptEvents:
 
 ^Infantry:
 	AppearsOnRadar:
 	Health:
-		Radius: 3
+		Radius: 128
 	Armor:
 		Type: None
 	RevealsShroud:
@@ -105,7 +135,7 @@
 		Crushes: crate
 		SharesCell: true
 		TerrainSpeeds:
-			Clear: 90
+			Clear: 100
 			Rough: 80
 			Road: 100
 			Tiberium: 70
@@ -121,7 +151,7 @@
 	Buildable:
 		Queue: Infantry
 	TakeCover:
-		BarrelOffset: 0,-2,0,4
+		ProneSpeed: 0.6
 	RenderInfantryProne:
 	AttackMove:
 	Passenger:
@@ -132,13 +162,23 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	SpawnViceroid:
 		Probability: 2
 	CrushableInfantry:
-	RepairableNear:
-		Buildings: hosp
-		CloseEnough: 1
+		WarnProbability: 60
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	SelfHealing:
+		Step: 5
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresTech: InfantryHealing
+	UpdatesPlayerStatistics:
+	Huntable:
+	LuaScriptEvents:
 
 ^CivInfantry:
 	Inherits: ^Infantry
@@ -156,21 +196,67 @@
 	Tooltip:
 		Name: Civilian
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
 		HP: 25
 	RevealsShroud:
 		Range: 2
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ActorLostNotification:
-		Notification: civdead1.aud
+		Notification: CivilianKilled
 		NotifyAll: true
 	ScaredyCat:
-	RenderInfantryPanic:	
+	RenderInfantryPanic:
 	AttackMove:
-		JustMove: yes
 	CrushableInfantry:
+
+^DINO:
+	AppearsOnRadar:
+	Health:
+		Radius: 128
+		HP: 1000
+	Armor:
+		Type: Wood
+	Buildable:
+		Queue: Biolab
+		BuildPaletteOrder: 50
+		Owner: gdi, nod
+	Valued:
+		Cost: 1000
+	Tooltip:
+		Name: Dinosaur
+	RevealsShroud:
+		Range: 6
+	Mobile:
+		Speed: 113
+		TerrainSpeeds:
+			Clear: 90
+			Rough: 80
+			Road: 100
+			Tiberium: 70
+			BlueTiberium: 70
+			Beach: 80
+	Selectable:
+		Voice: DinoVoice
+	TargetableUnit:
+		TargetTypes: Ground
+	HiddenUnderFog:
+	GivesExperience:
+	RenderInfantry:
+		Palette: terrain
+	EditorAppearance:
+		UseTerrainPalette: true
+	BodyOrientation:
+	DrawLineToTarget:
+	AutoTarget:
+		ScanRadius: 4
+	AttackMove:
+	AttackFrontal:
+	UpdatesPlayerStatistics:
+	Huntable:
+	LuaScriptEvents:
 
 ^Plane:
 	AppearsOnRadar:
@@ -185,7 +271,10 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	CombatDebugOverlay:
+	BodyOrientation:
+	Huntable:
+	LuaScriptEvents:
 
 ^Ship:
 	AppearsOnRadar:
@@ -195,7 +284,7 @@
 			Water: 100
 	SelectionDecorations:
 	Selectable:
-		Voice: GenericVoice
+		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground, Water
 	HiddenUnderFog:
@@ -203,8 +292,14 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Huntable:
+	LuaScriptEvents:
 
 ^Building:
 	AppearsOnRadar:
@@ -212,13 +307,15 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Armor:
 		Type: Wood
 	RepairableBuilding:
 		RepairPercent: 40
 		RepairStep: 14
 	Building:
+		Adjacent: 4
+		RequiresBaseProvider: true
 		Dimensions: 1,1
 		Footprint: x
 		BuildSounds: constru2.aud, hvydoor1.aud
@@ -237,41 +334,47 @@
 		ActorTypes: e6,e1
 	MustBeDestroyed:
 	GivesExperience:
-	CaptureNotification@GDI:
-		Race: gdi
-		Notification: gdicapt1.aud
-	CaptureNotification@NOD:
-		Race: nod
-		Notification: nodcapt1.aud
+	CaptureNotification:
+		Notification: BuildingCaptured
+		NewOwnerVoice: no
 	ActorLostNotification:
-		Notification: strclost.aud
+		Notification: BuildingLost
 	EditorAppearance:
 		RelativeToTopLeft: yes
-	AutoTargetIgnore:
 	ShakeOnDeath:
 	Sellable:
 	Capturable:
-	CapturableBar:
-	C4Demolishable:
+	CombatDebugOverlay:
+	Guardable:
+		Range: 3
+	BodyOrientation:
+	FrozenUnderFog:
+	UpdatesPlayerStatistics:
+	EngineerRepairable:
+	Huntable:
+	LuaScriptEvents:
+	Demolishable:
 
 ^CivBuilding:
 	Inherits: ^Building
 	-DeadBuildingState:
 	-Buildable:
 	-GivesBuildableArea:
+	-EngineerRepairable:
 	Health:
 		HP: 400
-	Armor: 
+	Armor:
 		Type: Wood
 	Building:
 	RenderBuilding:
 	WithBuildingExplosion:
 	-RepairableBuilding:
 	-Capturable:
-	-CapturableBar:
 	-Sellable:
 	Tooltip:
 		Name: Civilian Building
+	FrozenUnderFog:
+		StartsRevealed: true
 
 ^CivBuildingHusk:
 	AppearsOnRadar:
@@ -283,12 +386,16 @@
 		RelativeToTopLeft: yes
 	Tooltip:
 		Name: Civilian Building (Destroyed)
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^TechBuilding:
 	Inherits: ^CivBuilding
 	Capturable:
-	CapturableBar:
 	RepairableBuilding:
+	EngineerRepairable:
 	RevealsShroud:
 		Range: 3
 
@@ -298,6 +405,8 @@
 	Tooltip:
 		Name: Field
 	-WithBuildingExplosion:
+	-TargetableBuilding:
+	-Demolishable:
 	RenderBuilding:
 		Palette: terrain
 	EditorAppearance:
@@ -313,6 +422,12 @@
 	Tooltip:
 		Name: Field (Destroyed)
 	BelowUnits:
+	BodyOrientation:
+	RenderBuilding:
+		Palette: terrain
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^Wall:
 	AppearsOnRadar:
@@ -323,7 +438,7 @@
 		Adjacent: 7
 		TerrainTypes: Clear,Road
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4
 	Wall:
 		CrushClasses: wall
 		CrushSound: sandbag2.aud
@@ -340,7 +455,11 @@
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
 	Sellable:
-	C4Demolishable:
+	Guardable:
+	BodyOrientation:
+	FrozenUnderFog:
+	LuaScriptEvents:
+	Demolishable:
 
 ^Tree:
 	Tooltip:
@@ -360,9 +479,11 @@
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^Rock:
 	Tooltip:
@@ -377,13 +498,18 @@
 		Terrain: Tree
 	EditorAppearance:
 		RelativeToTopLeft: yes
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^Husk:
 	Health:
 		HP: 140
-	Armor: 
+	Armor:
 		Type: Light
 	Husk:
+		AllowedTerrain: Clear, Rough, Road, Tiberium, BlueTiberium, Beach
 	HiddenUnderFog:
 	AppearsOnRadar:
 	Burns:
@@ -391,11 +517,21 @@
 	TargetableUnit:
 	TransformOnCapture:
 		ForceHealthPercentage: 25
-#	Capturable:
-#		Type: husk
-#		AllowAllies: true
-#		AllowNeutral: true
-#		AllowEnemies: true
+	BelowUnits:
+	BodyOrientation:
+	LuaScriptEvents:
+
+^HelicopterHusk:
+	Inherits: ^Husk
+	-Husk:
+	-Burns:
+	FallsToEarth:
+		Spins: True
+		Moves: False
+		Explosion: HeliCrash
+	-BelowUnits:
+	-TransformOnCapture:
+	-TargetableUnit:
 
 ^Bridge:
 	Tooltip:
@@ -408,6 +544,6 @@
 	SoundOnDamageTransition:
 		DamagedSound: xplos.aud
 		DestroyedSound: xplobig4.aud
-	Building:
-		Footprint: ______ ______ ______ ______
-		Dimensions: 6,4
+	BodyOrientation:
+	LuaScriptEvents:
+

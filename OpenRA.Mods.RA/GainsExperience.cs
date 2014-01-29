@@ -8,18 +8,17 @@
  */
 #endregion
 
-using System.Collections.Generic;
 using System.Linq;
+using OpenRA.FileFormats;
 using OpenRA.GameRules;
-using OpenRA.Graphics;
 using OpenRA.Mods.RA.Effects;
 using OpenRA.Traits;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
 	public class GainsExperienceInfo : ITraitInfo, Requires<ValuedInfo>
 	{
+		[Desc("XP requirements for each level, as multiples of our own cost.")]
 		public readonly float[] CostThreshold = { 2, 4, 8, 16 };
 		public readonly float[] FirepowerModifier = { 1.1f, 1.15f, 1.2f, 1.5f };
 		public readonly float[] ArmorModifier = { 1.1f, 1.2f, 1.3f, 1.5f };
@@ -27,93 +26,73 @@ namespace OpenRA.Mods.RA
 		public object Create(ActorInitializer init) { return new GainsExperience(init, this); }
 	}
 
-	public class GainsExperience : IFirepowerModifier, ISpeedModifier, IDamageModifier, IRenderModifier, ISync
+	public class GainsExperience : IFirepowerModifier, ISpeedModifier, IDamageModifier, ISync
 	{
 		readonly Actor self;
-		readonly int[] Levels;
-		readonly GainsExperienceInfo Info;
-		readonly Animation RankAnim;
+		readonly int[] levels;
+		readonly GainsExperienceInfo info;
 
 		public GainsExperience(ActorInitializer init, GainsExperienceInfo info)
 		{
 			self = init.self;
-			this.Info = info;
+			this.info = info;
 			var cost = self.Info.Traits.Get<ValuedInfo>().Cost;
-			Levels = Info.CostThreshold.Select(t => (int)(t * cost)).ToArray();
-			RankAnim = new Animation("rank");
-			RankAnim.PlayFetchIndex("rank", () => Level - 1);
+			levels = info.CostThreshold.Select(t => (int)(t * cost)).ToArray();
 
 			if (init.Contains<ExperienceInit>())
-			{
-				Experience = init.Get<ExperienceInit, int>();
-
-				while (Level < Levels.Length && Experience >= Levels[Level])
-					Level++;
-			}
+				GiveExperience(init.Get<ExperienceInit, int>());
 		}
 
-		[Sync] int Experience = 0;
+		[Sync] int experience = 0;
 		[Sync] public int Level { get; private set; }
 
-		int MaxLevel { get { return Levels.Length; } }
+		int MaxLevel { get { return levels.Length; } }
 		public bool CanGainLevel { get { return Level < MaxLevel; } }
 
 		public void GiveOneLevel()
 		{
 			if (Level < MaxLevel)
-				GiveExperience(Levels[Level] - Experience);
+				GiveExperience(levels[Level] - experience);
 		}
 
 		public void GiveLevels(int numLevels)
 		{
-			for( var i = 0; i < numLevels; i++ )
+			for (var i = 0; i < numLevels; i++)
 				GiveOneLevel();
 		}
 
 		public void GiveExperience(int amount)
 		{
-			Experience += amount;
+			experience += amount;
 
-			while (Level < MaxLevel && Experience >= Levels[Level])
+			while (Level < MaxLevel && experience >= levels[Level])
 			{
 				Level++;
+
 				Sound.PlayNotification(self.Owner, "Sounds", "LevelUp", self.Owner.Country.Race);
-				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup", new int2(0,-24))));
+				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup")));
+				if (Level == 1)
+					self.World.AddFrameEndTask(w =>
+					{
+						if (!self.IsDead())
+							w.Add(new Rank(self));
+					});
 			}
 		}
 
 		public float GetDamageModifier(Actor attacker, WarheadInfo warhead)
 		{
-			return Level > 0 ? 1 / Info.ArmorModifier[Level - 1] : 1;
+			return Level > 0 ? 1 / info.ArmorModifier[Level - 1] : 1;
 		}
 
 		public float GetFirepowerModifier()
 		{
-			return Level > 0 ? Info.FirepowerModifier[Level - 1] : 1;
+			return Level > 0 ? info.FirepowerModifier[Level - 1] : 1;
 		}
 
 		public decimal GetSpeedModifier()
 		{
-			return Level > 0 ? Info.SpeedModifier[Level - 1] : 1m;
-		}
-
-		public IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
-		{
-			if ((self.Owner == self.World.LocalPlayer || self.World.LocalPlayer == null) && Level > 0)
-				return InnerModifyRender(self, wr, r);
-			else
-				return r;
-		}
-
-		IEnumerable<Renderable> InnerModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
-		{
-			foreach (var rs in r)
-				yield return rs;
-
-			RankAnim.Tick();	// HACK
-			var bounds = self.Bounds.Value;
-			yield return new Renderable(RankAnim.Image, new float2(bounds.Right - 6, bounds.Bottom - 8),
-				wr.Palette("effect"), self.CenterLocation.Y);
+			return Level > 0 ? info.SpeedModifier[Level - 1] : 1m;
 		}
 	}
 

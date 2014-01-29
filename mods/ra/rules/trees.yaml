@@ -51,7 +51,7 @@ T08:
 	Building:
 		Footprint: x_
 		Dimensions: 2,1
-	
+
 T10:
 	Inherits: ^Tree
 	Building:
@@ -155,54 +155,83 @@ TC05:
 		ExcludeTilesets: DESERT
 
 MINE:
-	Inherits: ^Tree
 	Tooltip:
 		Name: Ore Mine
-	SeedsResource:
+	RenderBuilding:
+		Palette: terrain
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	AppearsOnRadar:
 	RadarColorFromTerrain:
 		Terrain: Ore
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: yes
+	AutoTargetIgnore:
+	BodyOrientation:
+	SeedsResource:
+	BelowUnits:
+
+RAILMINE:
+	Tooltip:
+		Name: Gem Mine
+	RenderBuilding:
+		Palette: terrain
+	Building:
+		Footprint: _x
+		Dimensions: 1,2
+	AppearsOnRadar:
+	RadarColorFromTerrain:
+		Terrain: Gems
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: yes
+	AutoTargetIgnore:
+	BodyOrientation:
+	SeedsResource:
+		ResourceType: Gems
 	BelowUnits:
 
 BOXES01:
 	Inherits: ^Tree
 	Tooltip:
 		Name: Boxes
-	
 
 BOXES02:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES03:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES04:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES05:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES06:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES07:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES08:
 	Inherits: ^Tree
 	Tooltip:
-		Name: Boxes	
+		Name: Boxes
 
 BOXES09:
 	Inherits: ^Tree
@@ -253,7 +282,6 @@ ICE05:
 	EditorTilesetFilter:
 		ExcludeTilesets: DESERT
 
-# Desert Terrain Expansion
 ROCK1:
 	Inherits: ^Rock
 	Building:
@@ -301,3 +329,77 @@ T04:
 	Building:
 		Footprint: __ x_
 		Dimensions: 2,2
+
+UTILPOL1:
+	Inherits: ^Tree
+	Tooltip:
+		Name: Utility Pole
+
+UTILPOL2:
+	Inherits: ^Tree
+	Tooltip:
+		Name: Utility Pole
+
+TANKTRAP1:
+	Inherits: ^Rock
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	Tooltip:
+		Name: Tank Trap
+
+TANKTRAP2:
+	Inherits: ^Rock
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	Tooltip:
+		Name: Tank Trap
+
+QUEE:
+	Tooltip:
+		Name: Queen Ant
+	Building:
+		Footprint: xx
+		Dimensions: 2,1
+	RenderBuilding:
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+
+LAR1:
+	Tooltip:
+		Name: Ant Larva
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	RenderBuilding:
+		Palette: terrain
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+
+LAR2:
+	Tooltip:
+		Name: Ant Larvae
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	RenderBuilding:
+		Palette: terrain
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+

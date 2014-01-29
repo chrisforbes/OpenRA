@@ -96,7 +96,6 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="ITool.cs" />
-    <Compile Include="LegacyMapImporter.cs" />
     <Compile Include="MapSelect.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -116,9 +115,9 @@
     <Compile Include="PropertiesDialog.Designer.cs">
       <DependentUpon>PropertiesDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="ActorPropertiesDialog.resx">
       <DependentUpon>ActorPropertiesDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -165,6 +164,7 @@
     <Compile Include="Surface.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="TileSetRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">

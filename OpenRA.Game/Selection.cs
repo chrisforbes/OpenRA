@@ -11,6 +11,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA
@@ -36,13 +37,13 @@ namespace OpenRA
 
 			if (isClick)
 			{
-				var adjNewSelection = newSelection.Take(1);	/* todo: select BEST, not FIRST */
+				var adjNewSelection = newSelection.Take(1);	/* TODO: select BEST, not FIRST */
 				actors = (isCombine ? oldSelection.SymmetricDifference(adjNewSelection) : adjNewSelection).ToList();
 			}
 			else
 				actors = (isCombine ? oldSelection.Union(newSelection) : newSelection).ToList();
 
-			var voicedUnit = actors.FirstOrDefault(a => a.Owner == world.LocalPlayer && a.IsInWorld && a.HasVoice());
+			var voicedUnit = actors.FirstOrDefault(a => a.Owner == world.LocalPlayer && a.IsInWorld && a.HasVoices());
 			if (voicedUnit != null)
 				Sound.PlayVoice("Select", voicedUnit, voicedUnit.Owner.Country.Race);
 
@@ -64,7 +65,7 @@ namespace OpenRA
 
 		Cache<int, List<Actor>> controlGroups = new Cache<int, List<Actor>>(_ => new List<Actor>());
 
-		public void DoControlGroup(World world, int group, Modifiers mods, int MultiTapCount)
+		public void DoControlGroup(World world, WorldRenderer worldRenderer, int group, Modifiers mods, int MultiTapCount)
 		{
 			var addModifier = Platform.CurrentPlatform == PlatformType.OSX ? Modifiers.Meta : Modifiers.Ctrl;
 			if (mods.HasModifier(addModifier))
@@ -84,7 +85,7 @@ namespace OpenRA
 
 			if (mods.HasModifier(Modifiers.Alt) || MultiTapCount >= 2)
 			{
-				Game.viewport.Center(controlGroups[group]);
+				worldRenderer.Viewport.Center(controlGroups[group]);
 				return;
 			}
 

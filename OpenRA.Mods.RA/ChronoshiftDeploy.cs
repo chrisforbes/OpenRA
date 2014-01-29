@@ -10,7 +10,6 @@
 
 using System.Drawing;
 using System.Collections.Generic;
-using OpenRA.Effects;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
@@ -22,6 +21,8 @@ namespace OpenRA.Mods.RA
 	{
 		public readonly int ChargeTime = 30; // seconds
 		public readonly int JumpDistance = 10;
+		public readonly string ChronoshiftSound = "chrotnk1.aud";
+
 		public object Create(ActorInitializer init) { return new ChronoshiftDeploy(init.self, this); }
 	}
 
@@ -63,7 +64,7 @@ namespace OpenRA.Mods.RA
 				if (CanJumpTo(order.TargetLocation, true))
 				{
 					self.CancelActivity();
-					self.QueueActivity(new Teleport(null, order.TargetLocation, true));
+					self.QueueActivity(new Teleport(null, order.TargetLocation, true, Info.ChronoshiftSound));
 					chargeTick = 25 * Info.ChargeTime;
 				}
 			}
@@ -92,7 +93,7 @@ namespace OpenRA.Mods.RA
 
 		public bool CanJumpTo(CPos xy, bool ignoreVis)
 		{
-			var movement = self.TraitOrDefault<IMove>();
+			var movement = self.TraitOrDefault<IPositionable>();
 
 			if (chargeTick <= 0 // Can jump
 				&& (self.Location - xy).Length <= Info.JumpDistance // Within jump range
@@ -141,8 +142,9 @@ namespace OpenRA.Mods.RA
 			if (!self.IsInWorld || self.IsDead())
 				world.CancelInputMode();
 		}
-		public void RenderAfterWorld(WorldRenderer wr, World world) { }
-		public void RenderBeforeWorld(WorldRenderer wr, World world)
+
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
+		public void RenderAfterWorld(WorldRenderer wr, World world)
 		{
 			if (!self.IsInWorld)
 				return;
@@ -150,9 +152,12 @@ namespace OpenRA.Mods.RA
 			if (self.Owner != self.World.LocalPlayer)
 				return;
 
-			wr.DrawRangeCircle(
+			wr.DrawRangeCircleWithContrast(
+				self.CenterPosition,
+				WRange.FromCells(self.Trait<ChronoshiftDeploy>().Info.JumpDistance),
 				Color.FromArgb(128, Color.DeepSkyBlue),
-				self.CenterLocation.ToFloat2(), (int)self.Trait<ChronoshiftDeploy>().Info.JumpDistance);
+				Color.FromArgb(96, Color.Black)
+			);
 		}
 	}
 }

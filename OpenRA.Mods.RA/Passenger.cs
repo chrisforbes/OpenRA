@@ -35,8 +35,8 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new EnterOrderTargeter<Cargo>( "EnterTransport", 6, false, true,
-					target => IsCorrectCargoType( target ), target => CanEnter( target ) );
+				yield return new EnterAlliedActorTargeter<Cargo>("EnterTransport", 6,
+					target => IsCorrectCargoType(target), target => CanEnter(target));
 			}
 		}
 
@@ -79,7 +79,7 @@ namespace OpenRA.Mods.RA
 				self.SetTargetLine(target, Color.Green);
 
 				self.CancelActivity();
-				self.QueueActivity(new MoveAdjacentTo(target));
+				self.QueueActivity(new MoveAdjacentTo(self, target));
 				self.QueueActivity(new EnterTransport(self, order.TargetActor));
 			}
 		}

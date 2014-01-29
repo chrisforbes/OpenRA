@@ -20,6 +20,8 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 	{
 		Widget menu;
 
+		enum PanelType { Objectives, Debug }
+
 		[ObjectCreator.UseCtor]
 		public CncIngameMenuLogic(Widget widget, World world, Action onExit, WorldRenderer worldRenderer)
 		{
@@ -28,7 +30,7 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 			var mpe = world.WorldActor.Trait<CncMenuPaletteEffect>();
 			mpe.Fade(CncMenuPaletteEffect.EffectType.Desaturated);
 
-			menu.Get<LabelWidget>("VERSION_LABEL").GetText = WidgetUtils.ActiveModVersion;
+			menu.Get<LabelWidget>("VERSION_LABEL").Text = Game.modData.Manifest.Mod.Version;
 
 			bool hideButtons = false;
 			menu.Get("MENU_BUTTONS").IsVisible = () => !hideButtons;
@@ -41,13 +43,13 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				Game.RunAfterDelay(1200, () => mpe.Fade(CncMenuPaletteEffect.EffectType.Black));
 				Game.RunAfterDelay(1200 + 40 * mpe.Info.FadeLength, () =>
 				{
-						Game.Disconnect();
-						Ui.ResetAll();
-						Game.LoadShellMap();
+					Game.Disconnect();
+					Ui.ResetAll();
+					Game.LoadShellMap();
 				});
 			};
 
-			Action doNothing = () => {};
+			Action doNothing = () => { };
 
 			menu.Get<ButtonWidget>("QUIT_BUTTON").OnClick = () =>
 				CncWidgetUtils.PromptConfirmAction("Abort Mission", "Leave this game and return to the menu?", onQuit, doNothing);
@@ -88,10 +90,39 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				onExit();
 			};
 
-			// Mission objectives panel
+			// Menu panels - ordered from lowest to highest priority
+			var panelParent = Game.OpenWindow(world, "INGAME_MENU_PANEL");
+			PanelType panelType = PanelType.Objectives;
+			var visibleButtons = 0;
+
+			// Debug / Cheats panel
+			var debugButton = panelParent.Get<ButtonWidget>("DEBUG_BUTTON");
+			debugButton.OnClick = () => panelType = PanelType.Debug;
+			debugButton.IsHighlighted = () => panelType == PanelType.Debug;
+
+			if (world.LocalPlayer != null && world.LobbyInfo.GlobalSettings.AllowCheats)
+			{
+				panelType = PanelType.Debug;
+				visibleButtons++;
+				var debugPanel = Game.LoadWidget(world, "CHEATS_PANEL", panelParent, new WidgetArgs() { { "onExit", doNothing } });
+				debugPanel.IsVisible = () => panelType == PanelType.Debug;
+				debugButton.IsVisible = () => visibleButtons > 1;
+			}
+
+			// Mission objectives
 			var iop = world.WorldActor.TraitsImplementing<IObjectivesPanel>().FirstOrDefault();
+			var objectivesButton = panelParent.Get<ButtonWidget>("OBJECTIVES_BUTTON");
+			objectivesButton.OnClick = () => panelType = PanelType.Objectives;
+			objectivesButton.IsHighlighted = () => panelType == PanelType.Objectives;
+
 			if (iop != null && iop.ObjectivesPanel != null)
-				Game.OpenWindow(world, iop.ObjectivesPanel);
+			{
+				panelType = PanelType.Objectives;
+				visibleButtons++;
+				var objectivesPanel = Game.LoadWidget(world, iop.ObjectivesPanel, panelParent, new WidgetArgs());
+				objectivesPanel.IsVisible = () => panelType == PanelType.Objectives;
+				objectivesButton.IsVisible = () => visibleButtons > 1;
+			}
 		}
 	}
 }

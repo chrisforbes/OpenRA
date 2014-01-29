@@ -9,14 +9,12 @@
 #endregion
 
 using System;
-using System.Linq;
 using OpenRA.Traits;
-using OpenRA.FileFormats;
 using OpenRA.Mods.RA.Effects;
 
 namespace OpenRA.Mods.RA
 {
-	class InfiltrateForCashInfo : ITraitInfo
+	class InfiltrateForCashInfo : ITraitInfo, Requires<InfiltratableInfo>
 	{
 		public readonly int Percentage = 50;
 		public readonly int Minimum = 500;
@@ -44,8 +42,7 @@ namespace OpenRA.Mods.RA
 
 			Sound.PlayToPlayer(self.Owner, info.SoundToVictim);
 
-			self.World.AddFrameEndTask(w => w.Add(new CashTick(toGive, 30, 2, self.CenterLocation,
-			                                                   infiltrator.Owner.ColorRamp.GetColor(0))));
+			self.World.AddFrameEndTask(w => w.Add(new CashTick(self.CenterPosition, infiltrator.Owner.Color.RGB, toGive)));
 		}
 	}
 }

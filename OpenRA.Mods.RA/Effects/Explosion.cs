@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,34 +11,33 @@
 using System.Collections.Generic;
 using OpenRA.Effects;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
 	public class Explosion : IEffect
 	{
+		World world;
+		WPos pos;
+		CPos cell;
 		Animation anim;
-		PPos pos;
-		int altitude;
 
-		public Explosion(World world, PPos pixelPos, string style, bool isWater, int altitude)
+		public Explosion(World world, WPos pos, string style)
 		{
-			this.pos = pixelPos;
-			this.altitude = altitude;
+			this.world = world;
+			this.pos = pos;
+			this.cell = pos.ToCPos();
 			anim = new Animation("explosion");
-			anim.PlayThen(style,
-				() => world.AddFrameEndTask(w => w.Remove(this)));
+			anim.PlayThen(style, () => world.AddFrameEndTask(w => w.Remove(this)));
 		}
 
-		public void Tick( World world ) { anim.Tick(); }
+		public void Tick(World world) { anim.Tick(); }
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			yield return new Renderable(anim.Image,
-				pos.ToFloat2() - .5f * anim.Image.size - new int2(0,altitude),
-				wr.Palette("effect"), (int)pos.Y - altitude);
-		}
+			if (world.FogObscures(cell))
+				return SpriteRenderable.None;
 
-		public Player Owner { get { return null; } }
+			return anim.Render(pos, wr.Palette("effect"));
+		}
 	}
 }

@@ -34,7 +34,8 @@ namespace OpenRA.Traits
 	}
 
 	public interface ITick { void Tick(Actor self); }
-	public interface IRender { IEnumerable<Renderable> Render(Actor self, WorldRenderer wr); }
+	public interface ITickRender { void TickRender(WorldRenderer wr, Actor self); }
+	public interface IRender { IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr); }
 	public interface IAutoSelectionSize { int2 SelectionSize(Actor self); }
 
 	public interface IIssueOrder
@@ -43,12 +44,18 @@ namespace OpenRA.Traits
 		Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued);
 	}
 
+	[Flags] public enum TargetModifiers { None = 0, ForceAttack = 1, ForceQueue = 2, ForceMove = 4 };
+
+	public static class TargetModifiersExts
+	{
+		public static bool HasModifier(this TargetModifiers self, TargetModifiers m) { return (self & m) == m; }
+	}
+
 	public interface IOrderTargeter
 	{
 		string OrderID { get; }
 		int OrderPriority { get; }
-		bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueue, ref string cursor);
-		bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueue, ref string cursor);
+		bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor);
 		bool IsQueued { get; }
 	}
 
@@ -56,6 +63,8 @@ namespace OpenRA.Traits
 	public interface IValidateOrder { bool OrderValidation(OrderManager orderManager, World world, int clientId, Order order); }
 	public interface IOrderVoice { string VoicePhraseForOrder(Actor self, Order order); }
 	public interface INotify { void Play(Player p, string notification); }
+	public interface INotifyAddedToWorld { void AddedToWorld(Actor self); }
+	public interface INotifyRemovedFromWorld { void RemovedFromWorld(Actor self); }
 	public interface INotifySold { void Selling(Actor self); void Sold(Actor self); }
 	public interface INotifyDamage { void Damaged(Actor self, AttackInfo e); }
 	public interface INotifyDamageStateChanged { void DamageStateChanged(Actor self, AttackInfo e); }
@@ -65,14 +74,19 @@ namespace OpenRA.Traits
 	public interface INotifyProduction { void UnitProduced(Actor self, Actor other, CPos exit); }
 	public interface INotifyOwnerChanged { void OnOwnerChanged(Actor self, Player oldOwner, Player newOwner); }
 	public interface INotifyCapture { void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner); }
-	public interface INotifyOtherCaptured { void OnActorCaptured(Actor self, Actor captured, Actor captor, Player oldOwner, Player newOwner); }
+	public interface INotifyHarvest { void Harvested(Actor self, ResourceType resource); }
+
 	public interface IAcceptInfiltrator { void OnInfiltrate(Actor self, Actor infiltrator); }
+	public interface IDemolishable
+	{
+		void Demolish(Actor self, Actor saboteur);
+		bool IsValidTarget(Actor self, Actor saboteur);
+	}
 	public interface IStoreOre { int Capacity { get; } }
 	public interface IToolTip
 	{
 		string Name();
 		Player Owner();
-		Stance Stance();
 	}
 
 	public interface IDisable { bool Disabled { get; } }
@@ -85,12 +99,13 @@ namespace OpenRA.Traits
 		Color RadarSignatureColor(Actor self);
 	}
 
-	public interface IVisibilityModifier { bool IsVisible(Shroud s, Actor self); }
+	public interface IVisibilityModifier { bool IsVisible(Actor self, Player byPlayer); }
 	public interface IRadarColorModifier { Color RadarColorOverride(Actor self); }
-	public interface IHasLocation { PPos PxPosition { get; } }
 
-	public interface IOccupySpace : IHasLocation
+	public interface IOccupySpaceInfo { }
+	public interface IOccupySpace
 	{
+		WPos CenterPosition { get; }
 		CPos TopLeft { get; }
 		IEnumerable<Pair<CPos, SubCell>> OccupiedCells();
 	}
@@ -114,8 +129,7 @@ namespace OpenRA.Traits
 		}
 	}
 
-	public interface INotifyAttack { void Attacking(Actor self, Target target); }
-	public interface IRenderModifier { IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r); }
+	public interface IRenderModifier { IEnumerable<IRenderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r); }
 	public interface IDamageModifier { float GetDamageModifier(Actor attacker, WarheadInfo warhead); }
 	public interface ISpeedModifier { decimal GetSpeedModifier(); }
 	public interface IFirepowerModifier { float GetFirepowerModifier(); }
@@ -125,62 +139,38 @@ namespace OpenRA.Traits
 	public interface ITags { IEnumerable<TagType> GetTags(); }
 	public interface ISelectionBar { float GetValue(); Color GetColor(); }
 
-	public interface ITeleportable : IHasLocation /* crap name! */
+	public interface IPositionable : IOccupySpace
 	{
 		bool CanEnterCell(CPos location);
+		bool CanEnterCell(CPos location, Actor ignoreActor, bool checkTransientActors);
 		void SetPosition(Actor self, CPos cell);
-		void SetPxPosition(Actor self, PPos px);
-		void AdjustPxPosition(Actor self, PPos px);	/* works like SetPxPosition, but visual only */
+		void SetPosition(Actor self, WPos pos);
+		void SetVisualPosition(Actor self, WPos pos);
 	}
 
-	public interface IMove : ITeleportable { int Altitude { get; set; } }
+	public interface IMove
+	{
+		Activity MoveTo(CPos cell, int nearEnough);
+		Activity MoveTo(CPos cell, Actor ignoredActor);
+		Activity MoveWithinRange(Target target, WRange range);
+		CPos NearestMoveableCell(CPos target);
+	}
+
 	public interface INotifyBlockingMove { void OnNotifyBlockingMove(Actor self, Actor blocking); }
 
 	public interface IFacing
 	{
 		int ROT { get; }
 		int Facing { get; set; }
-		int InitialFacing { get; }
 	}
 
-	public interface IFacingInfo {}		/* tag interface for infoclasses whose corresponding trait has IFacing */
+	public interface IFacingInfo { int GetInitialFacing(); }
 
 	public interface ICrushable
 	{
 		void OnCrush(Actor crusher);
 		void WarnCrush(Actor crusher);
 		bool CrushableBy(string[] crushClasses, Player owner);
-	}
-
-	public struct Renderable
-	{
-		public readonly Sprite Sprite;
-		public readonly float2 Pos;
-		public readonly PaletteReference Palette;
-		public readonly int Z;
-		public readonly int ZOffset;
-		public float Scale;
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z, int zOffset, float scale)
-		{
-			Sprite = sprite;
-			Pos = pos;
-			Palette = palette;
-			Z = z;
-			ZOffset = zOffset;
-			Scale = scale; /* default */
-		}
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z)
-			: this(sprite, pos, palette, z, 0, 1f) { }
-
-		public Renderable(Sprite sprite, float2 pos, PaletteReference palette, int z, float scale)
-			: this(sprite, pos, palette, z, 0, scale) { }
-
-		public Renderable WithScale(float newScale) { return new Renderable(Sprite, Pos, Palette, Z, ZOffset, newScale); }
-		public Renderable WithPalette(PaletteReference newPalette) { return new Renderable(Sprite, Pos, newPalette, Z, ZOffset, Scale); }
-		public Renderable WithZOffset(int newOffset) { return new Renderable(Sprite, Pos, Palette, Z, newOffset, Scale); }
-		public Renderable WithPos(float2 newPos) { return new Renderable(Sprite, newPos, Palette, Z, ZOffset, Scale); }
 	}
 
 	public interface ITraitInfo { object Create(ActorInitializer init); }
@@ -191,7 +181,7 @@ namespace OpenRA.Traits
 	public interface UsesInit<T> where T : IActorInit { }
 
 	public interface INotifySelection { void SelectionChanged(); }
-	public interface IWorldLoaded { void WorldLoaded(World w); }
+	public interface IWorldLoaded { void WorldLoaded(World w, WorldRenderer wr); }
 	public interface ICreatePlayers { void CreatePlayers(World w); }
 
 	public interface IBotInfo { string Name { get; } }
@@ -207,15 +197,28 @@ namespace OpenRA.Traits
 	public interface IBlocksBullets { }
 
 	public interface IPostRender { void RenderAfterWorld(WorldRenderer wr, Actor self); }
+	public interface IRenderShroud { void RenderShroud(WorldRenderer wr, Shroud shroud); }
 
 	public interface IPostRenderSelection { void RenderAfterWorld(WorldRenderer wr); }
-	public interface IPreRenderSelection { void RenderBeforeWorld(WorldRenderer wr, Actor self); }
-	public interface IRenderAsTerrain { IEnumerable<Renderable> RenderAsTerrain(WorldRenderer wr, Actor self); }
+	public interface IBodyOrientation
+	{
+		WAngle CameraPitch { get; }
+		int QuantizedFacings { get; }
+		WVec LocalToWorld(WVec vec);
+		WRot QuantizeOrientation(Actor self, WRot orientation);
+		void SetAutodetectedFacings(int facings);
+	}
+	public interface IBodyOrientationInfo {}
+
+	public interface ITargetableInfo
+	{
+		string[] GetTargetTypes();
+	}
 
 	public interface ITargetable
 	{
 		string[] TargetTypes { get; }
-		IEnumerable<CPos> TargetableCells(Actor self);
+		IEnumerable<WPos> TargetablePositions(Actor self);
 		bool TargetableBy(Actor self, Actor byActor);
 	}
 

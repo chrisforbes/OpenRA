@@ -8,10 +8,8 @@
  */
 #endregion
 
-using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Traits;
-using OpenRA.Mods.RA.Effects;
 using OpenRA.Mods.RA.Move;
 using OpenRA.Mods.RA.Render;
 
@@ -47,7 +45,7 @@ namespace OpenRA.Mods.RA
 
 		public void OnCrush(Actor crusher)
 		{
-			Sound.Play(Info.CrushSound, crusher.CenterLocation);
+			Sound.Play(Info.CrushSound, crusher.CenterPosition);
 			ri.SpawnCorpse(self, Info.CorpseSequence);
 			self.Kill(crusher);
 		}

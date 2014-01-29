@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Widgets
 {
@@ -41,7 +40,6 @@ namespace OpenRA.Widgets
 		public string AxisFont;
 
 		public LineGraphWidget()
-			: base()
 		{
 			GetValueFormat = () => ValueFormat;
 			GetXAxisValueFormat = () => XAxisValueFormat;
@@ -143,7 +141,7 @@ namespace OpenRA.Widgets
 				keyOffset++;
 			}
 
-			//todo: make this stuff not draw outside of the RenderBounds
+			//TODO: make this stuff not draw outside of the RenderBounds
 			for (int n = pointStart, x = 0; n <= pointEnd; n++, x += xStep)
 			{
 				Game.Renderer.LineRenderer.DrawLine(origin + new float2(x, 0), origin + new float2(x, -5), Color.White, Color.White);

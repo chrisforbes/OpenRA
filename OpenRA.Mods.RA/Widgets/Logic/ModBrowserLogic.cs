@@ -26,10 +26,10 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			var modList = panel.Get<ScrollPanelWidget>("MOD_LIST");
 			var loadButton = panel.Get<ButtonWidget>("LOAD_BUTTON");
 			loadButton.OnClick = () => LoadMod(currentMod.Id, onSwitch);
-			loadButton.IsDisabled = () => currentMod.Id == Game.CurrentMods.Keys.First();
+			loadButton.IsDisabled = () => currentMod.Id == Game.modData.Manifest.Mod.Id;
 
 			panel.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => { Ui.CloseWindow(); onExit(); };
-			currentMod = Mod.AllMods[Game.modData.Manifest.Mods[0]];
+			currentMod = Game.modData.Manifest.Mod;
 
 			// Mod list
 			var modTemplate = modList.Get<ScrollItemWidget>("MOD_TEMPLATE");
@@ -37,7 +37,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			foreach (var m in Mod.AllMods)
 			{
 				var mod = m.Value;
-				var item = ScrollItemWidget.Setup(modTemplate, () => currentMod == mod, () => currentMod = mod);
+				var item = ScrollItemWidget.Setup(modTemplate, () => currentMod == mod, () => currentMod = mod, () => LoadMod(currentMod.Id, onSwitch));
 				item.Get<LabelWidget>("TITLE").GetText = () => mod.Title;
 				item.Get<LabelWidget>("VERSION").GetText = () => mod.Version;
 				item.Get<LabelWidget>("AUTHOR").GetText = () => mod.Author;
@@ -47,13 +47,11 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 		void LoadMod(string mod, Action onSwitch)
 		{
-			var mods = Mod.AllMods[mod].WithPrerequisites();
-
 			Game.RunAfterTick(() =>
 			{
 				Ui.CloseWindow();
 				onSwitch();
-				Game.InitializeWithMods(mods);
+				Game.InitializeWithMod(mod, null);
 			});
 		}
 	}

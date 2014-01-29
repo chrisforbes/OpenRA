@@ -11,6 +11,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using OpenRA.FileFormats;
 
 namespace OpenRA
@@ -45,10 +46,30 @@ namespace OpenRA
 				return PlatformType.Unknown;
 		}
 
+		public static string RuntimeVersion
+		{
+			get
+			{
+				var mono = Type.GetType("Mono.Runtime");
+				if (mono == null)
+					return ".NET CLR {0}".F(Environment.Version);
+
+				var version = mono.GetMethod("GetDisplayName", BindingFlags.NonPublic | BindingFlags.Static);
+				if (version == null)
+					return "Mono (unknown version) CLR {0}".F(Environment.Version);
+
+				return "Mono {0} CLR {1}".F(version.Invoke(null, null), Environment.Version); 
+			}
+		}
+
 		public static string SupportDir
 		{
 			get
 			{
+				// Use a local directory in the game root if it exists
+				if (Directory.Exists("Support"))
+					return "Support" + Path.DirectorySeparatorChar;
+
 				var dir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 
 				switch (CurrentPlatform)

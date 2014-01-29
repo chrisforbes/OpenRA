@@ -8,14 +8,14 @@
  */
 #endregion
 
-using System;
+using System.Drawing;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
 	public static class ActorExts
 	{
-		static bool IsDisguisedSpy( this Actor a )
+		static bool IsDisguisedSpy(this Actor a)
 		{
 			var spy = a.TraitOrDefault<Spy>();
 			return spy != null && spy.Disguised;
@@ -23,7 +23,7 @@ namespace OpenRA.Mods.RA
 
 		public static bool AppearsFriendlyTo(this Actor self, Actor toActor)
 		{
-			var stance = toActor.Owner.Stances[ self.Owner ];
+			var stance = toActor.Owner.Stances[self.Owner];
 			if (stance == Stance.Ally)
 				return true;
 
@@ -35,7 +35,7 @@ namespace OpenRA.Mods.RA
 
 		public static bool AppearsHostileTo(this Actor self, Actor toActor)
 		{
-			var stance = toActor.Owner.Stances[ self.Owner ];
+			var stance = toActor.Owner.Stances[self.Owner];
 			if (stance == Stance.Ally)
 				return false;		/* otherwise, we'll hate friendly disguised spies */
 
@@ -44,6 +44,43 @@ namespace OpenRA.Mods.RA
 
 			return stance == Stance.Enemy;
 		}
+
+		public static Target ResolveFrozenActorOrder(this Actor self, Order order, Color targetLine)
+		{
+			// Not targeting a frozen actor
+			if (order.ExtraData == 0)
+				return Target.FromOrder(order);
+
+			// Targeted an actor under the fog
+			var frozenLayer = self.Owner.PlayerActor.TraitOrDefault<FrozenActorLayer>();
+			if (frozenLayer == null)
+				return Target.Invalid;
+
+			var frozen = frozenLayer.FromID(order.ExtraData);
+			if (frozen == null)
+				return Target.Invalid;
+
+			// Flashes the frozen proxy
+			self.SetTargetLine(frozen, targetLine, true);
+
+			// Target is still alive - resolve the real order
+			if (frozen.Actor != null && frozen.Actor.IsInWorld)
+				return Target.FromActor(frozen.Actor);
+
+			if (!order.Queued)
+				self.CancelActivity();
+
+			var move = self.TraitOrDefault<IMove>();
+			if (move != null)
+			{
+				// Move within sight range of the frozen actor
+				var sight = self.TraitOrDefault<RevealsShroud>();
+				var range = sight != null ? sight.Range : 2;
+
+				self.QueueActivity(move.MoveWithinRange(Target.FromPos(frozen.CenterPosition), WRange.FromCells(range)));
+			}
+
+			return Target.Invalid;
+		}
 	}
 }
-

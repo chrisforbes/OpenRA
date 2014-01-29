@@ -21,38 +21,37 @@ namespace OpenRA
 {
 	public static class WorldUtils
 	{
-		public static IEnumerable<Actor> FindUnitsAtMouse(this World world, int2 mouseLocation)
+		public static IEnumerable<Actor> FindActorsInBox(this World world, CPos tl, CPos br)
 		{
-			var loc = Game.viewport.ViewToWorldPx(mouseLocation);
-			return FindUnits(world, loc, loc).Where(a => world.RenderedShroud.IsVisible(a));
+			// TODO: Support diamond boxes for isometric maps?
+			return world.FindActorsInBox(tl.TopLeft, br.BottomRight);
 		}
 
-		public static IEnumerable<Actor> FindUnits(this World world, PPos a, PPos b)
+		public static IEnumerable<Actor> FindActorsInBox(this World world, WPos tl, WPos br)
 		{
-			var u = PPos.Min(a, b);
-			var v = PPos.Max(a, b);
-			return world.WorldActor.Trait<SpatialBins>().ActorsInBox(u,v);
+			return world.ActorMap.ActorsInBox(tl, br);
 		}
 
-		public static Actor ClosestTo(this IEnumerable<Actor> actors, PPos px)
+		public static Actor ClosestTo(this IEnumerable<Actor> actors, Actor a)
 		{
-			return actors.OrderBy( a => (a.CenterLocation - px).LengthSquared ).FirstOrDefault();
+			var pos = a.CenterPosition;
+			return actors.OrderBy(b => (b.CenterPosition - pos).LengthSquared).FirstOrDefault();
 		}
 
-		public static IEnumerable<Actor> FindUnitsInCircle(this World world, PPos a, int r)
+		public static Actor ClosestTo(this IEnumerable<Actor> actors, WPos pos)
+		{
+			return actors.OrderBy(a => (a.CenterPosition - pos).LengthSquared).FirstOrDefault();
+		}
+
+		public static IEnumerable<Actor> FindActorsInCircle(this World world, WPos origin, WRange r)
 		{
 			using (new PerfSample("FindUnitsInCircle"))
 			{
-				var min = a - PVecInt.FromRadius(r);
-				var max = a + PVecInt.FromRadius(r);
-
-				var actors = world.FindUnits(min, max);
-
-				var rect = new Rectangle(min.X, min.Y, max.X - min.X, max.Y - min.Y);
-
-				var inBox = actors.Where(x => x.ExtendedBounds.Value.IntersectsWith(rect));
-
-				return inBox.Where(x => (x.CenterLocation - a).LengthSquared < r * r);
+				// Target ranges are calculated in 2D, so ignore height differences
+				var vec = new WVec(r, r, WRange.Zero);
+				var rSq = r.Range*r.Range;
+				return world.FindActorsInBox(origin - vec, origin + vec).Where(
+					a => (a.CenterPosition - origin).HorizontalLengthSquared <= rSq);
 			}
 		}
 
@@ -92,7 +91,7 @@ namespace OpenRA
 		public static string GetTerrainType(this World world, CPos cell)
 		{
 			var custom = world.Map.CustomTerrain[cell.X, cell.Y];
-			return custom != null ? custom : world.TileSet.GetTerrainType(world.Map.MapTiles.Value[cell.X, cell.Y]);
+			return custom ?? world.TileSet.GetTerrainType(world.Map.MapTiles.Value[cell.X, cell.Y]);
 		}
 
 		public static TerrainTypeInfo GetTerrainInfo(this World world, CPos cell)
@@ -125,31 +124,33 @@ namespace OpenRA
 				r.Next(w.Map.Bounds.Top, w.Map.Bounds.Bottom));
 		}
 
-		public static float Gauss1D(this Thirdparty.Random r, int samples)
+		public static WRange DistanceToMapEdge(this World w, WPos pos, WVec dir)
 		{
-			return Exts.MakeArray(samples, _ => r.NextFloat() * 2 - 1f)
-				.Sum() / samples;
+			var tl = w.Map.Bounds.TopLeftAsCPos().TopLeft;
+			var br = w.Map.Bounds.BottomRightAsCPos().BottomRight;
+			var x = dir.X == 0 ? int.MaxValue : ((dir.X < 0 ? tl.X : br.X) - pos.X) / dir.X;
+			var y = dir.Y == 0 ? int.MaxValue : ((dir.Y < 0 ? tl.Y : br.Y) - pos.Y) / dir.Y;
+			return new WRange(Math.Min(x, y) * dir.Length);
 		}
 
-		// Returns a random offset in the range [-1..1,-1..1] with a separable
-		// Gauss distribution with 'samples' values taken for each axis
-		public static float2 Gauss2D(this Thirdparty.Random r, int samples)
-		{
-			return new float2(Gauss1D(r, samples), Gauss1D(r, samples));
-		}
-
-		public static bool HasVoice(this Actor a)
+		public static bool HasVoices(this Actor a)
 		{
 			var selectable = a.Info.Traits.GetOrDefault<SelectableInfo>();
 			return selectable != null && selectable.Voice != null;
 		}
 
-		public static SoundInfo GetVoice(this Actor a)
+		public static bool HasVoice(this Actor a, string voice)
+		{
+			var v = GetVoices(a);
+			return v != null && v.Voices.ContainsKey(voice);
+		}
+
+		public static SoundInfo GetVoices(this Actor a)
 		{
 			var selectable = a.Info.Traits.GetOrDefault<SelectableInfo>();
 			if (selectable == null) return null;
 			var v = selectable.Voice;
-			return (v == null) ? null : Rules.Voices[v];
+			return (v == null) ? null : Rules.Voices[v.ToLowerInvariant()];
 		}
 
 		public static void PlayVoiceForOrders(this World w, Order[] orders)
@@ -157,7 +158,12 @@ namespace OpenRA
 			// Find an actor with a phrase to say
 			foreach (var o in orders)
 			{
-				if (o.Subject.Destroyed) continue;
+				if (o == null)
+					continue;
+
+				if (o.Subject.Destroyed)
+					continue;
+
 				foreach (var v in o.Subject.TraitsImplementing<IOrderVoice>())
 					if (Sound.PlayVoice(v.VoicePhraseForOrder(o.Subject, o),
 						o.Subject, o.Subject.Owner.Country.Race))

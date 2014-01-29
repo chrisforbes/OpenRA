@@ -10,6 +10,7 @@
 
 using System.Linq;
 using OpenRA.FileFormats;
+using OpenRA.Traits;
 
 namespace OpenRA
 {
@@ -54,14 +55,6 @@ namespace OpenRA
 		public int Value( World world ) { return value; }
 	}
 
-	public class AltitudeInit : IActorInit<int>
-	{
-		[FieldFromYamlKey] public readonly int value = 0;
-		public AltitudeInit() { }
-		public AltitudeInit( int init ) { value = init; }
-		public int Value( World world ) { return value; }
-	}
-
 	public class LocationInit : IActorInit<CPos>
 	{
 		[FieldFromYamlKey] public readonly int2 value = int2.Zero;
@@ -75,15 +68,16 @@ namespace OpenRA
 		[FieldFromYamlKey] public readonly int value = 0;
 		public SubCellInit() { }
 		public SubCellInit(int init) { value = init; }
+		public SubCellInit(SubCell init) { value = (int)init; }
 		public SubCell Value(World world) { return (SubCell)value; }
 	}
 
-	public class CenterLocationInit : IActorInit<PPos>
+	public class CenterPositionInit : IActorInit<WPos>
 	{
-		[FieldFromYamlKey] public readonly int2 value = int2.Zero;
-		public CenterLocationInit() { }
-		public CenterLocationInit(PPos init) { value = init.ToInt2(); }
-		public PPos Value(World world) { return (PPos)value; }
+		[FieldFromYamlKey] public readonly WPos value = WPos.Zero;
+		public CenterPositionInit() { }
+		public CenterPositionInit(WPos init) { value = init; }
+		public WPos Value(World world) { return value; }
 	}
 
 	public class OwnerInit : IActorInit<Player>

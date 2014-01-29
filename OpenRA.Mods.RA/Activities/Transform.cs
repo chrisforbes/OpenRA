@@ -34,6 +34,9 @@ namespace OpenRA.Mods.RA.Activities
 
 			self.World.AddFrameEndTask(w =>
 			{
+				if (self.IsDead())
+					return;
+
 				foreach (var nt in self.TraitsImplementing<INotifyTransform>())
 					nt.OnTransform(self);
 
@@ -41,7 +44,7 @@ namespace OpenRA.Mods.RA.Activities
 
 				self.Destroy();
 				foreach (var s in Sounds)
-					Sound.PlayToPlayer(self.Owner, s, self.CenterLocation);
+					Sound.PlayToPlayer(self.Owner, s, self.CenterPosition);
 
 				var init = new TypeDictionary
 				{

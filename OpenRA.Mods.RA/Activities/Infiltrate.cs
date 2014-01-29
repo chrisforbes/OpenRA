@@ -8,7 +8,6 @@
  */
 #endregion
 
-using System.Linq;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
 
@@ -16,31 +15,20 @@ namespace OpenRA.Mods.RA.Activities
 {
 	class Infiltrate : Activity
 	{
-		Actor target;
-		public Infiltrate(Actor target) { this.target = target; }
+		Target target;
+		public Infiltrate(Actor target) { this.target = Target.FromActor(target); }
 
 		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead()) return NextActivity;
-			if (target.Owner == self.Owner) return NextActivity;
-
-			if( !target.OccupiesSpace.OccupiedCells().Any( x => x.First == self.Location ) )
+			if (IsCanceled || target.Type != TargetType.Actor || target.Actor.Owner == self.Owner)
 				return NextActivity;
 
-			foreach (var t in target.TraitsImplementing<IAcceptInfiltrator>())
-				t.OnInfiltrate(target, self);
+			foreach (var t in target.Actor.TraitsImplementing<IAcceptInfiltrator>())
+				t.OnInfiltrate(target.Actor, self);
 
-			if (self.HasTrait<DontDestroyWhenInfiltrating>())
-				self.World.AddFrameEndTask(w =>
-				{
-					if (self.Destroyed) return;
-					w.Remove(self);
-				});
-			else
-				self.Destroy();
+			self.World.AddFrameEndTask(w => { if (!self.Destroyed) w.Remove(self); });
 
-			if (target.HasTrait<Building>())
+			if (target.Actor.HasTrait<Building>())
 				Sound.PlayToPlayer(self.Owner, "bldginf1.aud");
 
 			return this;

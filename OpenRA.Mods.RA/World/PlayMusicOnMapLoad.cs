@@ -9,10 +9,8 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Traits;
-using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA
 {
@@ -30,7 +28,7 @@ namespace OpenRA.Mods.RA
 
 		public PlayMusicOnMapLoad(PlayMusicOnMapLoadInfo info) { Info = info; }
 
-		public void WorldLoaded(World w) { PlayMusic(); }
+		public void WorldLoaded(World w, WorldRenderer wr) { PlayMusic(); }
 
 		void PlayMusic()
 		{

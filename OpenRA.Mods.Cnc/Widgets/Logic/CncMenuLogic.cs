@@ -16,9 +16,9 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 {
 	public class CncMenuLogic
 	{
-		enum MenuType {	Main, Multiplayer, Settings, None }
+		enum MenuType { Main, Multiplayer, Settings, None }
 
-		MenuType Menu = MenuType.Main;
+		MenuType menuType = MenuType.Main;
 		Widget rootMenu;
 
 		[ObjectCreator.UseCtor]
@@ -28,80 +28,94 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				.Fade(CncMenuPaletteEffect.EffectType.Desaturated);
 
 			rootMenu = widget.Get("MENU_BACKGROUND");
-			rootMenu.Get<LabelWidget>("VERSION_LABEL").GetText = WidgetUtils.ActiveModVersion;
+			rootMenu.Get<LabelWidget>("VERSION_LABEL").Text = Game.modData.Manifest.Mod.Version;
 
 			// Menu buttons
 			var mainMenu = widget.Get("MAIN_MENU");
-			mainMenu.IsVisible = () => Menu == MenuType.Main;
+			mainMenu.IsVisible = () => menuType == MenuType.Main;
 
 			mainMenu.Get<ButtonWidget>("SOLO_BUTTON").OnClick = StartSkirmishGame;
-			mainMenu.Get<ButtonWidget>("MULTIPLAYER_BUTTON").OnClick = () => Menu = MenuType.Multiplayer;
+			mainMenu.Get<ButtonWidget>("MULTIPLAYER_BUTTON").OnClick = () => menuType = MenuType.Multiplayer;
 
 			mainMenu.Get<ButtonWidget>("MODS_BUTTON").OnClick = () =>
 			{
-				Menu = MenuType.None;
+				menuType = MenuType.None;
 				Ui.OpenWindow("MODS_PANEL", new WidgetArgs()
 				{
-					{ "onExit", () => Menu = MenuType.Main },
+					{ "onExit", () => menuType = MenuType.Main },
 					{ "onSwitch", RemoveShellmapUI }
 				});
 			};
 
-			mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = () => Menu = MenuType.Settings;
+			mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = () => menuType = MenuType.Settings;
 			mainMenu.Get<ButtonWidget>("QUIT_BUTTON").OnClick = Game.Exit;
 
 			// Multiplayer menu
 			var multiplayerMenu = widget.Get("MULTIPLAYER_MENU");
-			multiplayerMenu.IsVisible = () => Menu == MenuType.Multiplayer;
+			multiplayerMenu.IsVisible = () => menuType == MenuType.Multiplayer;
 
-			multiplayerMenu.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => Menu = MenuType.Main;
+			multiplayerMenu.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => menuType = MenuType.Main;
 			multiplayerMenu.Get<ButtonWidget>("JOIN_BUTTON").OnClick = () => OpenGamePanel("SERVERBROWSER_PANEL");
 			multiplayerMenu.Get<ButtonWidget>("CREATE_BUTTON").OnClick = () => OpenGamePanel("CREATESERVER_PANEL");
 			multiplayerMenu.Get<ButtonWidget>("DIRECTCONNECT_BUTTON").OnClick = () => OpenGamePanel("DIRECTCONNECT_PANEL");
 
 			// Settings menu
 			var settingsMenu = widget.Get("SETTINGS_MENU");
-			settingsMenu.IsVisible = () => Menu == MenuType.Settings;
+			settingsMenu.IsVisible = () => menuType == MenuType.Settings;
 
 			settingsMenu.Get<ButtonWidget>("REPLAYS_BUTTON").OnClick = () =>
 			{
-				Menu = MenuType.None;
+				menuType = MenuType.None;
 				Ui.OpenWindow("REPLAYBROWSER_PANEL", new WidgetArgs()
 				{
-					{ "onExit", () => Menu = MenuType.Settings },
+					{ "onExit", () => menuType = MenuType.Settings },
 					{ "onStart", RemoveShellmapUI }
 				});
 			};
 
 			settingsMenu.Get<ButtonWidget>("MUSIC_BUTTON").OnClick = () =>
 			{
-				Menu = MenuType.None;
+				menuType = MenuType.None;
 				Ui.OpenWindow("MUSIC_PANEL", new WidgetArgs()
 				{
-					{ "onExit", () => Menu = MenuType.Settings },
+					{ "onExit", () => menuType = MenuType.Settings },
+				});
+			};
+
+			settingsMenu.Get<ButtonWidget>("CREDITS_BUTTON").OnClick = () =>
+			{
+				menuType = MenuType.None;
+				Ui.OpenWindow("CREDITS_PANEL", new WidgetArgs()
+				{
+					{ "onExit", () => menuType = MenuType.Settings },
 				});
 			};
 
 			settingsMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = () =>
 			{
-				Menu = MenuType.None;
+				menuType = MenuType.None;
 				Game.OpenWindow("SETTINGS_PANEL", new WidgetArgs()
 				{
-					{ "onExit", () => Menu = MenuType.Settings },
+					{ "onExit", () => menuType = MenuType.Settings },
 				});
 			};
 
-			settingsMenu.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => Menu = MenuType.Main;
+			settingsMenu.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => menuType = MenuType.Main;
 
-			rootMenu.Get<ImageWidget>("RECBLOCK").IsVisible = () => world.FrameNumber / 25 % 2 == 0;
+			var shellmapDecorations = widget.Get("SHELLMAP_DECORATIONS");
+			shellmapDecorations.IsVisible = () => menuType != MenuType.None && Game.Settings.Game.ShowShellmap;
+			shellmapDecorations.Get<ImageWidget>("RECBLOCK").IsVisible = () => world.FrameNumber / 25 % 2 == 0;
+
+			var shellmapDisabledDecorations = widget.Get("SHELLMAP_DISABLED_DECORATIONS");
+			shellmapDisabledDecorations.IsVisible = () => !Game.Settings.Game.ShowShellmap;
 		}
 		
 		void OpenGamePanel(string id)
 		{
-			Menu = MenuType.None;
+			menuType = MenuType.None;
 			Ui.OpenWindow(id, new WidgetArgs()
 			{
-				{ "onExit", () => Menu = MenuType.Multiplayer },
+				{ "onExit", () => menuType = MenuType.Multiplayer },
 				{ "openLobby", () => OpenLobbyPanel(MenuType.Multiplayer, false) }
 			});
 		}
@@ -113,10 +127,10 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 
 		void OpenLobbyPanel(MenuType menu, bool addBots)
 		{
-			Menu = MenuType.None;
+			menuType = MenuType.None;
 			Game.OpenWindow("SERVER_LOBBY", new WidgetArgs()
 			{
-				{ "onExit", () => { Game.Disconnect(); Menu = menu; } },
+				{ "onExit", () => { Game.Disconnect(); menuType = menu; } },
 				{ "onStart", RemoveShellmapUI },
 				{ "addBots", addBots }
 			});
@@ -125,11 +139,14 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 		void StartSkirmishGame()
 		{
 			var map = WidgetUtils.ChooseInitialMap(Game.Settings.Server.Map);
+			Game.Settings.Server.Map = map;
+			Game.Settings.Save();
 
 			ConnectionLogic.Connect(IPAddress.Loopback.ToString(),
 				Game.CreateLocalServer(map),
+				"",
 				() => OpenLobbyPanel(MenuType.Main, true),
-				() => { Game.CloseServer(); Menu = MenuType.Main; });
+				() => { Game.CloseServer(); menuType = MenuType.Main; });
 		}
 	}
 }

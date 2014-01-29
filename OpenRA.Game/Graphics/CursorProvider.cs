@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,36 +10,47 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Xml;
 using OpenRA.FileFormats;
 
 namespace OpenRA.Graphics
 {
 	public static class CursorProvider
 	{
-		public static Dictionary<string, Palette> Palettes { get; private set; }
+		static HardwarePalette palette;
 		static Dictionary<string, CursorSequence> cursors;
+		static Cache<string, PaletteReference> palettes;
+
+		static PaletteReference CreatePaletteReference(string name)
+		{
+			var pal = palette.GetPalette(name);
+			if (pal == null)
+				throw new InvalidOperationException("Palette `{0}` does not exist".F(name));
+
+			return new PaletteReference(name, palette.GetPaletteIndex(name), pal);
+		}
 
 		public static void Initialize(string[] sequenceFiles)
 		{
 			cursors = new Dictionary<string, CursorSequence>();
+			palettes = new Cache<string, PaletteReference>(CreatePaletteReference);
 			var sequences = new MiniYaml(null, sequenceFiles.Select(s => MiniYaml.FromFile(s)).Aggregate(MiniYaml.MergeLiberal));
-			int[] ShadowIndex = { };
+			var shadowIndex = new int[] { };
 
 			if (sequences.NodesDict.ContainsKey("ShadowIndex"))
 			{
-				Array.Resize(ref ShadowIndex, ShadowIndex.Length + 1);
-				ShadowIndex[ShadowIndex.Length - 1] = Convert.ToInt32(sequences.NodesDict["ShadowIndex"].Value);
+				Array.Resize(ref shadowIndex, shadowIndex.Length + 1);
+				int.TryParse(sequences.NodesDict["ShadowIndex"].Value, out shadowIndex[shadowIndex.Length - 1]);
 			}
 
-			Palettes = new Dictionary<string, Palette>();
-			foreach (var s in sequences.NodesDict["Palettes"].Nodes)
-				Palettes.Add(s.Key, new Palette(FileSystem.Open(s.Value.Value), ShadowIndex));
+			palette = new HardwarePalette();
+			foreach (var p in sequences.NodesDict["Palettes"].Nodes)
+				palette.AddPalette(p.Key, new Palette(FileSystem.Open(p.Value.Value), shadowIndex), false);
 
 			foreach (var s in sequences.NodesDict["Cursors"].Nodes)
 				LoadSequencesForCursor(s.Key, s.Value);
+
+			palette.Initialize();
 		}
 
 		static void LoadSequencesForCursor(string cursorSrc, MiniYaml cursor)
@@ -53,6 +64,18 @@ namespace OpenRA.Graphics
 		public static bool HasCursorSequence(string cursor)
 		{
 			return cursors.ContainsKey(cursor);
+		}
+
+		public static void DrawCursor(Renderer renderer, string cursorName, int2 lastMousePos, int cursorFrame)
+		{
+			var cursorSequence = GetCursorSequence(cursorName);
+			var cursorSprite = cursorSequence.GetSprite(cursorFrame);
+
+			renderer.SetPalette(palette);
+			renderer.SpriteRenderer.DrawSprite(cursorSprite,
+			                                   lastMousePos - cursorSequence.Hotspot - (0.5f * cursorSprite.size).ToInt2(),
+			                                   palettes[cursorSequence.Palette],
+			                                   cursorSprite.size);
 		}
 
 		public static CursorSequence GetCursorSequence(string cursor)

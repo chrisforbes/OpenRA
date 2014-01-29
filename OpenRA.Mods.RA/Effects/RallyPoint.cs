@@ -34,7 +34,7 @@ namespace OpenRA.Mods.RA.Effects
 		}
 
 		CPos cachedLocation;
-		public void Tick( World world )
+		public void Tick(World world)
 		{
 			flag.Tick();
 			circles.Tick();
@@ -48,22 +48,17 @@ namespace OpenRA.Mods.RA.Effects
 				world.AddFrameEndTask(w => w.Remove(this));
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			if (building.IsInWorld && building.Owner == building.World.LocalPlayer
-				&& building.World.Selection.Actors.Contains(building))
-			{
-				var pos = Traits.Util.CenterOfCell(rp.rallyPoint);
-				var palette = wr.Palette(palettePrefix+building.Owner.InternalName);
+			if (building.Owner != building.World.LocalPlayer)
+				return SpriteRenderable.None;
 
-				yield return new Renderable(circles.Image,
-					pos.ToFloat2() - .5f * circles.Image.size,
-					palette, (int)pos.Y);
+			if (!building.IsInWorld || !building.World.Selection.Actors.Contains(building))
+				return SpriteRenderable.None;
 
-				yield return new Renderable(flag.Image,
-					pos.ToFloat2() + new float2(-1,-17),
-					palette, (int)pos.Y);
-			}
+			var pos = cachedLocation.CenterPosition;
+			var palette = wr.Palette(palettePrefix+building.Owner.InternalName);
+			return circles.Render(pos, palette).Concat(flag.Render(pos, palette));
 		}
 	}
 }

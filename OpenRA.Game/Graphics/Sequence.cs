@@ -9,77 +9,151 @@
 #endregion
 
 using System;
-using System.Xml;
-using System.Collections.Generic;
+using System.Linq;
 using OpenRA.FileFormats;
+using OpenRA.FileFormats.Graphics;
 
 namespace OpenRA.Graphics
 {
 	public class Sequence
 	{
 		readonly Sprite[] sprites;
-		readonly int start, length, stride, facings, tick;
+		readonly bool reverseFacings, transpose;
 
 		public readonly string Name;
-		public int Start { get { return start; } }
-		public int End { get { return start + length; } }
-		public int Length { get { return length; } }
-		public int Stride { get { return stride; } }
-		public int Facings { get { return facings; } }
-		public int Tick { get { return tick; } }
+		public readonly int Start;
+		public readonly int Length;
+		public readonly int Stride;
+		public readonly int Facings;
+		public readonly int Tick;
+		public readonly int ZOffset;
+		public readonly int ShadowStart;
+		public readonly int ShadowZOffset;
+		public readonly int[] Frames;
 
 		public Sequence(string unit, string name, MiniYaml info)
 		{
 			var srcOverride = info.Value;
 			Name = name;
 			var d = info.NodesDict;
+			var offset = float2.Zero;
+			var blendMode = BlendMode.Alpha;
 
-			sprites = Game.modData.SpriteLoader.LoadAllSprites(srcOverride ?? unit);
-			start = int.Parse(d["Start"].Value);
+			try
+			{
+				if (d.ContainsKey("Start"))
+					Start = int.Parse(d["Start"].Value);
 
-			if (!d.ContainsKey("Length"))
-				length = 1;
-			else if (d["Length"].Value == "*")
-				length = sprites.Length - Start;
-			else
-				length = int.Parse(d["Length"].Value);
+				if (d.ContainsKey("Offset"))
+					offset = FieldLoader.GetValue<float2>("Offset", d["Offset"].Value);
 
-			if (d.ContainsKey("Stride"))
-				stride = int.Parse(d["Stride"].Value);
-			else
-				stride = length;
+				if (d.ContainsKey("BlendMode"))
+					blendMode = FieldLoader.GetValue<BlendMode>("BlendMode", d["BlendMode"].Value);
 
-			if(d.ContainsKey("Facings"))
-				facings = int.Parse(d["Facings"].Value);
-			else
-				facings = 1;
+				// Apply offset to each sprite in the sequence
+				// Different sequences may apply different offsets to the same frame
+				sprites = Game.modData.SpriteLoader.LoadAllSprites(srcOverride ?? unit).Select(
+					s => new Sprite(s.sheet, s.bounds, s.offset + offset, s.channel, blendMode)).ToArray();
 
-			if(d.ContainsKey("Tick"))
-				tick = int.Parse(d["Tick"].Value);
-			else
-				tick = 40;
+				if (!d.ContainsKey("Length"))
+					Length = 1;
+				else if (d["Length"].Value == "*")
+					Length = sprites.Length - Start;
+				else
+					Length = int.Parse(d["Length"].Value);
 
-			if (length > stride)
-				throw new InvalidOperationException(
-					"{0}: Sequence {1}.{2}: Length must be <= stride"
-						.F(info.Nodes[0].Location, unit, name));
+				if (d.ContainsKey("Stride"))
+					Stride = int.Parse(d["Stride"].Value);
+				else
+					Stride = Length;
 
-			if (start < 0 || start + facings * stride > sprites.Length)
-				throw new InvalidOperationException(
-					"{6}: Sequence {0}.{1} uses frames [{2}..{3}] of SHP `{4}`, but only 0..{5} actually exist"
-					.F(unit, name, start, start + facings * stride - 1, srcOverride ?? unit, sprites.Length - 1,
-					info.Nodes[0].Location));
+				if (d.ContainsKey("Facings"))
+				{
+					var f = int.Parse(d["Facings"].Value);
+					Facings = Math.Abs(f);
+					reverseFacings = f < 0;
+				}
+				else
+					Facings = 1;
+
+				if (d.ContainsKey("Tick"))
+					Tick = int.Parse(d["Tick"].Value);
+				else
+					Tick = 40;
+
+				if (d.ContainsKey("Transpose"))
+					transpose = bool.Parse(d["Transpose"].Value);
+
+				if (d.ContainsKey("Frames"))
+					Frames = Array.ConvertAll<string, int>(d["Frames"].Value.Split(','), int.Parse);
+
+				if (d.ContainsKey("ShadowStart"))
+					ShadowStart = int.Parse(d["ShadowStart"].Value);
+				else
+					ShadowStart = -1;
+
+				if (d.ContainsKey("ShadowZOffset"))
+				{
+					WRange r;
+					if (WRange.TryParse(d["ShadowZOffset"].Value, out r))
+						ShadowZOffset = r.Range;
+				}
+				else
+					ShadowZOffset = -5;
+
+				if (d.ContainsKey("ZOffset"))
+				{
+					WRange r;
+					if (WRange.TryParse(d["ZOffset"].Value, out r))
+						ZOffset = r.Range;
+				}
+
+				if (Length > Stride)
+					throw new InvalidOperationException(
+						"{0}: Sequence {1}.{2}: Length must be <= stride"
+							.F(info.Nodes[0].Location, unit, name));
+
+				if (Start < 0 || Start + Facings * Stride > sprites.Length || ShadowStart + Facings * Stride > sprites.Length)
+					throw new InvalidOperationException(
+						"{6}: Sequence {0}.{1} uses frames [{2}..{3}] of SHP `{4}`, but only 0..{5} actually exist"
+						.F(unit, name, Start, Start + Facings * Stride - 1, srcOverride ?? unit, sprites.Length - 1,
+						info.Nodes[0].Location));
+			}
+			catch (FormatException f)
+			{
+				throw new FormatException("Failed to parse sequences for {0}.{1} at {2}:\n{3}".F(unit, name, info.Nodes[0].Location, f));
+			}
 		}
 
-		public Sprite GetSprite( int frame )
+		public Sprite GetSprite(int frame)
 		{
-			return GetSprite( frame, 0 );
+			return GetSprite(Start, frame, 0);
 		}
 
 		public Sprite GetSprite(int frame, int facing)
 		{
-			var f = Traits.Util.QuantizeFacing( facing, facings );
-			return sprites[ (f * stride) + ( frame % length ) + start ];
+			return GetSprite(Start, frame, facing);
+		}
+
+		public Sprite GetShadow(int frame, int facing)
+		{
+			return ShadowStart >= 0 ? GetSprite(ShadowStart, frame, facing) : null;
+		}
+
+		Sprite GetSprite(int start, int frame, int facing)
+		{
+			var f = Traits.Util.QuantizeFacing(facing, Facings);
+
+			if (reverseFacings)
+				f = (Facings - f) % Facings;
+
+			var i = transpose ? (frame % Length) * Facings + f :
+				(f * Stride) + (frame % Length);
+
+			if (Frames != null)
+				return sprites[Frames[i]];
+
+			return sprites[start + i];
 		}
 	}
 }

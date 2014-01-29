@@ -1,60 +1,123 @@
 CONYARDH:
 	Inherits: ^CONYARD
-	Buildable:
-		Owner: harkonnen
-	Transforms:
-		IntoActor: mcvh
-		Offset:1,1
-		Facing: 270
 
 PWRH:
 	Inherits: ^POWER
 	Buildable:
-		Prerequisites: conyardh
+		Owner: harkonnen
+
+WALLH:
+	Inherits: ^WALL
+	Buildable:
+		Owner: harkonnen
+
+GUNTOWERH:
+	Inherits: ^GUNTOWER
+	Buildable:
+		Owner: harkonnen
+
+ROCKETTOWERH:
+	Inherits: ^ROCKETTOWER
+	Buildable:
 		Owner: harkonnen
 
 REFH:
 	Inherits: ^REFINERY
 	Buildable:
-		Prerequisites: pwrh
 		Owner: harkonnen
 	RenderBuildingWarFactory:
 		Image: REFH
 
-#TRIKEH:
-#	Inherits: ^TRIKE
-#	Buildable:
-#		Prerequisites: lighth
-#		Owner: harkonnen
-#		BuiltAt: lighth
-#	Valued:
-#		Cost: 250
-#	Tooltip:
-#		Name: Scout Quad
-#		Description: Heavy Scout\n Strong vs Infantry
-#		Icon: quadicon
-#	Health:
-#		HP: 125
-#	Mobile:
-#		ROT: 9
-#		Speed: 11
-#	AttackFrontal:
-#		PrimaryWeapon: M60mg
-#		PrimaryLocalOffset: 0,-1,0,-3,0
-#	RenderUnit:
-#		Image: QUAD
+BARRH:
+	Inherits: ^BARRACKS
+	Buildable:
+		Owner: harkonnen
+	-RepairsUnits:
 
-#TRIKEH.starport:
-#	Inherits: ^TRIKE
-#	Buildable:
-#		Prerequisites: lighth
-#		Owner: harkonnen
-#		Queue: Starport
-#		BuiltAt: starporth
-#	Valued:
-#		Cost: 149
-#	RenderUnit:
-#		Image: TRIKE
+REPAIRH:
+	Inherits: ^REPAIR
+	Buildable:
+		Owner: harkonnen
+
+RESEARCHH:
+	Inherits: ^RESEARCH
+	Buildable:
+		Owner: harkonnen
+
+SILOH:
+	Inherits: ^SILO
+	Buildable:
+		Owner: harkonnen
+
+LIGHTH:
+	Inherits: ^LIGHT
+	Buildable:
+		Owner: harkonnen
+	RenderBuildingWarFactory:
+		Image: LIGHTH
+
+HEAVYH:
+	Inherits: ^HEAVY
+	Buildable:
+		Owner: harkonnen
+	RenderBuildingWarFactory:
+		Image: HEAVYH
+
+RADARH:
+	Inherits: ^RADAR
+	Buildable:
+		Owner: harkonnen
+
+STARPORTH:
+	Inherits: ^STARPORT
+	Buildable:
+		Owner: harkonnen
+
+HIGHTECHH:
+	Inherits: ^HIGHTECH
+	Buildable:
+		Owner: harkonnen
+
+PALACEH:
+	Inherits: ^PALACE
+	Buildable:
+		Owner: harkonnen
+	Tooltip:
+		Description: Provides elite infantry\n  Special Ability: Death Hand Missile
+	NukePower:
+		Icon: deathhand
+		ChargeTime: 300
+		Description: Death Hand
+		LongDesc: Launches a nuclear missile at a target location
+		BeginChargeSound: HI_PREP.AUD
+		EndChargeSound: HI_DHRDY.AUD
+		SelectTargetSound:
+		LaunchSound:
+		IncomingSound:
+		MissileWeapon: atomic
+		SpawnOffset: -512,1c171,0
+	CanPowerDown:
+	RequiresPower:
+	SupportPowerChargeBar:
+
+MCVH:
+	Inherits: ^MCV
+	Buildable:
+		Owner: harkonnen
+	Transforms:
+		Facing: 16
+		IntoActor: conyardh
+		Offset: -1,-1
+		NoTransformSounds: HI_DPLOY.AUD
+	RenderUnit:
+		Image: DMCV
+
+MCVH.starport:
+	Inherits: MCVH
+	Buildable:
+		Queue: Starport
+	Valued:
+		Cost: 2500
 
 CARRYALLH:
 	Inherits: ^CARRYALL
@@ -64,118 +127,27 @@ CARRYALLH:
 CARRYALLH.starport:
 	Inherits: CARRYALLH
 	Valued:
-		Cost: 999
-
-BARRH:
-	Inherits: ^BARRACKS
-	Buildable:
-		Prerequisites: pwrh
-		Owner: harkonnen
-	-RepairsUnits:
-
-HIGHTECHH:
-	Inherits: ^HIGHTECH
-	Buildable:
-		Prerequisites: radarh
-		Owner: harkonnen
-
-PALACEH:
-	Inherits: ^PALACE
-	Buildable:
-		Prerequisites: hightechh
-		Owner: harkonnen
-	Tooltip:
-		Description: Provides elite infantry\n  Special Ability: Death Hand Missile
-	NukePower:
-		Image: deathhandicon
-		ChargeTime: 540
-		Description: Death Hand
-		LongDesc: Launches a nuclear missile at a target location
-		BeginChargeSound: HI_PREP.AUD
-		EndChargeSound: HI_DHRDY.AUD
-		SelectTargetSound: 
-		LaunchSound:
-		MissileWeapon: atomic
-		SpawnOffset: 28,12
-	CanPowerDown:
-	RequiresPower:
-	SupportPowerChargeBar:
-
-SILOH:
-	Inherits: ^SILO
-	Buildable:
-		Prerequisites: refh
-		Owner: harkonnen
-
-LIGHTH:
-	Inherits: ^LIGHT
-	Buildable:
-		Prerequisites: refh
-		Owner: harkonnen
-	RenderBuildingWarFactory:
-		Image: LIGHTH
-
-HEAVYH:
-	Inherits: ^HEAVY
-	Buildable:
-		Prerequisites: lighth
-		Owner: harkonnen
-	RenderBuildingWarFactory:
-		Image: HEAVYH
-
-RADARH:
-	Inherits: ^RADAR
-	Buildable:
-		Prerequisites: barrh
-		Owner: harkonnen
-
-STARPORTH:
-	Inherits: ^STARPORT
-	Buildable:
-		Prerequisites: radarh,hightechh
-		Owner: harkonnen
-
-MCVH:
-	Inherits: ^MCV
-	Buildable:
-		Prerequisites: heavyh,repair
-		Owner: harkonnen
-		BuiltAt: heavyh
-	Transforms:
-		Facing: 16
-		IntoActor: conyardh
-		Offset:-1,-1
-		NoTransformSounds: HI_DPLOY.AUD
-	RenderUnit:
-		Image: DMCV
-
-MCVH.starport:
-	Inherits: MCVH
-	Buildable:
-		Queue: Starport
-		BuiltAt: starporth
-	Valued:
-		Cost: 1499
+		Cost: 1500
 
 COMBATH:
 	Inherits: ^COMBAT
-	Tooltip:
-		Icon: combathicon
 	Buildable:
-		Prerequisites: heavyh
 		Owner: harkonnen
-		BuiltAt: heavyh
+	Mobile:
+		Speed: 53
+		ROT: 4
+	Turreted:
+		ROT: 5
 	Health:
-		HP: 400
-	RenderUnitTurreted:
+		HP: 440
+	RenderUnit:
 		Image: COMBATH
+	WithTurret:
 	LeavesHusk:
 		HuskActor: Combath.Husk
 
 COMBATH.Husk:
 	Inherits: ^COMBAT.Husk
-	Tooltip:
-		Icon: combathicon
 	RenderUnit:
 		Image: COMBATH
 
@@ -183,41 +155,39 @@ COMBATH.starport:
 	Inherits: COMBATH
 	Buildable:
 		Queue: Starport
-		BuiltAt: starporth
 	Valued:
-		Cost: 489
+		Cost: 875
 
 DEVAST:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Armor
 		BuildPaletteOrder: 100
-		Prerequisites: heavyh,research
+		Prerequisites: Research
 		Owner: harkonnen
-		BuiltAt: heavyh
 		Hotkey: d
 	Valued:
 		Cost: 1200
 	Tooltip:
 		Name: Devastator
 		Description: Super Heavy Tank\n  Strong vs Tanks\n  Weak vs Artillery, Aircraft
-		Icon: devasticon
 	Health:
 		HP: 650
 	Armor:
 		Type: Heavy
 	Mobile:
 		ROT: 3
-		Speed: 4
+		Speed: 42
 		Crushes: crate, infantry
 	RevealsShroud:
 		Range: 7
 	RenderUnit:
+	Armament:
+		Weapon: DevBullet
+		LocalOffset: 256,0,32
 	AttackFrontal:
-		PrimaryWeapon: 120mm
-		PrimaryLocalOffset: 5,-16,0,-2,0, -4,-16,0,-2,0
+	WithMuzzleFlash:
 	AutoTarget:
-		InitialStance: Defend
 	Explodes:
 		Weapon: UnitExplodeScale
 		EmptyWeapon: UnitExplodeScale
@@ -230,8 +200,6 @@ DEVAST.Husk:
 	Inherits: ^Husk
 	Health:
 		HP: 125
-	Tooltip:
-		Icon: devasticon
 	RenderUnit:
 		Image: DEVAST
 
@@ -252,14 +220,18 @@ SARDAUKAR:
 		Bounds: 12,17,0,0
 		Voice: GenericVoice
 	Health:
-		HP: 80
+		HP: 100
 	Mobile:
-		Speed: 4
+		Speed: 42
 	RevealsShroud:
 		Range: 6
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
+		IdleAnimations: stand,stand2
+	Armament@PRIMARY:
+		Weapon: Vulcan
+	Armament@SECONDARY:
+		Weapon: Slung
 	AttackFrontal:
-		PrimaryWeapon: Vulcan
-		SecondaryWeapon: Slung
+

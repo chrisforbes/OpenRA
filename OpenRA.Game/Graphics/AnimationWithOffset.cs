@@ -9,42 +9,43 @@
 #endregion
 
 using System;
-using OpenRA.Traits;
+using System.Collections.Generic;
 
 namespace OpenRA.Graphics
 {
 	public class AnimationWithOffset
 	{
-		public Animation Animation;
-		public Func<float2> OffsetFunc;
-		public Func<bool> DisableFunc;
-		public int ZOffset;
+		public readonly Animation Animation;
+		public readonly Func<WVec> OffsetFunc;
+		public readonly Func<bool> DisableFunc;
+		public readonly Func<WPos, int> ZOffset;
 
-		public AnimationWithOffset(Animation a)
-			: this(a, null, null)
-		{
-		}
+		public AnimationWithOffset(Animation a, Func<WVec> offset, Func<bool> disable)
+			: this(a, offset, disable, null) { }
 
-		public AnimationWithOffset(Animation a, Func<float2> o, Func<bool> d)
+		public AnimationWithOffset(Animation a, Func<WVec> offset, Func<bool> disable, int zOffset)
+			: this(a, offset, disable, _ => zOffset) { }
+
+		public AnimationWithOffset(Animation a, Func<WVec> offset, Func<bool> disable, Func<WPos, int> zOffset)
 		{
 			this.Animation = a;
-			this.OffsetFunc = o;
-			this.DisableFunc = d;
+			this.OffsetFunc = offset;
+			this.DisableFunc = disable;
+			this.ZOffset = zOffset;
 		}
 
-		public Renderable Image(Actor self, PaletteReference pal)
+		public IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr, PaletteReference pal, float scale)
 		{
-			var p = self.CenterLocation;
-			var loc = p.ToFloat2() - 0.5f * Animation.Image.size
-				+ (OffsetFunc != null ? OffsetFunc() : float2.Zero);
-			var r = new Renderable(Animation.Image, loc, pal, p.Y);
+			var center = self.CenterPosition;
+			var offset = OffsetFunc != null ? OffsetFunc() : WVec.Zero;
 
-			return ZOffset != 0 ? r.WithZOffset(ZOffset) : r;
+			var z = (ZOffset != null) ? ZOffset(center + offset) : 0;
+			return Animation.Render(center, offset, z, pal, scale);
 		}
 
 		public static implicit operator AnimationWithOffset(Animation a)
 		{
-			return new AnimationWithOffset(a);
+			return new AnimationWithOffset(a, null, null, null);
 		}
 	}
 }

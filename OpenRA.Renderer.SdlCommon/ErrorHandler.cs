@@ -26,12 +26,19 @@ namespace OpenRA.Renderer.SdlCommon
 			GL_OUT_OF_MEMORY = Gl.GL_OUT_OF_MEMORY,
 			GL_TABLE_TOO_LARGE = Gl.GL_TABLE_TOO_LARGE,
 			GL_INVALID_OPERATION = Gl.GL_INVALID_OPERATION,
+
+			// Framebuffer errors
+			GL_FRAMEBUFFER_COMPLETE_EXT = Gl.GL_FRAMEBUFFER_COMPLETE_EXT,
+			GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT = Gl.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT,
+			GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT = Gl.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT,
+			GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT = Gl.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT,
+			GL_FRAMEBUFFER_UNSUPPORTED_EXT = Gl.GL_FRAMEBUFFER_UNSUPPORTED_EXT,
 		}
 
 		public static void CheckGlError()
 		{
 			var n = Gl.glGetError();
-			if( n != Gl.GL_NO_ERROR )
+			if (n != Gl.GL_NO_ERROR)
 			{
 				var error = "GL Error: {0}\n{1}".F((GlError)n, new StackTrace());
 				WriteGraphicsLog(error);
@@ -41,7 +48,6 @@ namespace OpenRA.Renderer.SdlCommon
 
 		public static void WriteGraphicsLog(string message)
 		{
-			Log.AddChannel("graphics", "graphics.log");
 			Log.Write("graphics", message);
 			Log.Write("graphics", "");
 			Log.Write("graphics", "OpenGL Information:");
@@ -54,4 +60,3 @@ namespace OpenRA.Renderer.SdlCommon
 		}
 	}
 }
-

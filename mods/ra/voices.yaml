@@ -18,14 +18,6 @@ VehicleVoice:
 		Select: vehic1,yessir1,report1,await1
 		Move: ackno,affirm1
 
-ShipVoice:
-	Variants:
-		soviet: .r00,.r02
-		allies: .v00,.v02
-	Voices:
-		Select: vehic1,yessir1,report1,await1
-		Move: ackno,affirm1
-
 EngineerVoice:
 	Voices:
 		Select: eengin1,eyessir1
@@ -54,9 +46,9 @@ TanyaVoice:
 
 DogVoice:
 	Voices:
-		Select: dogy1
+		Select: dogw3px
 		Move: dogy1
-		Attack: dogg5p,dogw3px
+		Attack: dogg5p
 		Die: dogw5,dogw6,dogw7
 
 SpyVoice:
@@ -86,8 +78,8 @@ CivilianFemaleVoice:
 
 EinsteinVoice:
 	Voices:
-		Select: einah1,einok1,einyes1
-		Move: einah1,einok1,einyes1
+		Select: einah1
+		Move: einok1,einyes1
 		Die: dedman1,dedman2,dedman3,dedman4,dedman5,dedman6,dedman7,dedman8,dedman10
 
 ShokVoice:
@@ -97,9 +89,16 @@ ShokVoice:
 		Attack: jburn1,jcrisp1,jshock1,jlight1
 		Die: dedman1,dedman2,dedman3,dedman4,dedman5,dedman6,dedman7,dedman8,dedman10
 
-VolkovVoice:
+AntVoice:
 	Voices:
-		Select: iromsec,iromsee
-		Move: irommoc,irommoe,irommod
-		Attack: iromata,iromatb,iromatc,iromatd,iromate
-		Die: dedbot1,dedbot2,dedbot3,dedbot4,dedbot5,dedbot6,dedbot7,dedbot8,dedbot10
+		Select: antbite
+		Move: antbite
+		Attack: antbite
+		Die: antdie
+
+StavrosVoice:
+	Voices:
+		Select: stavcmdr
+		Move: stavcrse, stavyes, stavmov
+		Attack: stavcrse, stavyes
+		Die: dedman1,dedman2,dedman3,dedman4,dedman5,dedman6,dedman7,dedman8,dedman10

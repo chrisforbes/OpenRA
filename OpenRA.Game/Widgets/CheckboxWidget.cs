@@ -11,7 +11,6 @@
 using System;
 using System.Drawing;
 using OpenRA.Graphics;
-using System.Reflection;
 
 namespace OpenRA.Widgets
 {
@@ -25,7 +24,6 @@ namespace OpenRA.Widgets
 		public bool HasPressedState = ChromeMetrics.Get<bool>("CheckboxPressedState");
 
 		public CheckboxWidget()
-			: base()
 		{
 			GetCheckType = () => CheckType;
 		}
@@ -44,19 +42,29 @@ namespace OpenRA.Widgets
 		public override void Draw()
 		{
 			var disabled = IsDisabled();
+			var highlighted = IsHighlighted();
 			var font = Game.Renderer.Fonts[Font];
+			var color = GetColor();
+			var colordisabled = GetColorDisabled();
+			var contrast = GetContrastColor();
 			var rect = RenderBounds;
+			var textSize = font.Measure(Text);
 			var check = new Rectangle(rect.Location, new Size(Bounds.Height, Bounds.Height));
 			var state = disabled ? "checkbox-disabled" :
+						highlighted ? "checkbox-highlighted" :
 						Depressed && HasPressedState ? "checkbox-pressed" :
 						Ui.MouseOverWidget == this ? "checkbox-hover" :
 						"checkbox";
 
 			WidgetUtils.DrawPanel(state, check);
+			var position = new float2(rect.Left + rect.Height * 1.5f, RenderOrigin.Y - BaseLine + (Bounds.Height - textSize.Y)/2);
 
-			var textSize = font.Measure(Text);
-			font.DrawText(Text,
-				new float2(rect.Left + rect.Height * 1.5f, RenderOrigin.Y - BaseLine + (Bounds.Height - textSize.Y)/2), Color.White);
+			if (Contrast)
+				font.DrawTextWithContrast(Text, position,
+					disabled ? colordisabled : color, contrast, 2);
+			else
+				font.DrawText(Text, position,
+					disabled ? colordisabled : color);
 
 			if (IsChecked() || (Depressed && HasPressedState && !disabled))
 			{

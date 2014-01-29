@@ -22,11 +22,9 @@ namespace OpenRA
 	public class Player
 	{
 		public Actor PlayerActor;
-		public int Kills;
-		public int Deaths;
 		public WinState WinState = WinState.Undefined;
 
-		public readonly ColorRamp ColorRamp;
+		public readonly HSLColor Color;
 
 		public readonly string PlayerName;
 		public readonly string InternalName;
@@ -60,7 +58,7 @@ namespace OpenRA
 			if (client != null)
 			{
 				ClientIndex = client.Index;
-				ColorRamp = client.ColorRamp;
+				Color = client.Color;
 				PlayerName = client.Name;
 				botType = client.Bot;
 				Country = ChooseCountry(world, client.Country);
@@ -68,8 +66,8 @@ namespace OpenRA
 			else
 			{
 				// Map player
-				ClientIndex = 0; // Owned by the host (todo: fix this)
-				ColorRamp = pr.ColorRamp;
+				ClientIndex = 0; // Owned by the host (TODO: fix this)
+				Color = pr.Color;
 				PlayerName = pr.Name;
 				NonCombatant = pr.NonCombatant;
 				botType = pr.Bot;
@@ -77,7 +75,7 @@ namespace OpenRA
 			}
 			PlayerActor = world.CreateActor("Player", new TypeDictionary { new OwnerInit(this) });
 			Shroud = PlayerActor.Trait<Shroud>();
-			Shroud.Owner = this;
+
 			// Enable the bot logic on the host
 			IsBot = botType != null;
 			if (IsBot && Game.IsHost)
@@ -91,6 +89,16 @@ namespace OpenRA
 			}
 		}
 
+		public override string ToString()
+		{
+			return "{0} ({1})".F(PlayerName, ClientIndex);
+		}
+
 		public Dictionary<Player, Stance> Stances = new Dictionary<Player, Stance>();
+		public bool IsAlliedWith(Player p)
+		{
+			// Observers are considered as allies
+			return p == null || Stances[p] == Stance.Ally;
+		}
 	}
 }

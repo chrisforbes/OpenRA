@@ -10,8 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Orders
@@ -35,16 +33,15 @@ namespace OpenRA.Mods.RA.Orders
 		public string OrderID { get; private set; }
 		public int OrderPriority { get; private set; }
 
-		public bool CanTargetActor( Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor )
+		public bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor)
 		{
-			IsQueued = forceQueued;
-			cursor = useDeployCursor() ? "deploy" : "deploy-blocked";
-			return self == target;
-		}
+			if (target.Type != TargetType.Actor)
+				return false;
 
-		public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
-		{
-			return false;
+			IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
+			cursor = useDeployCursor() ? "deploy" : "deploy-blocked";
+
+			return self == target.Actor;
 		}
 
 		public bool IsQueued { get; protected set; }

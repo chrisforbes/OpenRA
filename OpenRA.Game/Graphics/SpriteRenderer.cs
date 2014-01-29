@@ -20,6 +20,7 @@ namespace OpenRA.Graphics
 
 		Vertex[] vertices = new Vertex[Renderer.TempBufferSize];
 		Sheet currentSheet = null;
+		BlendMode currentBlend = BlendMode.Alpha;
 		int nv = 0;
 
 		public SpriteRenderer(Renderer renderer, IShader shader)
@@ -33,40 +34,47 @@ namespace OpenRA.Graphics
 			if (nv > 0)
 			{
 				shader.SetTexture("DiffuseTexture", currentSheet.Texture);
+
+				renderer.Device.SetBlendMode(currentBlend);
 				shader.Render(() =>
 				{
 					var vb = renderer.GetTempVertexBuffer();
 					vb.SetData(vertices, nv);
 					renderer.DrawBatch(vb, 0, nv, PrimitiveType.QuadList);
 				});
+				renderer.Device.SetBlendMode(BlendMode.None);
 
 				nv = 0;
 				currentSheet = null;
 			}
 		}
 
-		public void DrawSprite(Sprite s, float2 location, WorldRenderer wr, string palette)
+		public void DrawSprite(Sprite s, float2 location, PaletteReference pal)
 		{
-			DrawSprite(s, location, wr.Palette(palette).Index, s.size);
+			DrawSprite(s, location, pal.Index, s.size);
 		}
 
-		public void DrawSprite(Sprite s, float2 location, WorldRenderer wr, string palette, float2 size)
+		public void DrawSprite(Sprite s, float2 location, PaletteReference pal, float2 size)
 		{
-			DrawSprite(s, location, wr.Palette(palette).Index, size);
+			DrawSprite(s, location, pal.Index, size);
 		}
 
-		public void DrawSprite(Sprite s, float2 location, int paletteIndex, float2 size)
+		void DrawSprite(Sprite s, float2 location, int paletteIndex, float2 size)
 		{
 			Renderer.CurrentBatchRenderer = this;
 
 			if (s.sheet != currentSheet)
 				Flush();
 
-			if( nv + 4 > Renderer.TempBufferSize )
+			if (s.blendMode != currentBlend)
 				Flush();
 
+			if (nv + 4 > Renderer.TempBufferSize)
+				Flush();
+
+			currentBlend = s.blendMode;
 			currentSheet = s.sheet;
-			Util.FastCreateQuad(vertices, location.ToInt2(), s, paletteIndex, nv, size);
+			Util.FastCreateQuad(vertices, location + s.offset, s, paletteIndex, nv, size);
 			nv += 4;
 		}
 
@@ -81,15 +89,40 @@ namespace OpenRA.Graphics
 			DrawSprite(s, location, 0, size);
 		}
 
+		public void DrawSprite(Sprite s, float2 a, float2 b, float2 c, float2 d)
+		{
+			Renderer.CurrentBatchRenderer = this;
+
+			if (s.sheet != currentSheet)
+				Flush();
+
+			if (s.blendMode != currentBlend)
+				Flush();
+
+			if (nv + 4 > Renderer.TempBufferSize)
+				Flush();
+
+			currentSheet = s.sheet;
+			currentBlend = s.blendMode;
+			Util.FastCreateQuad(vertices, a, b, c, d, s, 0, nv);
+			nv += 4;
+		}
+
 		public void DrawVertexBuffer(IVertexBuffer<Vertex> buffer, int start, int length, PrimitiveType type, Sheet sheet)
 		{
 			shader.SetTexture("DiffuseTexture", sheet.Texture);
+			renderer.Device.SetBlendMode(BlendMode.Alpha);
 			shader.Render(() => renderer.DrawBatch(buffer, start, length, type));
+			renderer.Device.SetBlendMode(BlendMode.None);
 		}
 
-		public void SetShaderParams(ITexture palette, Size screen, float zoom, float2 scroll)
+		public void SetPalette(ITexture palette)
 		{
 			shader.SetTexture("Palette", palette);
+		}
+
+		public void SetViewportParams(Size screen, float zoom, float2 scroll)
+		{
 			shader.SetVec("Scroll", (int)scroll.X, (int)scroll.Y);
 			shader.SetVec("r1", zoom*2f/screen.Width, -zoom*2f/screen.Height);
 			shader.SetVec("r2", -1, 1);

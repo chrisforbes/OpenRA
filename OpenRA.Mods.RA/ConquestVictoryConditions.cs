@@ -9,21 +9,27 @@
 #endregion
 
 using System.Linq;
+using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
 	public class ConquestVictoryConditionsInfo : ITraitInfo
 	{
-		public int NotificationDelay = 1500; // Milliseconds
+		[Desc("Milliseconds")]
+		public int NotificationDelay = 1500;
 
-		public object Create(ActorInitializer init) { return new ConquestVictoryConditions(this); }
+		public object Create(ActorInitializer init) { return new ConquestVictoryConditions(init.world, this); }
 	}
 
 	public class ConquestVictoryConditions : ITick, IResolveOrder
 	{
 		ConquestVictoryConditionsInfo Info;
-		public ConquestVictoryConditions(ConquestVictoryConditionsInfo info) { Info = info; }
+		public ConquestVictoryConditions(World world, ConquestVictoryConditionsInfo info)
+		{
+			world.ObserveAfterWinOrLose = true;
+			Info = info;
+		}
 
 		public void Tick(Actor self)
 		{
@@ -38,9 +44,9 @@ namespace OpenRA.Mods.RA
 			var others = self.World.Players.Where( p => !p.NonCombatant
 				&& p != self.Owner && p.Stances[self.Owner] != Stance.Ally );
 
-			if (others.Count() == 0) return;
+			if (!others.Any()) return;
 
-			if(others.All(p => p.WinState == WinState.Lost))
+			if (others.All(p => p.WinState == WinState.Lost))
 				Win(self);
 		}
 
@@ -60,15 +66,12 @@ namespace OpenRA.Mods.RA
 			foreach (var a in self.World.Actors.Where(a => a.Owner == self.Owner))
 				a.Kill(a);
 
-			self.Owner.Shroud.Disabled = true;
 			if (self.Owner == self.World.LocalPlayer)
-			{
 				Game.RunAfterDelay(Info.NotificationDelay, () =>
 				{
 					if (Game.IsCurrentWorld(self.World))
 						Sound.PlayNotification(self.Owner, "Speech", "Lose", self.Owner.Country.Race);
 				});
-			}
 		}
 
 		public void Win(Actor self)
@@ -77,21 +80,17 @@ namespace OpenRA.Mods.RA
 			self.Owner.WinState = WinState.Won;
 
 			Game.Debug("{0} is victorious.".F(self.Owner.PlayerName));
-			self.Owner.Shroud.Disabled = true;
 			if (self.Owner == self.World.LocalPlayer)
-			{
 				Game.RunAfterDelay(Info.NotificationDelay, () => Sound.PlayNotification(self.Owner, "Speech", "Win", self.Owner.Country.Race));
-			}
 		}
 	}
 
-	/* tag trait for things that must be destroyed for a short game to end */
-
+	[Desc("Tag trait for things that must be destroyed for a short game to end.")]
 	public class MustBeDestroyedInfo : TraitInfo<MustBeDestroyed> { }
 	public class MustBeDestroyed { }
 
-	// Provides game mode information for players/observers
-	// Goes on WorldActor - observers don't have a player it can live on
+	[Desc("Provides game mode information for players/observers.",
+	      "Goes on WorldActor - observers don't have a player it can live on.")]
 	public class ConquestObjectivesPanelInfo : ITraitInfo
 	{
 		public string ObjectivesPanel = null;

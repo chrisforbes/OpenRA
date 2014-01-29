@@ -9,12 +9,9 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Linq;
 using OpenRA.FileFormats;
-using OpenRA.Mods.RA;
-using OpenRA.Mods.RA.Render;
 
-namespace OpenRA.Scripting
+namespace OpenRA.Mods.RA.Scripting
 {
 	public class RASpecialPowers
 	{
@@ -26,7 +23,7 @@ namespace OpenRA.Scripting
 				var targetCell = kv.Second;
 				var cs = target.Trait<Chronoshiftable>();
 				if (chronosphere.Owner.Shroud.IsExplored(targetCell) && cs.CanChronoshiftTo(target, targetCell))
-					cs.Teleport(target, targetCell, duration, killCargo,chronosphere);
+					cs.Teleport(target, targetCell, duration, killCargo, chronosphere);
 			}
 		}
 	}

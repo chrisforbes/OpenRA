@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 
 namespace OpenRA.Effects
 {
@@ -32,6 +31,6 @@ namespace OpenRA.Effects
 				world.AddFrameEndTask(w => { w.Remove(this); a(); });
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr) { yield break; }
+		public IEnumerable<IRenderable> Render(WorldRenderer wr) { yield break; }
 	}
 }

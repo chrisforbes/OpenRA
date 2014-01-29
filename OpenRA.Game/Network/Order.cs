@@ -23,6 +23,7 @@ namespace OpenRA
 		TargetString = 0x04,
 		Queued = 0x08,
 		ExtraLocation = 0x10,
+		ExtraData = 0x20
 	}
 
 	static class OrderFieldsExts
@@ -42,12 +43,13 @@ namespace OpenRA
 		public CPos TargetLocation;
 		public string TargetString;
 		public CPos ExtraLocation;
+		public uint ExtraData;
 		public bool IsImmediate;
 
 		public Player Player { get { return Subject.Owner; } }
 
 		Order(string orderString, Actor subject,
-			Actor targetActor, CPos targetLocation, string targetString, bool queued, CPos extraLocation)
+			Actor targetActor, CPos targetLocation, string targetString, bool queued, CPos extraLocation, uint extraData)
 		{
 			this.OrderString = orderString;
 			this.Subject = subject;
@@ -56,18 +58,19 @@ namespace OpenRA
 			this.TargetString = targetString;
 			this.Queued = queued;
 			this.ExtraLocation = extraLocation;
+			this.ExtraData = extraData;
 		}
 
 		// For scripting special powers
 		public Order()
-			: this(null, null, null, CPos.Zero, null, false, CPos.Zero) { }
+			: this(null, null, null, CPos.Zero, null, false, CPos.Zero, 0) { }
 
 		public Order(string orderString, Actor subject, bool queued)
-			: this(orderString, subject, null, CPos.Zero, null, queued, CPos.Zero) { }
+			: this(orderString, subject, null, CPos.Zero, null, queued, CPos.Zero, 0) { }
 
 		public Order(string orderstring, Order order)
 			: this(orderstring, order.Subject, order.TargetActor, order.TargetLocation,
-				   order.TargetString, order.Queued, order.ExtraLocation) {}
+				   order.TargetString, order.Queued, order.ExtraLocation, order.ExtraData) {}
 
 		public byte[] Serialize()
 		{
@@ -102,6 +105,7 @@ namespace OpenRA
 						if (TargetString != null) fields |= OrderFields.TargetString;
 						if (Queued) fields |= OrderFields.Queued;
 						if (ExtraLocation != CPos.Zero) fields |= OrderFields.ExtraLocation;
+						if (ExtraData != 0) fields |= OrderFields.ExtraData;
 
 						w.Write((byte)fields);
 
@@ -113,6 +117,8 @@ namespace OpenRA
 							w.Write(TargetString);
 						if (ExtraLocation != CPos.Zero)
 							w.Write(ExtraLocation.ToInt2());
+						if (ExtraData != 0)
+							w.Write(ExtraData);
 
 						return ret.ToArray();
 					}
@@ -134,12 +140,13 @@ namespace OpenRA
 						var targetString = flags.HasField(OrderFields.TargetString) ? r.ReadString() : null;
 						var queued = flags.HasField(OrderFields.Queued);
 						var extraLocation = (CPos)(flags.HasField(OrderFields.ExtraLocation) ? r.ReadInt2() : int2.Zero);
+						var extraData = flags.HasField(OrderFields.ExtraData) ? r.ReadUInt32() : 0;
 
 						Actor subject, targetActor;
-						if( !TryGetActorFromUInt( world, subjectId, out subject ) || !TryGetActorFromUInt( world, targetActorId, out targetActor ) )
+						if (!TryGetActorFromUInt(world, subjectId, out subject) || !TryGetActorFromUInt(world, targetActorId, out targetActor))
 							return null;
 
-						return new Order( order, subject, targetActor, targetLocation, targetString, queued, extraLocation);
+						return new Order(order, subject, targetActor, targetLocation, targetString, queued, extraLocation, extraData);
 					}
 
 				case 0xfe:
@@ -168,16 +175,16 @@ namespace OpenRA
 			return a.ActorID;
 		}
 
-		static bool TryGetActorFromUInt(World world, uint aID, out Actor ret )
+		static bool TryGetActorFromUInt(World world, uint aID, out Actor ret)
 		{
-			if( aID == 0xFFFFFFFF )
+			if (aID == 0xFFFFFFFF)
 			{
 				ret = null;
 				return true;
 			}
 			else
 			{
-				foreach( var a in world.Actors.Where( x => x.ActorID == aID ) )
+				foreach (var a in world.Actors.Where(x => x.ActorID == aID))
 				{
 					ret = a;
 					return true;
@@ -199,18 +206,17 @@ namespace OpenRA
 		{
 			return new Order("HandshakeResponse", null, false) { IsImmediate = true, TargetString = text };
 		}
-		
-		public static Order PauseRequest()
+
+		public static Order Pong(string pingTime)
 		{
-			return new Order("PauseRequest", null, false) { IsImmediate = true, TargetString="" }; //TODO: targetbool?
-		}
-                
-		public static Order PauseGame()
-		{
-			return new Order("PauseGame", null, false) { IsImmediate = true, TargetString=""}; //TODO: targetbool?
+			return new Order("Pong", null, false) { IsImmediate = true, TargetString = pingTime };
 		}
 
-		
+		public static Order PauseGame(bool paused)
+		{
+			return new Order("PauseGame", null, false) { TargetString = paused ? "Pause" : "UnPause" };
+		}
+
 		public static Order Command(string text)
 		{
 			return new Order("Command", null, false) { IsImmediate = true, TargetString = text };

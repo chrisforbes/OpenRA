@@ -15,18 +15,15 @@ namespace OpenRA.Mods.RA
 	public class BuildableInfo : TraitInfo<Buildable>
 	{
 		public readonly string[] Prerequisites = { };
-		[ActorReference]
-		public readonly string[] BuiltAt = { };
-
 		public readonly string[] Owner = { };
 
 		public readonly string Queue;
 		public readonly bool Hidden = false;
 		public readonly int BuildLimit = 0;
 
-		// todo: UI fluff; doesn't belong here
+		// TODO: UI fluff; doesn't belong here
 		public readonly int BuildPaletteOrder = 9999;
-		public readonly string Hotkey = null;
+		public readonly Hotkey Hotkey = Hotkey.Invalid;
 	}
 
 	public class Buildable { }

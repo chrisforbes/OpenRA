@@ -2,26 +2,57 @@ Container@SERVERBROWSER_PANEL:
 	Logic:ServerBrowserLogic
 	X:(WINDOW_RIGHT - WIDTH)/2
 	Y:(WINDOW_BOTTOM - 500)/2
-	Width:540
+	Width:730
 	Height:535
 	Children:
 		Label@TITLE:
 			Text:Find Server
-			Width:540
+			Width:740
 			Y:0-25
 			Font:BigBold
 			Contrast:true
 			Align:Center
 		Background@bg:
-			Width:540
+			Width:730
 			Height:500
 			Background:panel-black
 			Children:
+				Label@SHOW_LABEL_TITLE:
+					X:20
+					Y:10
+					Width:20
+					Height:25
+					Text:Show:
+					Font:Bold
+				Checkbox@WAITING_FOR_PLAYERS:
+					X:80
+					Y:13
+					Width:100
+					Height:20
+					Text:Waiting
+				Checkbox@EMPTY:
+					X:180
+					Y:13
+					Width:100
+					Height:20
+					Text:Empty
+				Checkbox@ALREADY_STARTED:
+					X:280
+					Y:13
+					Width:100
+					Height:20
+					Text:Started
+				Checkbox@INCOMPATIBLE_VERSION:
+					X:380
+					Y:13
+					Width:100
+					Height:20
+					Text:Incompatible
 				ScrollPanel@SERVER_LIST:
 					X:15
-					Y:30
-					Width:510
-					Height:450
+					Y:45
+					Width:700
+					Height:440
 					Children:
 						ScrollItem@SERVER_TEMPLATE:
 							Width:PARENT_RIGHT-27
@@ -68,6 +99,12 @@ Container@SERVERBROWSER_PANEL:
 									Y:40
 									Align:Right
 									Height:25
+								Label@LOCATION:
+									Width:140
+									X:PARENT_RIGHT-150
+									Y:40
+									Align:Right
+									Height:25
 				Label@PROGRESS_LABEL:
 					X:(PARENT_RIGHT - WIDTH) / 2
 					Y:PARENT_BOTTOM / 2 - HEIGHT
@@ -84,14 +121,14 @@ Container@SERVERBROWSER_PANEL:
 			Height:35
 			Text:Back
 		Button@REFRESH_BUTTON:
-			X:250
+			X:PARENT_RIGHT - 140 - 10 - 140
 			Y:499
 			Width:140
 			Height:35
 			Text:Refresh
 		Button@JOIN_BUTTON:
 			Key:return
-			X:400
+			X:PARENT_RIGHT - 140
 			Y:499
 			Width:140
 			Height:35

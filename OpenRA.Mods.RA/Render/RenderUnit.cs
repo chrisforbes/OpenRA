@@ -9,7 +9,6 @@
 #endregion
 
 using System;
-using OpenRA.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Render
@@ -22,10 +21,7 @@ namespace OpenRA.Mods.RA.Render
 	public class RenderUnit : RenderSimple
 	{
 		public RenderUnit(Actor self)
-			: base(self, RenderSimple.MakeFacingFunc(self))
-		{
-			anim.PlayRepeating("idle");
-		}
+			: base(self) { }
 
 		public void PlayCustomAnimation(Actor self, string newAnim, Action after)
 		{

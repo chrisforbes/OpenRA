@@ -10,11 +10,15 @@
 
 using System;
 using System.Drawing;
+using System.Linq;
+using OpenRA.FileFormats.Primitives;
 using OpenRA.Graphics;
 
 namespace OpenRA.Widgets
 {
-	public interface ILayout { void AdjustChild(Widget w); }
+	public interface ILayout { void AdjustChild(Widget w); void AdjustChildren(); }
+
+	public enum ScrollPanelAlign { Bottom, Top }
 
 	public class ScrollPanelWidget : Widget
 	{
@@ -25,6 +29,8 @@ namespace OpenRA.Widgets
 		public string Background = "scrollpanel-bg";
 		public int ContentHeight = 0;
 		public ILayout Layout;
+		public int MinimumThumbSize = 10;
+		public ScrollPanelAlign Align = ScrollPanelAlign.Top;
 		protected float ListOffset = 0;
 		protected bool UpPressed = false;
 		protected bool DownPressed = false;
@@ -35,7 +41,7 @@ namespace OpenRA.Widgets
 		protected Rectangle scrollbarRect;
 		protected Rectangle thumbRect;
 
-		public ScrollPanelWidget() : base() { Layout = new ListLayout(this); }
+		public ScrollPanelWidget() { Layout = new ListLayout(this); }
 
 		public override void RemoveChildren()
 		{
@@ -50,6 +56,22 @@ namespace OpenRA.Widgets
 			base.AddChild(child);
 		}
 
+		public override void RemoveChild(Widget child)
+		{
+			base.RemoveChild(child);
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
+		public void ReplaceChild(Widget oldChild, Widget newChild)
+		{
+			oldChild.Removed();
+			newChild.Parent = this;
+			Children[Children.IndexOf(oldChild)] = newChild;
+			Layout.AdjustChildren();
+			Scroll(0);
+		}
+
 		public override void DrawOuter()
 		{
 			if (!IsVisible())
@@ -59,12 +81,12 @@ namespace OpenRA.Widgets
 
 			var ScrollbarHeight = rb.Height - 2 * ScrollbarWidth;
 
-			var thumbHeight = ContentHeight == 0 ? 0 : (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f));
+			var thumbHeight = ContentHeight == 0 ? 0 : Math.Max(MinimumThumbSize, (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f)));
 			var thumbOrigin = rb.Y + ScrollbarWidth + (int)((ScrollbarHeight - thumbHeight)*(-1f*ListOffset/(ContentHeight - rb.Height)));
 			if (thumbHeight == ScrollbarHeight)
 				thumbHeight = 0;
 
-			backgroundRect = new Rectangle(rb.X, rb.Y, rb.Width - ScrollbarWidth+1, rb.Height);
+			backgroundRect = new Rectangle(rb.X, rb.Y, rb.Width - ScrollbarWidth + 1, rb.Height);
 			upButtonRect = new Rectangle(rb.Right - ScrollbarWidth, rb.Y, ScrollbarWidth, ScrollbarWidth);
 			downButtonRect = new Rectangle(rb.Right - ScrollbarWidth, rb.Bottom - ScrollbarWidth, ScrollbarWidth, ScrollbarWidth);
 			scrollbarRect = new Rectangle(rb.Right - ScrollbarWidth, rb.Y + ScrollbarWidth - 1, ScrollbarWidth, ScrollbarHeight + 2);
@@ -83,7 +105,7 @@ namespace OpenRA.Widgets
 			ButtonWidget.DrawBackground("button", downButtonRect, downDisabled, DownPressed, downHover, false);
 
 			if (thumbHeight > 0)
-				ButtonWidget.DrawBackground("scrollthumb", thumbRect, false, Focused && thumbHover, thumbHover, false);
+				ButtonWidget.DrawBackground("scrollthumb", thumbRect, false, HasMouseFocus && thumbHover, thumbHover, false);
 
 			var upOffset = !UpPressed || upDisabled ? 4 : 4 + ButtonDepth;
 			var downOffset = !DownPressed || downDisabled ? 4 : 4 + ButtonDepth;
@@ -93,7 +115,7 @@ namespace OpenRA.Widgets
 			WidgetUtils.DrawRGBA(ChromeProvider.GetImage("scrollbar", DownPressed || downDisabled ? "down_pressed" : "down_arrow"),
 				new float2(downButtonRect.Left + downOffset, downButtonRect.Top + downOffset));
 
-			Game.Renderer.EnableScissor(backgroundRect.X + 1, backgroundRect.Y + 1, backgroundRect.Width - 2, backgroundRect.Height - 2);
+			Game.Renderer.EnableScissor(backgroundRect.InflateBy(-1, -1, -1, -1));
 
 			foreach (var child in Children)
 				child.DrawOuter();
@@ -116,12 +138,39 @@ namespace OpenRA.Widgets
 
 		public void ScrollToBottom()
 		{
-			ListOffset = Math.Min(0,Bounds.Height - ContentHeight);
+			ListOffset = Align == ScrollPanelAlign.Top ?
+				Math.Min(0, Bounds.Height - ContentHeight) :
+				Bounds.Height - ContentHeight;
 		}
 
 		public void ScrollToTop()
 		{
-			ListOffset = 0;
+			ListOffset = Align == ScrollPanelAlign.Top ? 0 :
+				Math.Max(0, Bounds.Height - ContentHeight);
+		}
+
+		public bool ScrolledToBottom
+		{
+			get { return ListOffset == Math.Min(0, Bounds.Height - ContentHeight); }
+		}
+
+		public void ScrollToItem(string itemKey)
+		{
+			var item = Children.FirstOrDefault(c =>
+			{
+				var si = c as ScrollItemWidget;
+				return si != null && si.ItemKey == itemKey;
+			});
+
+			if (item == null)
+				return;
+
+			// Scroll the item to be visible
+			if (item.Bounds.Top + ListOffset < 0)
+				ListOffset = ItemSpacing - item.Bounds.Top;
+
+			if (item.Bounds.Bottom + ListOffset > RenderBounds.Height)
+				ListOffset = RenderBounds.Height - item.Bounds.Bottom - ItemSpacing;
 		}
 
 		public override void Tick ()
@@ -130,10 +179,10 @@ namespace OpenRA.Widgets
 			if (DownPressed) Scroll(-1);
 		}
 
-		public override bool LoseFocus (MouseInput mi)
+		public override bool YieldMouseFocus(MouseInput mi)
 		{
 			UpPressed = DownPressed = ThumbPressed = false;
-			return base.LoseFocus(mi);
+			return base.YieldMouseFocus(mi);
 		}
 
 		int2 lastMouseLocation;
@@ -154,20 +203,20 @@ namespace OpenRA.Widgets
 			if (mi.Button != MouseButton.Left)
 				return false;
 
-			if (mi.Event == MouseInputEvent.Down && !TakeFocus(mi))
+			if (mi.Event == MouseInputEvent.Down && !TakeMouseFocus(mi))
 				return false;
 
-			if (!Focused)
+			if (!HasMouseFocus)
 				return false;
 
-			if (Focused && mi.Event == MouseInputEvent.Up)
-				return LoseFocus(mi);
+			if (HasMouseFocus && mi.Event == MouseInputEvent.Up)
+				return YieldMouseFocus(mi);
 
 			if (ThumbPressed && mi.Event == MouseInputEvent.Move)
 			{
 				var rb = RenderBounds;
 				var ScrollbarHeight = rb.Height - 2 * ScrollbarWidth;
-				var thumbHeight = ContentHeight == 0 ? 0 : (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f));
+				var thumbHeight = ContentHeight == 0 ? 0 : Math.Max(MinimumThumbSize, (int)(ScrollbarHeight*Math.Min(rb.Height*1f/ContentHeight, 1f)));
 				var oldOffset = ListOffset;
 				ListOffset += (int)((lastMouseLocation.Y - mi.Location.Y)*(ContentHeight - rb.Height)*1f/(ScrollbarHeight - thumbHeight));
 				ListOffset = Math.Min(0,Math.Max(rb.Height - ContentHeight, ListOffset));
@@ -185,6 +234,117 @@ namespace OpenRA.Widgets
 			}
 
 			return UpPressed || DownPressed || ThumbPressed;
+		}
+
+		IObservableCollection collection;
+		Func<object, Widget> makeWidget;
+		Func<Widget, object, bool> widgetItemEquals;
+		bool autoScroll;
+
+		public void Unbind()
+		{
+			Bind(null, null, null, false);
+		}
+
+		public void Bind(IObservableCollection c, Func<object, Widget> makeWidget, Func<Widget, object, bool> widgetItemEquals, bool autoScroll)
+		{
+			this.autoScroll = autoScroll;
+
+			Game.RunAfterTick(() =>
+			{
+				if (collection != null)
+				{
+					collection.OnAdd -= BindingAdd;
+					collection.OnRemove -= BindingRemove;
+					collection.OnRemoveAt -= BindingRemoveAt;
+					collection.OnSet -= BindingSet;
+					collection.OnRefresh -= BindingRefresh;
+				}
+
+				this.makeWidget = makeWidget;
+				this.widgetItemEquals = widgetItemEquals;
+
+				RemoveChildren();
+				collection = c;
+
+				if (c != null)
+				{
+					foreach (var item in c.ObservedItems)
+						BindingAddImpl(item);
+
+					c.OnAdd += BindingAdd;
+					c.OnRemove += BindingRemove;
+					c.OnRemoveAt += BindingRemoveAt;
+					c.OnSet += BindingSet;
+					c.OnRefresh += BindingRefresh;
+				}
+			});
+		}
+
+		void BindingAdd(object item)
+		{
+			Game.RunAfterTick(() => BindingAddImpl(item));
+		}
+
+		void BindingAddImpl(object item)
+		{
+			var widget = makeWidget(item);
+			var scrollToBottom = autoScroll && ScrolledToBottom;
+
+			AddChild(widget);
+
+			if (scrollToBottom)
+				ScrollToBottom();
+		}
+
+		void BindingRemove(object item)
+		{
+			Game.RunAfterTick(() =>
+			{
+				var widget = Children.FirstOrDefault(w => widgetItemEquals(w, item));
+				if (widget != null)
+					RemoveChild(widget);
+			});
+		}
+
+		void BindingRemoveAt(int index)
+		{
+			Game.RunAfterTick(() =>
+			{
+				if (index < 0 || index >= Children.Count)
+					return;
+				RemoveChild(Children[index]);
+			});
+		}
+
+		void BindingSet(object oldItem, object newItem)
+		{
+			Game.RunAfterTick(() =>
+			{
+				var newWidget = makeWidget(newItem);
+				newWidget.Parent = this;
+
+				var i = Children.FindIndex(w => widgetItemEquals(w, oldItem));
+				if (i >= 0)
+				{
+					var oldWidget = Children[i];
+					oldWidget.Removed();
+					Children[i] = newWidget;
+					Layout.AdjustChildren();
+				}
+				else
+					AddChild(newWidget);
+			});
+		}
+
+		void BindingRefresh()
+		{
+			Game.RunAfterTick(() =>
+			{
+				RemoveChildren();
+				foreach (var item in collection.ObservedItems)
+					BindingAddImpl(item);
+			});
 		}
 	}
 }

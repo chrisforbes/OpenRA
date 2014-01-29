@@ -13,7 +13,6 @@ using System.Linq;
 using OpenRA.Effects;
 using OpenRA.GameRules;
 using OpenRA.Mods.RA.Effects;
-using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
 using System.Collections.Generic;
 
@@ -24,30 +23,29 @@ namespace OpenRA.Mods.RA
 		static string GetImpactSound(WarheadInfo warhead, bool isWater)
 		{
 			if (isWater && warhead.WaterImpactSound != null)
-				return warhead.WaterImpactSound + ".aud";
+				return warhead.WaterImpactSound;
 
 			if (warhead.ImpactSound != null)
-				return warhead.ImpactSound + ".aud";
+				return warhead.ImpactSound;
 
 			return null;
 		}
 
-		public static void DoImpact(WarheadInfo warhead, ProjectileArgs args)
+		public static void DoImpact(WPos pos, WarheadInfo warhead, WeaponInfo weapon, Actor firedBy, float firepowerModifier)
 		{
-			var world = args.firedBy.World;
-			var targetTile = args.dest.ToCPos();
+			var world = firedBy.World;
+			var targetTile = pos.ToCPos();
 
 			if (!world.Map.IsInMap(targetTile))
 				return;
 
-			var isWater = args.destAltitude == 0 && world.GetTerrainInfo(targetTile).IsWater;
+			var isWater = pos.Z == 0 && world.GetTerrainInfo(targetTile).IsWater;
 			var explosionType = isWater ? warhead.WaterExplosion : warhead.Explosion;
 
 			if (explosionType != null)
-				world.AddFrameEndTask(
-					w => w.Add(new Explosion(w, args.dest, explosionType, isWater, args.destAltitude)));
+				world.AddFrameEndTask(w => w.Add(new Explosion(w, pos, explosionType)));
 
-			Sound.Play(GetImpactSound(warhead, isWater), args.dest);
+			Sound.Play(GetImpactSound(warhead, isWater), pos);
 
 			var smudgeLayers = world.WorldActor.TraitsImplementing<SmudgeLayer>().ToDictionary(x => x.Info.Type);
 
@@ -103,60 +101,67 @@ namespace OpenRA.Mods.RA
 			{
 				case DamageModel.Normal:
 					{
-						var maxSpread = warhead.Spread * (float)Math.Log(Math.Abs(warhead.Damage), 2);
-						var hitActors = world.FindUnitsInCircle(args.dest, (int)maxSpread);
+						var maxSpread = new WRange((int)(warhead.Spread.Range * (float)Math.Log(Math.Abs(warhead.Damage), 2)));
+						var hitActors = world.FindActorsInCircle(pos, maxSpread);
 
 						foreach (var victim in hitActors)
 						{
-							var damage = (int)GetDamageToInflict(victim, args, warhead, args.firepowerModifier);
-							victim.InflictDamage(args.firedBy, damage, warhead);
+							var damage = (int)GetDamageToInflict(pos, victim, warhead, weapon, firepowerModifier, true);
+							victim.InflictDamage(firedBy, damage, warhead);
 						}
 					} break;
 
 				case DamageModel.PerCell:
 					{
 						foreach (var t in world.FindTilesInCircle(targetTile, warhead.Size[0]))
-							foreach (var unit in world.FindUnits(t.ToPPos(), (t + new CVec(1,1)).ToPPos()))
-								unit.InflictDamage(args.firedBy,
-									(int)(warhead.Damage * warhead.EffectivenessAgainst(unit)), warhead);
+							foreach (var unit in world.ActorMap.GetUnitsAt(t))
+							{
+								var damage = (int)GetDamageToInflict(pos, unit, warhead, weapon, firepowerModifier, false);
+								unit.InflictDamage(firedBy, damage, warhead);
+							}
+					} break;
+
+				case DamageModel.HealthPercentage:
+					{
+						var range = new WRange(warhead.Size[0] * 1024);
+						var hitActors = world.FindActorsInCircle(pos, range);
+
+						foreach (var victim in hitActors)
+						{
+							var damage = GetDamageToInflict(pos, victim, warhead, weapon, firepowerModifier, false);
+							if (damage != 0) // will be 0 if the target doesn't have HealthInfo
+							{
+								var healthInfo = victim.Info.Traits.Get<HealthInfo>();
+								damage = (float)(damage / 100 * healthInfo.HP);
+							}
+							victim.InflictDamage(firedBy, (int)damage, warhead);
+						}
 					} break;
 			}
 		}
 
-		public static void DoImpacts(ProjectileArgs args)
+		public static void DoImpacts(WPos pos, Actor firedBy, WeaponInfo weapon, float damageModifier)
 		{
-			foreach (var warhead in args.weapon.Warheads)
+			foreach (var wh in weapon.Warheads)
 			{
-				// NOTE(jsd): Fixed access to modified closure bug!
-				var warheadClosed = warhead;
+				var warhead = wh;
+				Action a = () => DoImpact(pos, warhead, weapon, firedBy, damageModifier);
 
-				Action a = () => DoImpact(warheadClosed, args);
 				if (warhead.Delay > 0)
-					args.firedBy.World.AddFrameEndTask(
-						w => w.Add(new DelayedAction(warheadClosed.Delay, a)));
+					firedBy.World.AddFrameEndTask(
+						w => w.Add(new DelayedAction(warhead.Delay, a)));
 				else
 					a();
 			}
 		}
 
-		public static void DoExplosion(Actor attacker, string weapontype, PPos pos, int altitude)
+		public static void DoExplosion(Actor attacker, string weapontype, WPos pos)
 		{
-			var args = new ProjectileArgs
-			{
-				src = pos,
-				dest = pos,
-				srcAltitude = altitude,
-				destAltitude = altitude,
-				firedBy = attacker,
-				target = Target.FromPos(pos),
-				weapon = Rules.Weapons[ weapontype.ToLowerInvariant() ],
-				facing = 0
-			};
+			var weapon = Rules.Weapons[weapontype.ToLowerInvariant()];
+			if (weapon.Report != null && weapon.Report.Any())
+				Sound.Play(weapon.Report.Random(attacker.World.SharedRandom), pos);
 
-			if (args.weapon.Report != null && args.weapon.Report.Any())
-				Sound.Play(args.weapon.Report.Random(attacker.World.SharedRandom) + ".aud", pos);
-
-			DoImpacts(args);
+			DoImpacts(pos, attacker, weapon, 1f);
 		}
 
 		static readonly float[] falloff =
@@ -173,105 +178,24 @@ namespace OpenRA.Mods.RA
 			return (falloff[u] * (1 - t)) + (falloff[u + 1] * t);
 		}
 
-		static float GetDamageToInflict(Actor target, ProjectileArgs args, WarheadInfo warhead, float modifier)
+		static float GetDamageToInflict(WPos pos, Actor target, WarheadInfo warhead, WeaponInfo weapon, float modifier, bool withFalloff)
 		{
 			// don't hit air units with splash from ground explosions, etc
-			if (!WeaponValidForTarget(args.weapon, target)) return 0f;
+			if (!weapon.IsValidAgainst(target))
+				return 0;
 
-			var health = target.Info.Traits.GetOrDefault<HealthInfo>();
-			if( health == null ) return 0f;
+			var healthInfo = target.Info.Traits.GetOrDefault<HealthInfo>();
+			if (healthInfo == null)
+				return 0;
 
-			var distance = (int)Math.Max(0, (target.CenterLocation - args.dest).Length - health.Radius);
-			var falloff = (float)GetDamageFalloff(distance / warhead.Spread);
-			var rawDamage = (float)(warhead.Damage * modifier * falloff);
-			var multiplier = (float)warhead.EffectivenessAgainst(target);
-
-			return (float)(rawDamage * multiplier);
-		}
-
-		public static bool WeaponValidForTarget(WeaponInfo weapon, Actor target)
-		{
-			var targetable = target.TraitOrDefault<ITargetable>();
-			if (targetable == null || !weapon.ValidTargets.Intersect(targetable.TargetTypes).Any())
-				return false;
-
-			if (weapon.Warheads.All( w => w.EffectivenessAgainst(target) <= 0))
-				return false;
-
-			return true;
-		}
-
-		public static bool WeaponValidForTarget( WeaponInfo weapon, World world, CPos location )
-		{
-			if( weapon.ValidTargets.Contains( "Ground" ) && world.GetTerrainType( location ) != "Water" ) return true;
-			if( weapon.ValidTargets.Contains( "Water" ) && world.GetTerrainType( location ) == "Water" ) return true;
-			return false;
-		}
-
-		static PVecFloat GetRecoil(Actor self, float recoil)
-		{
-			if (!self.HasTrait<RenderUnitTurreted>())
-				return PVecFloat.Zero;
-
-			var facing = self.Trait<Turreted>().turretFacing;
-			var localRecoil = new float2(0, recoil);	// vector in turret-space.
-
-			return (PVecFloat)Util.RotateVectorByFacing(localRecoil, facing, .7f);
-		}
-
-		public static PVecFloat GetTurretPosition(Actor self, IFacing facing, Turret turret)
-		{
-			if (facing == null) return turret.ScreenSpacePosition;	/* things that don't have a rotating base don't need the turrets repositioned */
-
-			var ru = self.TraitOrDefault<RenderUnit>();
-			var numDirs = (ru != null) ? ru.anim.CurrentSequence.Facings : 8;
-			var bodyFacing = facing.Facing;
-			var quantizedFacing = Util.QuantizeFacing(bodyFacing, numDirs) * (256 / numDirs);
-
-			return (PVecFloat)Util.RotateVectorByFacing(turret.UnitSpacePosition.ToFloat2(), quantizedFacing, .7f)
-				+ GetRecoil(self, turret.Recoil)
-				+ (PVecFloat)turret.ScreenSpacePosition.ToFloat2();
-		}
-
-		static PVecFloat GetUnitspaceBarrelOffset(Actor self, IFacing facing, Turret turret, Barrel barrel)
-		{
-			var turreted = self.TraitOrDefault<Turreted>();
-			if (turreted == null && facing == null)
-				return PVecFloat.Zero;
-
-			var turretFacing = turreted != null  ? turreted.turretFacing : facing.Facing;
-			return (PVecFloat)Util.RotateVectorByFacing(barrel.TurretSpaceOffset.ToFloat2(), turretFacing, .7f);
-		}
-
-		// gets the screen-space position of a barrel.
-		public static PVecFloat GetBarrelPosition(Actor self, IFacing facing, Turret turret, Barrel barrel)
-		{
-			return GetTurretPosition(self, facing, turret) + barrel.ScreenSpaceOffset
-				+ GetUnitspaceBarrelOffset(self, facing, turret, barrel);
-		}
-
-		public static bool IsInRange( PPos attackOrigin, float range, Actor target )
-		{
-			var rsq = range * range * Game.CellSize * Game.CellSize;
-			foreach ( var cell in target.Trait<ITargetable>().TargetableCells( target ) )
-				if ( (attackOrigin - cell.ToPPos()).LengthSquared <= rsq )
-					return true;
-			return false;
-		}
-
-		public static bool IsInRange(PPos attackOrigin, float range, PPos targetLocation)
-		{
-			var rsq = range * range * Game.CellSize * Game.CellSize;
-			return ( attackOrigin - targetLocation ).LengthSquared <= rsq;
-		}
-
-		public static bool IsInRange(PPos attackOrigin, float range, Target target)
-		{
-			if( !target.IsValid ) return false;
-			if( target.IsActor )
-				return IsInRange( attackOrigin, range, target.Actor );
-			else
-				return IsInRange( attackOrigin, range, target.CenterLocation );
+			var rawDamage = (float)warhead.Damage;
+			if (withFalloff)
+			{
+				var distance = Math.Max(0, (target.CenterPosition - pos).Length - healthInfo.Radius.Range);
+				var falloff = (float)GetDamageFalloff(distance * 1f / warhead.Spread.Range);
+				rawDamage = (float)(falloff * rawDamage);
+			}
+			return (float)(rawDamage * modifier * (float)warhead.EffectivenessAgainst(target.Info));
 		}
 	}
 }

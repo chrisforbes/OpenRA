@@ -14,7 +14,6 @@ using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Traits;
 using OpenRA.Mods.RA.Air;
-using OpenRA.Mods.RA.Move;
 
 namespace OpenRA.Mods.RA.Render
 {
@@ -22,17 +21,25 @@ namespace OpenRA.Mods.RA.Render
 
 	class WithShadow : IRenderModifier
 	{
-		public IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
+		public IEnumerable<IRenderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r)
 		{
-			var move = self.Trait<IMove>();
+			var ios = self.Trait<IOccupySpace>();
 
 			/* rude hack */
-			var visualOffset = ((move is Helicopter || move is Mobile) && move.Altitude > 0)
-				? Math.Abs((self.ActorID + Game.LocalTick) / 5 % 4 - 1) - 1 : 0;
+			var flying = ios.CenterPosition.Z > 0;
+			var visualOffset = (ios is Helicopter && flying)
+				? (int)Math.Abs((self.ActorID + Game.LocalTick) / 5 % 4 - 1) - 1 : 0;
 
-			var shadowSprites = r.Select(a => a.WithPalette(wr.Palette("shadow")));
-			var flyingSprites = (move.Altitude <= 0) ? r
-				: r.Select(a => a.WithPos(a.Pos - new float2(0, move.Altitude + visualOffset)).WithZOffset(move.Altitude + a.ZOffset));
+			// Contrails shouldn't cast shadows
+			var shadowSprites = r.Where(s => !s.IsDecoration)
+				.Select(a => a.WithPalette(wr.Palette("shadow"))
+				.OffsetBy(new WVec(0, 0, -a.Pos.Z))
+				.WithZOffset(a.ZOffset + a.Pos.Z)
+				.AsDecoration());
+
+			var worldVisualOffset = new WVec(0,0,-43*visualOffset);
+			var flyingSprites = !flying ? r :
+				r.Select(a => a.OffsetBy(worldVisualOffset));
 
 			return shadowSprites.Concat(flyingSprites);
 		}

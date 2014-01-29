@@ -9,7 +9,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System;
 using System.Drawing;
 
 namespace OpenRA.FileFormats
@@ -40,10 +39,8 @@ namespace OpenRA.FileFormats
 
 		public override bool Equals(object obj)
 		{
-			if (!(obj is Pair<T, U>))
-				return false;
-
-			return (Pair<T, U>)obj == this;
+			var o = obj as Pair<T, U>?;
+			return o != null && o == this;
 		}
 
 		public override int GetHashCode()

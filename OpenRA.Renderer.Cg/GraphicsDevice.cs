@@ -13,8 +13,6 @@ using System.Drawing;
 using OpenRA.FileFormats.Graphics;
 using OpenRA.Renderer.SdlCommon;
 using Tao.Cg;
-using Tao.OpenGl;
-using Tao.Sdl;
 
 [assembly: Renderer(typeof(OpenRA.Renderer.Cg.DeviceFactory))]
 
@@ -24,42 +22,49 @@ namespace OpenRA.Renderer.Cg
 	{
 		public IGraphicsDevice Create(Size size, WindowMode windowMode)
 		{
-			Console.WriteLine("Using Cg renderer");
+			Console.WriteLine("Using SDL 1.2 with Cg renderer");
 			return new GraphicsDevice(size, windowMode);
 		}
 	}
 
 	public class GraphicsDevice : SdlGraphics
 	{
-		static string[] RequiredExtensions =
+		static string[] requiredExtensions =
 		{
 			"GL_ARB_vertex_program",
 			"GL_ARB_fragment_program",
-			"GL_ARB_vertex_buffer_object"
+			"GL_ARB_vertex_buffer_object",
+			"GL_EXT_framebuffer_object"
 		};
 
-		internal IntPtr cgContext;
-		internal int vertexProfile, fragmentProfile;
+		internal IntPtr Context;
+		internal int VertexProfile, FragmentProfile;
 
-		static Tao.Cg.Cg.CGerrorCallbackFuncDelegate CgErrorCallback = () =>
+		static Tao.Cg.Cg.CGerrorCallbackFuncDelegate errorCallback = () =>
 		{
 			var err = Tao.Cg.Cg.cgGetError();
-			var msg = "CG Error: {0}: {1}".F(err, Tao.Cg.Cg.cgGetErrorString(err));
+			var msg = "Cg Error: {0}: {1}".F(err, Tao.Cg.Cg.cgGetErrorString(err));
 			ErrorHandler.WriteGraphicsLog(msg);
-			throw new InvalidOperationException("CG Error. See graphics.log for details");
+			throw new InvalidOperationException("Cg Error. See graphics.log for details");
 		};
 
 		public GraphicsDevice(Size size, WindowMode window)
-			: base(size, window, RequiredExtensions)
+			: base(size, window, requiredExtensions)
 		{
-			cgContext = Tao.Cg.Cg.cgCreateContext();
+			Context = Tao.Cg.Cg.cgCreateContext();
 
-			Tao.Cg.Cg.cgSetErrorCallback(CgErrorCallback);
+			Tao.Cg.Cg.cgSetErrorCallback(errorCallback);
 
-			Tao.Cg.CgGl.cgGLRegisterStates(cgContext);
-			Tao.Cg.CgGl.cgGLSetManageTextureParameters(cgContext, true);
-			vertexProfile = CgGl.cgGLGetLatestProfile(CgGl.CG_GL_VERTEX);
-			fragmentProfile = CgGl.cgGLGetLatestProfile(CgGl.CG_GL_FRAGMENT);
+			CgGl.cgGLRegisterStates(Context);
+			CgGl.cgGLSetManageTextureParameters(Context, true);
+			VertexProfile = CgGl.cgGLGetLatestProfile(CgGl.CG_GL_VERTEX);
+			FragmentProfile = CgGl.cgGLGetLatestProfile(CgGl.CG_GL_FRAGMENT);
+		}
+
+		public override void Quit()
+		{
+			Tao.Cg.Cg.cgDestroyContext(Context);
+			base.Quit();
 		}
 
 		public override IShader CreateShader(string name) { return new Shader(this, name); }

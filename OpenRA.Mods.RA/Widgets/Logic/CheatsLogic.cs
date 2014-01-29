@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,62 +9,110 @@
 #endregion
 
 using System;
-using OpenRA;
 using OpenRA.Traits;
 using OpenRA.Widgets;
+using XRandom = OpenRA.Thirdparty.Random;
 
 namespace OpenRA.Mods.RA.Widgets.Logic
 {
 	public class CheatsLogic
 	{
+		public static XRandom CosmeticRandom = new XRandom();
+
 		[ObjectCreator.UseCtor]
 		public CheatsLogic(Widget widget, Action onExit, World world)
 		{
 			var devTrait = world.LocalPlayer.PlayerActor.Trait<DeveloperMode>();
 
-			var shroudCheckbox = widget.Get<CheckboxWidget>("DISABLE_SHROUD");
-			shroudCheckbox.IsChecked = () => devTrait.DisableShroud;
-			shroudCheckbox.OnClick = () => Order(world, "DevShroudDisable");
+			var shroudCheckbox = widget.GetOrNull<CheckboxWidget>("DISABLE_SHROUD");
+			if (shroudCheckbox != null)
+			{
+				shroudCheckbox.IsChecked = () => devTrait.DisableShroud;
+				shroudCheckbox.OnClick = () => Order(world, "DevShroudDisable");
+			}
 
-			var pathCheckbox = widget.Get<CheckboxWidget>("SHOW_UNIT_PATHS");
-			pathCheckbox.IsChecked = () => devTrait.PathDebug;
-			pathCheckbox.OnClick = () => Order(world, "DevPathDebug");
+			var pathCheckbox = widget.GetOrNull<CheckboxWidget>("SHOW_UNIT_PATHS");
+			if (pathCheckbox != null)
+			{
+				pathCheckbox.IsChecked = () => devTrait.PathDebug;
+				pathCheckbox.OnClick = () => Order(world, "DevPathDebug");
+			}
 
-			widget.Get<ButtonWidget>("GIVE_CASH").OnClick = () =>
+			var cashButton = widget.GetOrNull<ButtonWidget>("GIVE_CASH");
+			if (cashButton != null)
+				cashButton.OnClick = () =>
 				world.IssueOrder(new Order("DevGiveCash", world.LocalPlayer.PlayerActor, false));
 
-			var fastBuildCheckbox = widget.Get<CheckboxWidget>("INSTANT_BUILD");
-			fastBuildCheckbox.IsChecked = () => devTrait.FastBuild;
-			fastBuildCheckbox.OnClick = () => Order(world, "DevFastBuild");
+			var fastBuildCheckbox = widget.GetOrNull<CheckboxWidget>("INSTANT_BUILD");
+			if (fastBuildCheckbox != null)
+			{
+				fastBuildCheckbox.IsChecked = () => devTrait.FastBuild;
+				fastBuildCheckbox.OnClick = () => Order(world, "DevFastBuild");
+			}
 
-			var fastChargeCheckbox = widget.Get<CheckboxWidget>("INSTANT_CHARGE");
-			fastChargeCheckbox.IsChecked = () => devTrait.FastCharge;
-			fastChargeCheckbox.OnClick = () => Order(world, "DevFastCharge");
+			var fastChargeCheckbox = widget.GetOrNull<CheckboxWidget>("INSTANT_CHARGE");
+			if (fastChargeCheckbox != null)
+			{
+				fastChargeCheckbox.IsChecked = () => devTrait.FastCharge;
+				fastChargeCheckbox.OnClick = () => Order(world, "DevFastCharge");
+			}
 
-			var allTechCheckbox = widget.Get<CheckboxWidget>("ENABLE_TECH");
-			allTechCheckbox.IsChecked = () => devTrait.AllTech;
-			allTechCheckbox.OnClick = () => Order(world, "DevEnableTech");
+			var showCombatCheckbox = widget.GetOrNull<CheckboxWidget>("SHOW_COMBATOVERLAY");
+			if (showCombatCheckbox != null)
+			{
+				showCombatCheckbox.IsChecked = () => devTrait.ShowCombatGeometry;
+				showCombatCheckbox.OnClick = () => devTrait.ShowCombatGeometry ^= true;
+			}
 
-			var powerCheckbox = widget.Get<CheckboxWidget>("UNLIMITED_POWER");
-			powerCheckbox.IsChecked = () => devTrait.UnlimitedPower;
-			powerCheckbox.OnClick = () => Order(world, "DevUnlimitedPower");
+			var showGeometryCheckbox = widget.GetOrNull<CheckboxWidget>("SHOW_GEOMETRY");
+			if (showGeometryCheckbox != null)
+			{
+				showGeometryCheckbox.IsChecked = () => devTrait.ShowDebugGeometry;
+				showGeometryCheckbox.OnClick = () => devTrait.ShowDebugGeometry ^= true;
+			}
 
-			var buildAnywhereCheckbox = widget.Get<CheckboxWidget>("BUILD_ANYWHERE");
-			buildAnywhereCheckbox.IsChecked = () => devTrait.BuildAnywhere;
-			buildAnywhereCheckbox.OnClick = () => Order(world, "DevBuildAnywhere");
+			var allTechCheckbox = widget.GetOrNull<CheckboxWidget>("ENABLE_TECH");
+			if (allTechCheckbox != null)
+			{
+				allTechCheckbox.IsChecked = () => devTrait.AllTech;
+				allTechCheckbox.OnClick = () => Order(world, "DevEnableTech");
+			}
 
-			widget.Get<ButtonWidget>("GIVE_EXPLORATION").OnClick = () =>
+			var powerCheckbox = widget.GetOrNull<CheckboxWidget>("UNLIMITED_POWER");
+			if (powerCheckbox != null)
+			{
+				powerCheckbox.IsChecked = () => devTrait.UnlimitedPower;
+				powerCheckbox.OnClick = () => Order(world, "DevUnlimitedPower");
+			}
+
+			var buildAnywhereCheckbox = widget.GetOrNull<CheckboxWidget>("BUILD_ANYWHERE");
+			if (buildAnywhereCheckbox != null)
+			{
+				buildAnywhereCheckbox.IsChecked = () => devTrait.BuildAnywhere;
+				buildAnywhereCheckbox.OnClick = () => Order(world, "DevBuildAnywhere");
+			}
+
+			var explorationButton = widget.GetOrNull<ButtonWidget>("GIVE_EXPLORATION");
+			if (explorationButton != null)
+				explorationButton.OnClick = () =>
 				world.IssueOrder(new Order("DevGiveExploration", world.LocalPlayer.PlayerActor, false));
 
-			widget.Get<ButtonWidget>("RESET_EXPLORATION").OnClick = () =>
+			var noexplorationButton = widget.GetOrNull<ButtonWidget>("RESET_EXPLORATION");
+			if (noexplorationButton != null)
+				noexplorationButton.OnClick = () =>
 				world.IssueOrder(new Order("DevResetExploration", world.LocalPlayer.PlayerActor, false));
 
-			var dbgOverlay = world.WorldActor.TraitOrDefault<DebugOverlay>();
-			var showAstarCostCheckbox = widget.Get<CheckboxWidget>("SHOW_ASTAR");
-			showAstarCostCheckbox.IsChecked = () => dbgOverlay != null ? dbgOverlay.Visible : false;
-			showAstarCostCheckbox.OnClick = () => { if (dbgOverlay != null) dbgOverlay.Visible ^= true; };
+			var dbgOverlay = world.WorldActor.TraitOrDefault<PathfinderDebugOverlay>();
+			var showAstarCostCheckbox = widget.GetOrNull<CheckboxWidget>("SHOW_ASTAR");
+			if (showAstarCostCheckbox != null)
+			{
+				showAstarCostCheckbox.IsChecked = () => dbgOverlay != null ? dbgOverlay.Visible : false;
+				showAstarCostCheckbox.OnClick = () => { if (dbgOverlay != null) dbgOverlay.Visible ^= true; };
+			}
 
-			widget.Get<ButtonWidget>("CLOSE").OnClick = () => { Ui.CloseWindow(); onExit(); };
+			var close = widget.GetOrNull<ButtonWidget>("CLOSE");
+			if (close != null)
+				close.OnClick = () => { Ui.CloseWindow(); onExit(); };
 		}
 
 		public void Order(World world, string order)

@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenRA.Graphics;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Mods.RA.Move;
@@ -40,23 +41,15 @@ namespace OpenRA.Mods.RA.Missions
 
 		public event Action<bool> OnObjectivesUpdated = notify => { };
 
-		public IEnumerable<Objective> Objectives { get { return objectives.Values; } }
+		public IEnumerable<Objective> Objectives { get { return new[] { findOutpost, evacuateDemitri, infiltrateRadarDome }; } }
 
-		Dictionary<int, Objective> objectives = new Dictionary<int, Objective>
-		{
-			{ FindOutpostID, new Objective(ObjectiveType.Primary, FindOutpost, ObjectiveStatus.InProgress) },
-			{ EvacuateDemitriID, new Objective(ObjectiveType.Primary, EvacuateDemitri, ObjectiveStatus.InProgress) },
-			{ InfiltrateRadarDomeID, new Objective(ObjectiveType.Primary, InfiltrateRadarDome, ObjectiveStatus.InProgress) },
-		};
+		Objective findOutpost = new Objective(ObjectiveType.Primary, FindOutpostText, ObjectiveStatus.InProgress);
+		Objective evacuateDemitri = new Objective(ObjectiveType.Primary, EvacuateDemitriText, ObjectiveStatus.InProgress);
+		Objective infiltrateRadarDome = new Objective(ObjectiveType.Primary, InfiltrateRadarDomeText, ObjectiveStatus.InProgress);
 
-		const int FindOutpostID = 0;
-		const string FindOutpost = "Find our outpost and start repairs on it.";
-
-		const int EvacuateDemitriID = 1;
-		const string EvacuateDemitri = "Find and evacuate Dr. Demitri. He is missing -- likely hiding in the village to the far south.";
-
-		const int InfiltrateRadarDomeID = 2;
-		const string InfiltrateRadarDome = "Reprogram the Super Tanks by sending a spy into the Soviet radar dome.";
+		const string FindOutpostText = "Find our outpost and start repairs on it.";
+		const string EvacuateDemitriText = "Find and evacuate Dr. Demitri. He is missing -- likely hiding in the village to the far south.";
+		const string InfiltrateRadarDomeText = "Reprogram the Super Tanks by sending a spy into the Soviet radar dome.";
 
 		//const string Briefing = "Dr. Demitri, creator of a Soviet Super Tank, wants to defect."
 		//					+ " We planned to extract him while the Soviets were testing their new weapon, but something has gone wrong."
@@ -129,7 +122,7 @@ namespace OpenRA.Mods.RA.Missions
 
 			MissionUtils.CapOre(ussr);
 
-			if (!hospitalEvacuated && !hospital.IsDead() && MissionUtils.AreaSecuredWithUnits(world, greece, hospital.CenterLocation, 5))
+			if (!hospitalEvacuated && !hospital.IsDead() && MissionUtils.AreaSecuredWithUnits(world, greece, hospital.CenterPosition, WRange.FromCells(5)))
 			{
 				EvacuateCivilians();
 				hospitalEvacuated = true;
@@ -137,12 +130,12 @@ namespace OpenRA.Mods.RA.Missions
 
 			if (baseTransferredTick == -1)
 			{
-				var actorsInBase = world.FindUnits(alliedBaseTopLeft.CenterLocation, alliedBaseBottomRight.CenterLocation).Where(a => a != a.Owner.PlayerActor);
+				var actorsInBase = world.FindActorsInBox(alliedBaseTopLeft.Location, alliedBaseBottomRight.Location).Where(a => a != a.Owner.PlayerActor);
 				if (actorsInBase.Any(a => a.Owner == greece))
 				{
 					SetupAlliedBase(actorsInBase);
 					baseTransferredTick = world.FrameNumber;
-					objectives[FindOutpostID].Status = ObjectiveStatus.Completed;
+					findOutpost.Status = ObjectiveStatus.Completed;
 					OnObjectivesUpdated(true);
 				}
 			}
@@ -181,18 +174,18 @@ namespace OpenRA.Mods.RA.Missions
 					superTanksDestroyed = true;
 				}
 			}
-			if (objectives[EvacuateDemitriID].Status != ObjectiveStatus.Completed)
+			if (evacuateDemitri.Status != ObjectiveStatus.Completed)
 			{
 				if (demitri == null)
 				{
 					if (demitriChurch.IsDead())
 					{
-						objectives[EvacuateDemitriID].Status = ObjectiveStatus.Failed;
+						evacuateDemitri.Status = ObjectiveStatus.Failed;
 						OnObjectivesUpdated(true);
 						MissionFailed("Dr. Demitri was killed.");
 					}
 
-					else if (MissionUtils.AreaSecuredWithUnits(world, greece, demitriTriggerAreaCenter.CenterLocation, 3))
+					else if (MissionUtils.AreaSecuredWithUnits(world, greece, demitriTriggerAreaCenter.CenterPosition, WRange.FromCells(3)))
 					{
 						demitri = world.CreateActor("demitri", greece, demitriChurchSpawnPoint.Location, null);
 						demitri.QueueActivity(new Move.Move(demitriTriggerAreaCenter.Location, 0));
@@ -204,7 +197,7 @@ namespace OpenRA.Mods.RA.Missions
 				}
 				else if (demitri.IsDead())
 				{
-					objectives[EvacuateDemitriID].Status = ObjectiveStatus.Failed;
+					evacuateDemitri.Status = ObjectiveStatus.Failed;
 					OnObjectivesUpdated(true);
 					MissionFailed("Dr. Demitri was killed.");
 				}
@@ -212,7 +205,7 @@ namespace OpenRA.Mods.RA.Missions
 				{
 					demitriLZFlare.Destroy();
 					SpawnAndMoveAlliedBaseUnits(info.FirstBaseUnits);
-					objectives[EvacuateDemitriID].Status = ObjectiveStatus.Completed;
+					evacuateDemitri.Status = ObjectiveStatus.Completed;
 					OnObjectivesUpdated(true);
 				}
 			}
@@ -223,11 +216,11 @@ namespace OpenRA.Mods.RA.Missions
 			}
 			if (superTankDomeInfiltratedTick == -1 && superTankDome.IsDead())
 			{
-				objectives[InfiltrateRadarDomeID].Status = ObjectiveStatus.Failed;
+				infiltrateRadarDome.Status = ObjectiveStatus.Failed;
 				OnObjectivesUpdated(true);
 				MissionFailed("The Soviet radar dome was destroyed.");
 			}
-			if (superTanksDestroyed && objectives[EvacuateDemitriID].Status == ObjectiveStatus.Completed)
+			if (superTanksDestroyed && evacuateDemitri.Status == ObjectiveStatus.Completed)
 			{
 				MissionAccomplished("Dr. Demitri has been extracted and the super tanks have been dealt with.");
 			}
@@ -266,7 +259,7 @@ namespace OpenRA.Mods.RA.Missions
 		{
 			Sound.Play("reinfor1.aud");
 			foreach (var unit in units)
-				world.CreateActor(unit, greece, startEntryPoint.Location, Util.GetFacing(startBridgeEndPoint.CenterLocation - startEntryPoint.CenterLocation, 0))
+				world.CreateActor(unit, greece, startEntryPoint.Location, Traits.Util.GetFacing(startBridgeEndPoint.CenterPosition - startEntryPoint.CenterPosition, 0))
 				.QueueActivity(new Move.Move(startMovePoint.Location, 0));
 		}
 
@@ -274,25 +267,35 @@ namespace OpenRA.Mods.RA.Missions
 		{
 			Sound.Play("reinfor1.aud");
 			foreach (var unit in units)
-				world.CreateActor(unit, greece, alliedBaseEntryPoint.Location, Util.GetFacing(alliedBaseMovePoint.CenterLocation - alliedBaseEntryPoint.CenterLocation, 0))
+				world.CreateActor(unit, greece, alliedBaseEntryPoint.Location, Traits.Util.GetFacing(alliedBaseMovePoint.CenterPosition - alliedBaseEntryPoint.CenterPosition, 0))
 				.QueueActivity(new Move.Move(alliedBaseMovePoint.Location, 0));
 		}
 
 		void OnSuperTankDomeInfiltrated(Actor spy)
 		{
 			if (superTankDomeInfiltratedTick != -1) return;
+
 			superTankDome.QueueActivity(new Transform(superTankDome, "dome") { SkipMakeAnims = true });
-			turkey.Stances[greece] = turkey.Stances[neutral] = Stance.Ally;
-			greece.Stances[turkey] = neutral.Stances[turkey] = Stance.Ally;
-			greece.Shroud.ExploreAll(world);
+
+			world.AddFrameEndTask(_ =>
+			{
+				superTanks.Do(world.Remove);
+				turkey.Stances[greece] = turkey.Stances[neutral] = Stance.Ally;
+				greece.Stances[turkey] = neutral.Stances[turkey] = Stance.Ally;
+				greece.Shroud.ExploreAll(world);
+				superTanks.Do(world.Add);
+			});
+
 			foreach (var tank in superTanks.Where(t => !t.IsDead() && t.IsInWorld))
 				MissionUtils.AttackNearestLandActor(false, tank, ussr);
+
 			superTankDomeInfiltratedTick = world.FrameNumber;
-			objectives[InfiltrateRadarDomeID].Status = ObjectiveStatus.Completed;
+
+			infiltrateRadarDome.Status = ObjectiveStatus.Completed;
 			OnObjectivesUpdated(true);
 		}
 
-		public void WorldLoaded(World w)
+		public void WorldLoaded(World w, WorldRenderer wr)
 		{
 			world = w;
 
@@ -329,10 +332,10 @@ namespace OpenRA.Mods.RA.Missions
 			world.CreateActor("camera", greece, provingGroundsCameraPoint.Location, null);
 
 			superTankDome = actors["SuperTankDome"];
-			superTankDome.AddTrait(new InfiltrateForMissionObjective(OnSuperTankDomeInfiltrated));
+			superTankDome.AddTrait(new InfiltrateAction(OnSuperTankDomeInfiltrated));
 			superTankDome.AddTrait(new TransformedAction(self => superTankDome = self));
 
-			Game.MoveViewport(startEntryPoint.Location.ToFloat2());
+			wr.Viewport.Center(startEntryPoint.CenterPosition);
 			MissionUtils.PlayMissionMusic();
 		}
 	}

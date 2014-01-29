@@ -16,9 +16,13 @@ namespace OpenRA.Mods.RA
 {
 	class PaletteFromFileInfo : ITraitInfo
 	{
+		[Desc("internal palette name")]
 		public readonly string Name = null;
+		[Desc("If defined, load the palette only for this tileset.")]
 		public readonly string Tileset = null;
+		[Desc("filename to load")]
 		public readonly string Filename = null;
+		[Desc("Map listed indices to shadow. Ignores previous color.")]
 		public readonly int[] ShadowIndex = { };
 		public readonly bool AllowModifiers = true;
 
@@ -39,6 +43,16 @@ namespace OpenRA.Mods.RA
 		{
 			if (info.Tileset == null || info.Tileset.ToLowerInvariant() == world.Map.Tileset.ToLowerInvariant())
 				wr.AddPalette(info.Name, new Palette(FileSystem.Open(info.Filename), info.ShadowIndex), info.AllowModifiers);
+		}
+
+		public string Filename
+		{
+			get { return info.Filename; }
+		}
+
+		public string Name
+		{
+			get { return info.Name; }
 		}
 	}
 }

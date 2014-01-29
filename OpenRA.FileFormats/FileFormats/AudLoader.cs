@@ -31,12 +31,12 @@ namespace OpenRA.FileFormats
 		public int CompressedSize;
 		public int OutputSize;
 
-		public static Chunk Read(BinaryReader r)
+		public static Chunk Read(Stream s)
 		{
 			Chunk c;
-			c.CompressedSize = r.ReadUInt16();
-			c.OutputSize = r.ReadUInt16();
-			if (0xdeaf != r.ReadUInt32())
+			c.CompressedSize = s.ReadUInt16();
+			c.OutputSize = s.ReadUInt16();
+			if (0xdeaf != s.ReadUInt32())
 				throw new InvalidDataException("Chunk header is bogus");
 			return c;
 		}
@@ -44,8 +44,8 @@ namespace OpenRA.FileFormats
 
 	public static class AudLoader
 	{
-		static int[] IndexAdjust = { -1, -1, -1, -1, 2, 4, 6, 8 };
-		static int[] StepTable = {
+		static int[] indexAdjust = { -1, -1, -1, -1, 2, 4, 6, 8 };
+		static int[] stepTable = {
 									7,     8,     9,     10,    11,    12,     13,    14,    16,
 									17,    19,    21,    23,    25,    28,     31,    34,    37,
 									41,    45,    50,    55,    60,    66,     73,    80,    88,
@@ -62,14 +62,14 @@ namespace OpenRA.FileFormats
 			var sb = (b & 8) != 0;
 			b &= 7;
 
-			var delta = (StepTable[index] * b) / 4 + StepTable[index] / 8;
+			var delta = (stepTable[index] * b) / 4 + stepTable[index] / 8;
 			if (sb) delta = -delta;
 
 			current += delta;
 			if (current > short.MaxValue) current = short.MaxValue;
 			if (current < short.MinValue) current = short.MinValue;
 
-			index += IndexAdjust[b];
+			index += indexAdjust[b];
 			if (index < 0) index = 0;
 			if (index > 88) index = 88;
 
@@ -78,7 +78,7 @@ namespace OpenRA.FileFormats
 
 		public static byte[] LoadSound(byte[] raw, ref int index)
 		{
-			var br = new BinaryReader(new MemoryStream(raw));
+			var s = new MemoryStream(raw);
 			var dataSize = raw.Length;
 			var outputSize = raw.Length * 4;
 
@@ -88,7 +88,7 @@ namespace OpenRA.FileFormats
 
 			while (dataSize-- > 0)
 			{
-				var b = br.ReadByte();
+				var b = s.ReadUInt8();
 
 				var t = DecodeSample(b, ref index, ref currentSample);
 				output[offset++] = (byte)t;
@@ -104,11 +104,10 @@ namespace OpenRA.FileFormats
 
 		public static float SoundLength(Stream s)
 		{
-			var br = new BinaryReader(s);
-			var sampleRate = br.ReadUInt16();
-			/*var dataSize = */ br.ReadInt32();
-			var outputSize = br.ReadInt32();
-			var flags = (SoundFlags) br.ReadByte();
+			var sampleRate = s.ReadUInt16();
+			/*var dataSize = */ s.ReadInt32();
+			var outputSize = s.ReadInt32();
+			var flags = (SoundFlags)s.ReadByte();
 
 			var samples = outputSize;
 			if (0 != (flags & SoundFlags.Stereo)) samples /= 2;
@@ -118,12 +117,11 @@ namespace OpenRA.FileFormats
 
 		public static byte[] LoadSound(Stream s)
 		{
-			var br = new BinaryReader(s);
-			/*var sampleRate =*/ br.ReadUInt16();
-			var dataSize = br.ReadInt32();
-			var outputSize = br.ReadInt32();
-			/*var flags = (SoundFlags)*/ br.ReadByte();
-			/*var format = (SoundFormat)*/ br.ReadByte();
+			/*var sampleRate =*/ s.ReadUInt16();
+			var dataSize = s.ReadInt32();
+			var outputSize = s.ReadInt32();
+			/*var flags = (SoundFlags)*/ s.ReadByte();
+			/*var format = (SoundFormat)*/ s.ReadByte();
 
 			var output = new byte[outputSize];
 			var offset = 0;
@@ -132,10 +130,10 @@ namespace OpenRA.FileFormats
 
 			while (dataSize > 0)
 			{
-				var chunk = Chunk.Read(br);
+				var chunk = Chunk.Read(s);
 				for (int n = 0; n < chunk.CompressedSize; n++)
 				{
-					var b = br.ReadByte();
+					var b = s.ReadUInt8();
 
 					var t = DecodeSample(b, ref index, ref currentSample);
 					output[offset++] = (byte)t;

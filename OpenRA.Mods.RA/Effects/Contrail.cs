@@ -16,90 +16,43 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class ContrailInfo : ITraitInfo
+	class ContrailInfo : ITraitInfo, Requires<IBodyOrientationInfo>
 	{
-		public readonly int[] ContrailOffset = {0, 0};
+		[Desc("Position relative to body")]
+		public readonly WVec Offset = WVec.Zero;
 
-		public readonly int TrailLength = 20;
+		public readonly int TrailLength = 25;
 		public readonly Color Color = Color.White;
 		public readonly bool UsePlayerColor = true;
 
 		public object Create(ActorInitializer init) { return new Contrail(init.self, this); }
 	}
 
-	class Contrail : ITick, IPostRender
+	class Contrail : ITick, IRender
 	{
-		Turret contrailTurret = null;
-		ContrailHistory history;
-		IFacing facing;
-		IMove move;
+		ContrailInfo info;
+		ContrailRenderable trail;
+		IBodyOrientation body;
 
 		public Contrail(Actor self, ContrailInfo info)
 		{
-			contrailTurret = new Turret(info.ContrailOffset);
-			history = new ContrailHistory(info.TrailLength,
-				info.UsePlayerColor ? ContrailHistory.ChooseColor(self) : info.Color);
-			facing = self.Trait<IFacing>();
-			move = self.Trait<IMove>();
+			this.info = info;
+
+			var color = info.UsePlayerColor ? ContrailRenderable.ChooseColor(self) : info.Color;
+			trail = new ContrailRenderable(self.World, color, info.TrailLength, 0, 0);
+
+			body = self.Trait<IBodyOrientation>();
 		}
 
 		public void Tick(Actor self)
 		{
-			history.Tick(self.CenterLocation - new PVecInt(0, move.Altitude) - (PVecInt)Combat.GetTurretPosition(self, facing, contrailTurret).ToInt2());
+			var local = info.Offset.Rotate(body.QuantizeOrientation(self, self.Orientation));
+			trail.Update(self.CenterPosition + body.LocalToWorld(local));
 		}
 
-		public void RenderAfterWorld(WorldRenderer wr, Actor self) { history.Render(self); }
-	}
-
-	class ContrailHistory
-	{
-		List<PPos> positions = new List<PPos>();
-		readonly int TrailLength;
-		readonly Color Color;
-		readonly int StartSkip;
-
-		public static Color ChooseColor(Actor self)
+		public IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr)
 		{
-			var ownerColor = Color.FromArgb(255, self.Owner.ColorRamp.GetColor(0));
-			return Exts.ColorLerp(0.5f, ownerColor, Color.White);
-		}
-
-		public ContrailHistory(int trailLength, Color color)
-			: this(trailLength, color, 0) { }
-
-		public ContrailHistory(int trailLength, Color color, int startSkip)
-		{
-			this.TrailLength = trailLength;
-			this.Color = color;
-			this.StartSkip = startSkip;
-		}
-
-		public void Tick(PPos currentPos)
-		{
-			positions.Add(currentPos);
-			if (positions.Count >= TrailLength)
-				positions.RemoveAt(0);
-		}
-
-		public void Render(Actor self)
-		{
-			Color trailStart = Color;
-			Color trailEnd = Color.FromArgb(trailStart.A - 255 / TrailLength, trailStart.R, trailStart.G, trailStart.B);
-
-			for (int i = positions.Count - 1 - StartSkip; i >= 1; --i)
-			{
-				var conPos = positions[i];
-				var nextPos = positions[i - 1];
-
-				if (self.World.RenderedShroud.IsVisible(conPos.ToCPos()) ||
-					self.World.RenderedShroud.IsVisible(nextPos.ToCPos()))
-				{
-					Game.Renderer.WorldLineRenderer.DrawLine(conPos.ToFloat2(), nextPos.ToFloat2(), trailStart, trailEnd);
-
-					trailStart = trailEnd;
-					trailEnd = Color.FromArgb(trailStart.A - 255 / positions.Count, trailStart.R, trailStart.G, trailStart.B);
-				}
-			}
+			yield return trail;
 		}
 	}
 }

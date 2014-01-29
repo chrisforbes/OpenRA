@@ -15,34 +15,33 @@ namespace OpenRA.Mods.RA.Activities
 {
 	public class Follow : Activity
 	{
-		Target Target;
-		int Range;
+		Target target;
+		Mobile mobile;
+		WRange range;
 		int nextPathTime;
 
 		const int delayBetweenPathingAttempts = 20;
 		const int delaySpread = 5;
 
-		public Follow(Target target, int range)
+		public Follow(Actor self, Target target, WRange range)
 		{
-			Target = target;
-			Range = range;
+			this.target = target;
+			mobile = self.Trait<Mobile>();
+			this.range = range;
 		}
 
-		public override Activity Tick( Actor self )
+		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (!Target.IsValid) return NextActivity;
+			if (IsCanceled || !target.IsValidFor(self))
+				return NextActivity;
 
-			var inRange = ( Target.CenterLocation.ToCPos() - self.Location ).LengthSquared < Range * Range;
-
-			if( inRange ) return this;
-			if (--nextPathTime > 0) return this;
+			if (target.IsInRange(self.CenterPosition, range) || --nextPathTime > 0)
+				return this;
 
 			nextPathTime = self.World.SharedRandom.Next(delayBetweenPathingAttempts - delaySpread,
 				delayBetweenPathingAttempts + delaySpread);
 
-			var mobile = self.Trait<Mobile>();
-			return Util.SequenceActivities( mobile.MoveWithinRange( Target, Range ), this );
+			return Util.SequenceActivities(mobile.MoveWithinRange(target, range), this);
 		}
 	}
 }

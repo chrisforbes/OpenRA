@@ -6,34 +6,45 @@
 			Clear: 80
 			Rough: 40
 			Road: 100
+			Bridge: 100
 			Ore: 70
 			Gems: 70
 			Beach: 40
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
-	IronCurtainable: 
+	IronCurtainable:
 	AttackMove:
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
-		Types:Vehicle
+		Types: Vehicle
 	GivesBounty:
 	GpsDot:
-		String:Vehicle
+		String: Vehicle
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	EjectOnDeath:
+		PilotActor: e1
+		SuccessRate: 20
+		EjectOnGround: yes
+		EjectInAir: no
+	Huntable:
+	LuaScriptEvents:
 
 ^Tank:
 	AppearsOnRadar:
@@ -43,18 +54,19 @@
 			Clear: 80
 			Rough: 70
 			Road: 100
+			Bridge: 100
 			Ore: 70
 			Gems: 70
 			Beach: 70
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
 	IronCurtainable:
 	AttackMove:
@@ -63,19 +75,29 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
-		Types:Tank
+		Types: Tank
 	GivesBounty:
 	GpsDot:
-		String:Vehicle
+		String: Vehicle
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	EjectOnDeath:
+		PilotActor: e1
+		SuccessRate: 20
+		EjectOnGround: yes
+		EjectInAir: no
+	Huntable:
+	LuaScriptEvents:
 
 ^Infantry:
 	AppearsOnRadar:
 	Health:
-		Radius: 3
+		Radius: 128
 	Armor:
 		Type: None
 	RevealsShroud:
@@ -87,6 +109,7 @@
 			Clear: 90
 			Rough: 80
 			Road: 100
+			Bridge: 100
 			Ore: 80
 			Gems: 80
 			Beach: 80
@@ -94,7 +117,7 @@
 	Selectable:
 		Voice: GenericVoice
 	TargetableUnit:
-		TargetTypes: Ground
+		TargetTypes: Ground, Infantry, Disguise
 	RenderInfantry:
 	AutoTarget:
 	AttackMove:
@@ -106,20 +129,28 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlst1.aud
 	ProximityCaptor:
-		Types:Infantry
+		Types: Infantry
 	GivesBounty:
 	GpsDot:
-		String:Infantry
+		String: Infantry
 	ParachuteAttachment:
-		Offset: 0,-10
+		Offset: 0,0,427
 	CrushableInfantry:
 		CrushSound: squishy2.aud
-	RepairableNear:
-		Buildings: hosp
-		CloseEnough: 1
 	UpdatesPlayerStatistics:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	SelfHealing:
+		Step: 5
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresTech: InfantryHealing
+	Huntable:
+	LuaScriptEvents:
 
 ^Ship:
 	AppearsOnRadar:
@@ -129,7 +160,7 @@
 			Water: 100
 	SelectionDecorations:
 	Selectable:
-		Voice: ShipVoice
+		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground, Water
 	DetectCloaked:
@@ -140,14 +171,20 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: navylst1.aud
+		Notification: NavalUnitLost
 	ProximityCaptor:
-		Types:Ship
+		Types: Ship
 	GivesBounty:
 	GpsDot:
-		String:Ship
+		String: Ship
 	WithSmoke:
 	UpdatesPlayerStatistics:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	Huntable:
+	LuaScriptEvents:
 
 ^Plane:
 	AppearsOnRadar:
@@ -163,25 +200,27 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: aunitl1.aud
-	DebugAircraftFacing:
-	DebugAircraftSubPxX:
-	DebugAircraftSubPxY:
-	DebugAircraftAltitude:
+		Notification: AirUnitLost
 	ProximityCaptor:
-		Types:Plane
+		Types: Plane
 	EjectOnDeath:
 		PilotActor: E1
 		SuccessRate: 50
+		EjectOnGround: no
+		EjectInAir: yes
 	GivesBounty:
 	GpsDot:
-		String:Plane
+		String: Plane
 	UpdatesPlayerStatistics:
+	CombatDebugOverlay:
+	BodyOrientation:
+	Huntable:
+	LuaScriptEvents:
 
 ^Helicopter:
 	Inherits: ^Plane
 	GpsDot:
-		String:Helicopter
+		String: Helicopter
 
 ^Building:
 	AppearsOnRadar:
@@ -189,14 +228,15 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4, DetonateAttack
 	Building:
 		Dimensions: 1,1
 		Footprint: x
 		TerrainTypes: Clear,Road
+		RequiresBaseProvider: True
 	GivesBuildableArea:
-	Capturable:
-	CapturableBar:
+	ExternalCapturable:
+	ExternalCapturableBar:
 	SoundOnDamageTransition:
 		DamagedSound: kaboom1.aud
 		DestroyedSound: kaboom22.aud
@@ -208,19 +248,26 @@
 		ActorTypes: e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,e1,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,e6,e6,e6,e6,e6
 	MustBeDestroyed:
 	GivesExperience:
-#	FrozenUnderFog:
 	CaptureNotification:
-		Notification: strucap1.aud
 	EditorAppearance:
 		RelativeToTopLeft: yes
 	ShakeOnDeath:
 	ProximityCaptor:
-		Types:Building
+		Types: Building
 	Sellable:
 	AcceptsSupplies:
 	GivesBounty:
 	UpdatesPlayerStatistics:
-	C4Demolishable:
+	CombatDebugOverlay:
+	Guardable:
+		Range: 3
+	BodyOrientation:
+	FrozenUnderFog:
+	GpsDot:
+		String: Structure
+	Huntable:
+	LuaScriptEvents:
+	Demolishable:
 
 ^Wall:
 	AppearsOnRadar:
@@ -241,7 +288,7 @@
 	Selectable:
 		Priority: 1
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4, DetonateAttack
 	RenderBuildingWall:
 		HasMakeAnimation: false
 		Palette: terrain
@@ -251,10 +298,13 @@
 		UseTerrainPalette: true
 	AutoTargetIgnore:
 	ProximityCaptor:
-		Types:Wall
+		Types: Wall
 	Sellable:
-	UpdatesPlayerStatistics:
-	C4Demolishable:
+	Guardable:
+	BodyOrientation:
+	FrozenUnderFog:
+	LuaScriptEvents:
+	Demolishable:
 
 ^TechBuilding:
 	Inherits: ^Building
@@ -267,12 +317,32 @@
 	Tooltip:
 		Name: Civilian Building
 	ProximityCaptor:
-		Types:CivilianBuilding
+		Types: CivilianBuilding
 	-AcceptsSupplies:
 	-GivesBuildableArea:
 	-Sellable:
-	-Capturable:
-	-CapturableBar:
+	-ExternalCapturable:
+	-ExternalCapturableBar:
+	FrozenUnderFog:
+		StartsRevealed: true
+	-GpsDot:
+	-MustBeDestroyed:
+
+^AmmoBox:
+	Inherits: ^TechBuilding
+	Selectable:
+		Priority: 0
+	Health:
+		HP: 10
+	Explodes:
+		Weapon: UnitExplode
+	Tooltip:
+		Name: Ammo Box
+	AutoTargetIgnore:
+	Armor:
+		Type: Light
+	TargetableBuilding:
+		TargetTypes: Ground, DetonateAttack
 
 ^CivInfantry:
 	Inherits: ^Infantry
@@ -286,13 +356,14 @@
 	Health:
 		HP: 20
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
 		Range: 2
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ProximityCaptor:
-		Types:CivilianInfantry
+		Types: CivilianInfantry
 	-RenderInfantry:
 	RenderInfantryPanic:
 	ScaredyCat:
@@ -309,9 +380,11 @@
 	-Selectable:
 	Tooltip:
 		Name: Field
+	-TargetableBuilding:
+	-Demolishable:
 	-ProximityCaptor:
 	ProximityCaptor:
-		Types:CivilianField
+		Types: CivilianField
 
 ^Tree:
 	Tooltip:
@@ -328,18 +401,21 @@
 		RelativeToTopLeft: yes
 		UseTerrainPalette: true
 	ProximityCaptor:
-		Types:Tree
+		Types: Tree
 	Health:
 		HP: 500
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^Husk:
 	Husk:
+		AllowedTerrain: Clear, Rough, Road, Ore, Gems, Beach
 	RenderUnit:
 	Health:
 		HP: 140
@@ -349,7 +425,29 @@
 	AppearsOnRadar:
 	Burns:
 	ProximityCaptor:
-		Types:Husk
+		Types: Husk
+	BelowUnits:
+	BodyOrientation:
+	Chronoshiftable:
+	LuaScriptEvents:
+
+^HelicopterHusk:
+	Inherits: ^Husk
+	-Husk:
+	-Burns:
+	FallsToEarth:
+		Spins: True
+		Moves: False
+	-BelowUnits:
+
+^PlaneHusk:
+	Inherits: ^Husk
+	-Husk:
+	-Burns:
+	FallsToEarth:
+		Spins: False
+		Moves: True
+	-BelowUnits:
 
 ^Bridge:
 	Tooltip:
@@ -363,56 +461,13 @@
 	Health:
 		HP: 1000
 	ProximityCaptor:
-		Types:Bridge
+		Types: Bridge
+	Armor:
+		Type: Concrete
 	AutoTargetIgnore:
+	BodyOrientation:
+	LuaScriptEvents:
 
-#Temperate Terrain Expansion
-^SVBridge:
-	Tooltip:
-		Name: Small Bridge
-	BelowUnits:
-	TargetableBuilding:
-		TargetTypes: Ground, Water
-	Building:
-		Footprint: ___ ___
-		Dimensions: 3,2
-	Health:
-		HP: 750
-	ProximityCaptor:
-		Types:Bridge
-	AutoTargetIgnore:
-
-^SHBridge:
-	Tooltip:
-		Name: Small Bridge
-	BelowUnits:
-	TargetableBuilding:
-		TargetTypes: Ground, Water
-	Building:
-		Footprint: __ __ __
-		Dimensions: 2,3
-	Health:
-		HP: 750
-	ProximityCaptor:
-		Types:Bridge
-	AutoTargetIgnore:
-
-^STDBridge:
-	Tooltip:
-		Name: Small Bridge
-	BelowUnits:
-	TargetableBuilding:
-		TargetTypes: Ground, Water
-	Building:
-		Footprint: ____ ____
-		Dimensions: 4,2
-	Health:
-		HP: 750
-	ProximityCaptor:
-		Types:Bridge
-	AutoTargetIgnore:
-
-#Desert Terrain Expansion:
 ^Rock:
 	Tooltip:
 		Name: Rock
@@ -428,9 +483,14 @@
 		RelativeToTopLeft: yes
 		UseTerrainPalette: true
 	ProximityCaptor:
-		Types:Tree
+		Types: Tree
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	LuaScriptEvents:
 
 ^DesertCivBuilding:
 	Inherits: ^CivBuilding
 	RenderBuilding:
 		Palette: terrain
+

@@ -6,17 +6,27 @@ language: c
 
 # Make sure build dependencies are installed.
 install:
- - sudo apt-get install mono-gmcs cli-common-dev libgl1-mesa-dev libsdl1.2-dev libsdl-gfx1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-net1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libopenal-dev libalut-dev
+ - sudo apt-get install mono-gmcs cli-common-dev libsdl1.2debian libgl1-mesa-glx libopenal1 libfreetype6 dpkg rpm nsis markdown
 
-# Run the build script which will automatically call RALint.
+# Run the build script
+# call RALint to check for YAML errors
+# Test run the packaging scripts for all platforms
 script:
  - make all
+ - make test
+ - cd packaging && mkdir temp &&./package-all.sh travis-build temp
 
 # Only watch the development branch.
 branches:
  only:
    - bleed
 
-# Notify developers when needed.
+# Notify developers when build passed/failed.
 notifications:
-  irc: "irc.freenode.net#openra"
+  irc:
+    template:
+      - "%{repository}#%{build_number} %{commit} %{author}: %{message} %{build_url}"
+    channels:
+      - "irc.freenode.net#openra"
+    use_notice: true
+    skip_join: true

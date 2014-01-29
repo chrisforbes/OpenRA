@@ -12,7 +12,6 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using OpenRA.FileFormats;
 using OpenRA.FileFormats.Graphics;
 using Tao.OpenGl;
 
@@ -20,7 +19,11 @@ namespace OpenRA.Renderer.SdlCommon
 {
 	public class Texture : ITexture
 	{
-		public int texture;		/* temp: can be internal again once shaders are in shared code */
+		int texture;
+		public int ID { get { return texture; } }
+
+		Size size;
+		public Size Size { get { return size; } }
 
 		public Texture()
 		{
@@ -48,6 +51,11 @@ namespace OpenRA.Renderer.SdlCommon
 			Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
 			ErrorHandler.CheckGlError();
 
+			Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+			ErrorHandler.CheckGlError();
+			Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+			ErrorHandler.CheckGlError();
+
 			Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_BASE_LEVEL, 0);
 			ErrorHandler.CheckGlError();
 			Gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAX_LEVEL, 0);
@@ -56,9 +64,10 @@ namespace OpenRA.Renderer.SdlCommon
 
 		public void SetData(byte[] colors, int width, int height)
 		{
-			if (!IsPowerOf2(width) || !IsPowerOf2(height))
+			if (!Exts.IsPowerOf2(width) || !Exts.IsPowerOf2(height))
 				throw new InvalidDataException("Non-power-of-two array {0}x{1}".F(width, height));
 
+			size = new Size(width, height);
 			unsafe
 			{
 				fixed (byte* ptr = &colors[0])
@@ -78,14 +87,15 @@ namespace OpenRA.Renderer.SdlCommon
 			int width = colors.GetUpperBound(1) + 1;
 			int height = colors.GetUpperBound(0) + 1;
 
-			if (!IsPowerOf2(width) || !IsPowerOf2(height))
-				throw new InvalidDataException("Non-power-of-two array {0}x{1}".F(width,height));
+			if (!Exts.IsPowerOf2(width) || !Exts.IsPowerOf2(height))
+				throw new InvalidDataException("Non-power-of-two array {0}x{1}".F(width, height));
 
+			size = new Size(width, height);
 			unsafe
 			{
-				fixed (uint* ptr = &colors[0,0])
+				fixed (uint* ptr = &colors[0, 0])
 				{
-					IntPtr intPtr = new IntPtr((void *) ptr);
+					IntPtr intPtr = new IntPtr((void*)ptr);
 					PrepareTexture();
 					Gl.glTexImage2D(Gl.GL_TEXTURE_2D, 0, Gl.GL_RGBA8, width, height,
 						0, Gl.GL_BGRA, Gl.GL_UNSIGNED_BYTE, intPtr);
@@ -96,15 +106,12 @@ namespace OpenRA.Renderer.SdlCommon
 
 		public void SetData(Bitmap bitmap)
 		{
-			if (!IsPowerOf2(bitmap.Width) || !IsPowerOf2(bitmap.Height))
-			{
-				//throw new InvalidOperationException( "non-power-of-2-texture" );
+			if (!Exts.IsPowerOf2(bitmap.Width) || !Exts.IsPowerOf2(bitmap.Height))
 				bitmap = new Bitmap(bitmap, bitmap.Size.NextPowerOf2());
-			}
 
+			size = new Size(bitmap.Width, bitmap.Height);
 			var bits = bitmap.LockBits(bitmap.Bounds(),
-				ImageLockMode.ReadOnly,
-				PixelFormat.Format32bppArgb);
+				ImageLockMode.ReadOnly,	PixelFormat.Format32bppArgb);
 
 			PrepareTexture();
 			Gl.glTexImage2D(Gl.GL_TEXTURE_2D, 0, Gl.GL_RGBA8, bits.Width, bits.Height,
@@ -113,9 +120,35 @@ namespace OpenRA.Renderer.SdlCommon
 			bitmap.UnlockBits(bits);
 		}
 
-		bool IsPowerOf2(int v)
+		public byte[] GetData()
 		{
-			return (v & (v - 1)) == 0;
+			var data = new byte[4 * size.Width * size.Height];
+
+			ErrorHandler.CheckGlError();
+			Gl.glBindTexture(Gl.GL_TEXTURE_2D, texture);
+			unsafe
+			{
+				fixed (byte* ptr = &data[0])
+				{
+					IntPtr intPtr = new IntPtr((void*)ptr);
+					Gl.glGetTexImage(Gl.GL_TEXTURE_2D, 0, Gl.GL_BGRA, Gl.GL_UNSIGNED_BYTE, intPtr);
+				}
+			}
+
+			ErrorHandler.CheckGlError();
+			return data;
+		}
+
+		public void SetEmpty(int width, int height)
+		{
+			if (!Exts.IsPowerOf2(width) || !Exts.IsPowerOf2(height))
+				throw new InvalidDataException("Non-power-of-two array {0}x{1}".F(width, height));
+
+			size = new Size(width, height);
+			PrepareTexture();
+			Gl.glTexImage2D(Gl.GL_TEXTURE_2D, 0, Gl.GL_RGBA8, width, height,
+			                0, Gl.GL_BGRA, Gl.GL_UNSIGNED_BYTE, null);
+			ErrorHandler.CheckGlError();
 		}
 	}
 }

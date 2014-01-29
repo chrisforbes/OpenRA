@@ -12,8 +12,8 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Windows.Forms;
 using System.Text;
+using System.Windows.Forms;
 
 namespace OpenRA
 {
@@ -31,16 +31,38 @@ namespace OpenRA
 				return;
 			}
 
+			AppDomain.CurrentDomain.UnhandledException += (_, e) => FatalError((Exception)e.ExceptionObject);
+
 			try
 			{
 				Run(args);
 			}
 			catch (Exception e)
 			{
-				Log.AddChannel("exception", "exception.log");
-				var rpt = BuildExceptionReport(e).ToString();
-				Log.Write("exception", "{0}", rpt);
-				Console.Error.WriteLine(rpt);
+				FatalError(e);
+			}
+		}
+
+		static void FatalError(Exception e)
+		{
+			Log.AddChannel("exception", "exception.log");
+
+			if (Game.modData != null)
+			{
+				var mod = Game.modData.Manifest.Mod;
+				Log.Write("exception", "{0} Mod at Version {1}", mod.Title, mod.Version);
+			}
+
+			Log.Write("exception", "Operating System: {0} ({1})", Platform.CurrentPlatform, Environment.OSVersion);
+			Log.Write("exception", "Runtime Version: {0}", Platform.RuntimeVersion);
+			var rpt = BuildExceptionReport(e).ToString();
+			Log.Write("exception", "{0}", rpt);
+			Console.Error.WriteLine(rpt);
+
+			if (Game.Settings.Debug.ShowFatalErrorDialog && !Game.Settings.Server.Dedicated)
+			{
+				Game.Renderer.Device.Quit();
+				FatalErrorDialog.Show();
 			}
 		}
 
@@ -56,7 +78,8 @@ namespace OpenRA
 
 		static StringBuilder BuildExceptionReport(Exception e, StringBuilder sb, int d)
 		{
-			if (e == null) return sb;
+			if (e == null)
+				return sb;
 
 			sb.AppendFormat("Exception of type `{0}`: {1}", e.GetType().FullName, e.Message);
 

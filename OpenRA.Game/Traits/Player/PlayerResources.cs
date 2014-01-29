@@ -10,68 +10,28 @@
 
 using System;
 using System.Linq;
-using OpenRA.GameRules;
 
 namespace OpenRA.Traits
 {
 	public class PlayerResourcesInfo : ITraitInfo
 	{
-		public readonly int InitialCash = 10000;
-		public readonly int InitialOre = 0;
+		public readonly int[] SelectableCash = { 2500, 5000, 10000, 20000 };
+		public readonly int DefaultCash = 5000;
 		public readonly int AdviceInterval = 250;
 
 		public object Create(ActorInitializer init) { return new PlayerResources(init.self, this); }
-	}
-
-	public class DebugResourceCashInfo : ITraitInfo, Requires<PlayerResourcesInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceCash(init.self); }
-	}
-
-	public class DebugResourceCash : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceCash(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.Cash; } }
-	}
-
-	public class DebugResourceOreInfo : ITraitInfo, Requires<PlayerResourcesInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceOre(init.self); }
-	}
-
-	public class DebugResourceOre : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceOre(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.Ore; } }
-	}
-
-	public class DebugResourceOreCapacityInfo : ITraitInfo
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceOreCapacity(init.self); }
-	}
-
-	public class DebugResourceOreCapacity : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceOreCapacity(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.OreCapacity; } }
 	}
 
 	public class PlayerResources : ITick, ISync
 	{
 		readonly Player Owner;
 		int AdviceInterval;
-		
-		int cashtickallowed = 0;
 
 		public PlayerResources(Actor self, PlayerResourcesInfo info)
 		{
 			Owner = self.Owner;
 
-			Cash = info.InitialCash;
-			Ore = info.InitialOre;
+			Cash = self.World.LobbyInfo.GlobalSettings.StartingCash;
 			AdviceInterval = info.AdviceInterval;
 		}
 
@@ -140,13 +100,13 @@ namespace OpenRA.Traits
 		const float displayCashFracPerFrame = .07f;
 		const int displayCashDeltaPerFrame = 37;
 		int nextSiloAdviceTime = 0;
+		int nextCashTickTime = 0;
 
 		public void Tick(Actor self)
 		{
-			if(cashtickallowed > 0) {
-				cashtickallowed = cashtickallowed - 1;
-			}
-			
+			if (nextCashTickTime > 0)
+				nextCashTickTime--;
+
 			OreCapacity = self.World.ActorsWithTrait<IStoreOre>()
 				.Where(a => a.Actor.Owner == Owner)
 				.Sum(a => a.Trait.Capacity);
@@ -202,22 +162,17 @@ namespace OpenRA.Traits
 		
 		public void playCashTickUp(Actor self)
 		{
-			if (Game.Settings.Sound.SoundCashTickType != SoundCashTicks.Disabled)
-			{
+			if (Game.Settings.Sound.CashTicks)
 				Sound.PlayNotification(self.Owner, "Sounds", "CashTickUp", self.Owner.Country.Race);
-			}
 		}
 		
 		public void playCashTickDown(Actor self)
 		{
-			if (
-				Game.Settings.Sound.SoundCashTickType == SoundCashTicks.Extreme ||
-				(Game.Settings.Sound.SoundCashTickType == SoundCashTicks.Normal && cashtickallowed == 0)
-			) {
+			if (Game.Settings.Sound.CashTicks && nextCashTickTime == 0)
+			{
 				Sound.PlayNotification(self.Owner, "Sounds", "CashTickDown", self.Owner.Country.Race);
-				cashtickallowed = 3;
+				nextCashTickTime = 2;
 			}
-			
 		}
 	}
 }

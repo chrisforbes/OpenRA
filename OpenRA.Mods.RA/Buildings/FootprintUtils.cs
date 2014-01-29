@@ -55,10 +55,17 @@ namespace OpenRA.Mods.RA.Buildings
 						yield return new CVec(x, y);
 		}
 
-		public static CVec AdjustForBuildingSize( BuildingInfo buildingInfo )
+		public static CVec AdjustForBuildingSize(BuildingInfo buildingInfo)
 		{
 			var dim = buildingInfo.Dimensions;
 			return new CVec(dim.X / 2, dim.Y > 1 ? (dim.Y + 1) / 2 : 0);
+		}
+
+		public static WVec CenterOffset(BuildingInfo buildingInfo)
+		{
+			var dim = buildingInfo.Dimensions;
+			// Offset is measured relative to the center of the cell, so need to subtract an additional half cell.
+			return new CVec(dim.X, dim.Y).ToWVec() / 2 - new WVec(512, 512, 0);
 		}
 	}
 }

@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.FileFormats;
-using OpenRA.Network;
+using OpenRA.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
@@ -26,7 +26,7 @@ namespace OpenRA.Mods.RA
 	{
 		public Dictionary<Player, CPos> Start = new Dictionary<Player, CPos>();
 
-		public void WorldLoaded(World world)
+		public void WorldLoaded(World world, WorldRenderer wr)
 		{
 			var taken = world.LobbyInfo.Clients.Where(c => c.SpawnPoint != 0 && c.Slot != null)
 				.Select(c => (CPos) world.Map.GetSpawnPoints()[c.SpawnPoint-1]).ToList();
@@ -47,14 +47,15 @@ namespace OpenRA.Mods.RA
 			}
 
 			// Explore allied shroud
-			foreach (var p in Start)
-				if ((world.LocalPlayer != null ) &&(p.Key == world.LocalPlayer || p.Key.Stances[world.LocalPlayer] == Stance.Ally))
-					world.WorldActor.Trait<Shroud>().Explore(world, p.Value,
-						world.WorldActor.Info.Traits.Get<MPStartLocationsInfo>().InitialExploreRange);
+			var explore = world.WorldActor.Info.Traits.Get<MPStartLocationsInfo>().InitialExploreRange;
+			foreach (var p in Start.Keys)
+				foreach (var q in world.Players)
+					if (p.IsAlliedWith(q))
+						q.Shroud.Explore(world, Start[p], explore);
 
 			// Set viewport
 			if (world.LocalPlayer != null && Start.ContainsKey(world.LocalPlayer))
-				Game.viewport.Center(Start[world.LocalPlayer].ToFloat2());
+				wr.Viewport.Center(Start[world.LocalPlayer].CenterPosition);
 		}
 
 		static Player FindPlayerInSlot(World world, string pr)

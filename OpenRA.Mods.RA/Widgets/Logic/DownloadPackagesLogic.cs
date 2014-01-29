@@ -22,13 +22,13 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 	public class DownloadPackagesLogic
 	{
 		Widget panel;
-		Dictionary<string,string> installData;
+		Dictionary<string, string> installData;
 		ProgressBarWidget progressBar;
 		LabelWidget statusLabel;
 		Action afterInstall;
-		
+
 		[ObjectCreator.UseCtor]
-		public DownloadPackagesLogic(Widget widget, Dictionary<string,string> installData, Action afterInstall)
+		public DownloadPackagesLogic(Widget widget, Dictionary<string, string> installData, Action afterInstall)
 		{
 			this.installData = installData;
 			this.afterInstall = afterInstall;
@@ -51,7 +51,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 			// Save the package to a temp file
 			var file = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-			var dest = new string[] { Platform.SupportDir, "Content", Game.modData.Manifest.Mods[0] }.Aggregate(Path.Combine);
+			var dest = new string[] { Platform.SupportDir, "Content", Game.modData.Manifest.Mod.Id }.Aggregate(Path.Combine);
 
 			Action<DownloadProgressChangedEventArgs> onDownloadProgress = i =>
 			{
@@ -71,7 +71,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				Game.RunAfterTick(() =>
 				{
-					statusLabel.GetText = () => "Error: "+s;
+					statusLabel.GetText = () => "Error: " + s;
 					retryButton.IsVisible = () => true;
 				});
 			};

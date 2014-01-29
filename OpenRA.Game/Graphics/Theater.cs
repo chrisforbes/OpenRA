@@ -1,0 +1,89 @@
+#region Copyright & License Information
+/*
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
+ * This file is part of OpenRA, which is free software. It is made
+ * available to you under the terms of the GNU General Public License
+ * as published by the Free Software Foundation. For more information,
+ * see COPYING.
+ */
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using OpenRA.FileFormats;
+
+namespace OpenRA.Graphics
+{
+	public class Theater
+	{
+		SheetBuilder sheetBuilder;
+		Dictionary<ushort, Sprite[]> templates;
+		Sprite missingTile;
+
+		Sprite[] LoadTemplate(string filename, string[] exts, Dictionary<string, ISpriteSource> sourceCache, int[] frames)
+		{
+			ISpriteSource source;
+			if (!sourceCache.ContainsKey(filename))
+			{
+				using (var s = FileSystem.OpenWithExts(filename, exts))
+					source = SpriteSource.LoadSpriteSource(s, filename);
+
+				if (source.CacheWhenLoadingTileset)
+					sourceCache.Add(filename, source);
+			}
+			else
+				source = sourceCache[filename];
+
+			if (frames != null)
+			{
+				var ret = new List<Sprite>();
+				var srcFrames = source.Frames.ToArray();
+				foreach (var i in frames)
+					ret.Add(sheetBuilder.Add(srcFrames[i]));
+
+				return ret.ToArray();
+			}
+
+			return source.Frames.Select(f => sheetBuilder.Add(f)).ToArray();
+		}
+
+		public Theater(TileSet tileset)
+		{
+			var allocated = false;
+			Func<Sheet> allocate = () =>
+			{
+				if (allocated)
+					throw new SheetOverflowException("Terrain sheet overflow. Try increasing the tileset SheetSize parameter.");
+				allocated = true;
+
+				return new Sheet(new Size(tileset.SheetSize, tileset.SheetSize));
+			};
+
+			var sourceCache = new Dictionary<string, ISpriteSource>();
+			templates = new Dictionary<ushort, Sprite[]>();
+			sheetBuilder = new SheetBuilder(SheetType.Indexed, allocate);
+			foreach (var t in tileset.Templates)
+				templates.Add(t.Value.Id, LoadTemplate(t.Value.Image, tileset.Extensions, sourceCache, t.Value.Frames));
+
+			// 1x1px transparent tile
+			missingTile = sheetBuilder.Add(new byte[1], new Size(1, 1));
+		}
+
+		public Sprite TileSprite(TileReference<ushort, byte> r)
+		{
+			Sprite[] template;
+			if (!templates.TryGetValue(r.Type, out template))
+				return missingTile;
+
+			if (r.Index >= template.Length)
+				return missingTile;
+
+			return template[r.Index];
+		}
+
+		public Sheet Sheet { get { return sheetBuilder.Current; } }
+	}
+}

@@ -8,7 +8,6 @@
  */
 #endregion
 
-using System.Collections.Generic;
 using OpenRA.Network;
 
 namespace OpenRA.Traits
@@ -31,8 +30,7 @@ namespace OpenRA.Traits
 				return false;
 			}
 
-			// Hack: Assumes bots always run on clientId 0.
-			var isBotOrder = subjectClient.Bot != null && clientId == 0;
+			var isBotOrder = subjectClient.Bot != null && clientId == subjectClient.BotControllerClientIndex;
 
 			// Drop exploiting orders
 			if (subjectClientId != clientId && !isBotOrder)
@@ -41,7 +39,7 @@ namespace OpenRA.Traits
 				return false;
 			}
 
-			return true;
+			return order.Subject.AcceptsOrder(order.OrderString);
 		}
 	}
 }

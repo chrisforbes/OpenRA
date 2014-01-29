@@ -1,0 +1,481 @@
+GACNST:
+	Inherits: ^Building
+	Building:
+		Power: 0
+		Footprint: xxx xxx xxx
+		Dimensions: 3,3
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 1000
+		Owner: None
+	Health:
+		HP: 1500
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5
+	Production:
+		Produces: Building,Defense
+	Valued:
+		Cost: 2500
+	Tooltip:
+		Name: Construction Yard
+		Description: Builds base structures.
+	CustomSellValue:
+		Value: 2500
+	BaseBuilding:
+	Transforms:
+		IntoActor: mcv
+		Offset: 1,1
+		Facing: 96
+	ProductionBar:
+	-Sellable:
+	WithIdleOverlay@TOP:
+		Sequence: idle-top
+	WithIdleOverlay@SIDE:
+		Sequence: idle-side
+	WithIdleOverlay@FRONT:
+		Sequence: idle-front
+
+GAPOWR:
+	Inherits: ^Building
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 0
+		Owner: gdi
+		Hotkey: p
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: GDI Power Plant
+		Description: Provides power for other structures
+	ProvidesCustomPrerequisite:
+		Prerequisite: anypower
+	Building:
+		Power: 100
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 750
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+	WithIdleOverlay@PLUG:
+		Sequence: idle-plug
+
+GAPILE:
+	Inherits: ^Building
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 30
+		Prerequisites: anypower
+		Owner: gdi
+		Hotkey: b
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: GDI Barracks
+		Description: Produces infantry
+	Building:
+		Power: -20
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 800
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5
+	Exit@1:
+		SpawnOffset: -2730,2730,0
+		ExitCell: 0,2
+	Production:
+		Produces: Infantry
+	PrimaryBuilding:
+	IronCurtainable:
+	ProductionBar:
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+	WithIdleOverlay@LIGHT:
+		Sequence: idle-light
+	WithIdleOverlay@FLAG:
+		Sequence: idle-flag
+
+GAWEAP:
+	Inherits: ^Building
+	Valued:
+		Cost: 2000
+	Tooltip:
+		Name: GDI War Factory
+		Description: Assembly point for\nvehicle reinforcements
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 50
+		Owner: gdi
+	Building:
+		Power: -30
+		Footprint: ___ xxx ===
+		Dimensions: 3,3
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 4
+	-RenderBuilding:
+	RenderBuildingWarFactory:
+	RallyPoint:
+		RallyPoint: 6,5
+	Exit@1:
+		SpawnOffset: -170,1024,0
+		ExitCell: 3,3
+	Production:
+		Produces: Vehicle
+	ProductionBar:
+
+NAPOWR:
+	Inherits: ^Building
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 0
+		Owner: nod
+		Hotkey: p
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: Nod Power Plant
+		Description: Provides power for other structures
+	ProvidesCustomPrerequisite:
+		Prerequisite: anypower
+	Building:
+		Power: 100
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 750
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+
+NAHAND:
+	Inherits: ^Building
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 30
+		Prerequisites: anypower
+		Owner: nod
+		Hotkey: b
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: Hand of Nod
+		Description: Produces infantry
+	Building:
+		Power: -20
+		Footprint: xxx xxx
+		Dimensions: 3,2
+	Health:
+		HP: 800
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5
+	Exit@1:
+		SpawnOffset: -2730,2730,0
+		ExitCell: 0,2
+	Production:
+		Produces: Infantry
+	PrimaryBuilding:
+	IronCurtainable:
+	ProductionBar:
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+	WithIdleOverlay@LIGHT:
+		Sequence: idle-light
+
+NAWEAP:
+	Inherits: ^Building
+	Valued:
+		Cost: 2000
+	Tooltip:
+		Name: Nod War Factory
+		Description: Assembly point for\nvehicle reinforcements
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 50
+		Owner: nod
+	Building:
+		Power: -30
+		Footprint: ___ xxx ===
+		Dimensions: 3,3
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 4
+	-RenderBuilding:
+	RenderBuildingWarFactory:
+	RallyPoint:
+		RallyPoint: 6,5
+	Exit@1:
+		SpawnOffset: -170,1024,0
+		ExitCell: 3,3
+	Production:
+		Produces: Vehicle
+	ProductionBar:
+
+GASAND:
+	Inherits: ^Wall
+	Buildable:
+		Queue: Defense
+		BuildPaletteOrder: 1000
+		Prerequisites: gacnst
+		Owner: gdi
+		Hotkey: b
+	SoundOnDamageTransition:
+		DamagedSound: sandbag1.aud
+		DestroyedSound: sandbag1.aud
+	Valued:
+		Cost: 25
+	CustomSellValue:
+		Value: 0
+	Tooltip:
+		Name: Sandbags
+		Description: Stops infantry and blocks enemy fire.\nCan be crushed by tanks.
+	Health:
+		HP: 250
+	Armor:
+		Type: Light
+
+GATICK:
+	Inherits: ^Building
+	Valued:
+		Cost: 800
+	-AcceptsSupplies:
+	Tooltip:
+		Name: Deployed Tick Tank
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	-GivesBuildableArea:
+	Health:
+		HP: 350
+	Armor:
+		Type: Concrete
+	RevealsShroud:
+		Range: 5
+	Turreted:
+		ROT: 6
+		InitialFacing: 128
+	Armament:
+		Weapon: 90mm
+	AttackTurreted:
+	AutoTarget:
+	RenderRangeCircle:
+	DrawLineToTarget:
+	RenderBuilding:
+	RenderVoxels:
+		Image: ttnk
+	WithVoxelBarrel:
+	WithVoxelTurret:
+	Transforms:
+		IntoActor: ttnk
+		Offset: 1,1
+		Facing: 96
+		TransformSounds:
+		NoTransformSounds:
+
+GAICBM:
+	Inherits: ^Building
+	Valued:
+		Cost: 800
+	-AcceptsSupplies:
+	Tooltip:
+		Name: Deployed ICBM
+	Building:
+		Footprint: _ x
+		Dimensions: 1,2
+	-GivesBuildableArea:
+	Health:
+		HP: 400
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5
+	Transforms:
+		IntoActor: icbm
+		Offset: 1,1
+		Facing: 96
+		TransformSounds:
+		NoTransformSounds:
+
+GADPSA:
+	Inherits: ^Building
+	Valued:
+		Cost: 950
+	-AcceptsSupplies:
+	Tooltip:
+		Name: Deployed Sensor Array
+	Building:
+		Footprint: _ x
+		Dimensions: 1,2
+	-GivesBuildableArea:
+	Health:
+		HP: 600
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 8
+	Transforms:
+		IntoActor: lpst
+		Offset: 1,1
+		Facing: 96
+		TransformSounds:
+		NoTransformSounds:
+	RenderDetectionCircle:
+	DetectCloaked:
+		Range: 6
+
+GAARTY:
+	Inherits: ^Building
+	Valued:
+		Cost: 975
+	-AcceptsSupplies:
+	Tooltip:
+		Name: Deployed Artillery
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	-GivesBuildableArea:
+	Health:
+		HP: 300
+	Armor:
+		Type: Light
+	RevealsShroud:
+		Range: 9
+	Selectable:
+		Voice: Vehicle
+	Turreted:
+		ROT: 5
+		InitialFacing: 128
+	Armament:
+		Weapon: 155mm
+	AttackTurreted:
+	AutoTarget:
+	RenderRangeCircle:
+	DrawLineToTarget:
+	RenderBuilding:
+	RenderVoxels:
+		Image: art2
+	WithVoxelBarrel:
+	WithVoxelTurret:
+	Transforms:
+		IntoActor: art2
+		Offset: 1,1
+		Facing: 96
+		TransformSounds:
+		NoTransformSounds:
+
+GASPOT:
+	Inherits: ^Building
+	Buildable:
+		Queue: Defense
+		BuildPaletteOrder: 10
+		Owner: gdi, nod
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: Light Tower
+	Building:
+		Power: -10
+		Footprint: x
+		Dimensions: 1,1
+	Health:
+		HP: 400
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4
+	RenderDetectionCircle:
+	DetectCloaked:
+		Range: 3
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+
+GAHPAD:
+	Inherits: ^Building
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: Helipad
+		Description: Produces, rearms and\nrepairs helicopters
+	Buildable:
+		BuildPaletteOrder: 60
+		Owner: gdi
+		Queue: Building
+	Building:
+		Power: -10
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 600
+	RevealsShroud:
+		Range: 5
+	Exit@1:
+		SpawnOffset: 0,-256,0
+	Production:
+		Produces: Air
+	BelowUnits:
+	Reservable:
+	RepairsUnits:
+	ProductionBar:
+	WithIdleOverlay@PLATFORM:
+		Sequence: idle-platform
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+
+NAHPAD:
+	Inherits: ^Building
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: Nod Helipad
+		Description: Produces, rearms and\nrepairs helicopters
+	Buildable:
+		BuildPaletteOrder: 60
+		Owner: nod
+		Queue: Building
+	Building:
+		Power: -10
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 600
+	RevealsShroud:
+		Range: 5
+	Exit@1:
+		SpawnOffset: 0,-256,0
+	Production:
+		Produces: Air
+	BelowUnits:
+	Reservable:
+	RepairsUnits:
+	ProductionBar:
+	WithIdleOverlay@PLATFORM:
+		Sequence: idle-platform
+	WithIdleOverlay@LIGHTS:
+		Sequence: idle-lights
+
+ANYPOWER:
+	Tooltip:
+		Name: Power Plant
+		Description: Power Plant
+
+BARRACKS:
+	Tooltip:
+		Name: Infantry Production
+		Description: Infantry Production
+

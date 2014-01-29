@@ -18,19 +18,23 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Move
 {
-	public class MobileInfo : ITraitInfo, IFacingInfo, UsesInit<FacingInit>, UsesInit<LocationInit>, UsesInit<SubCellInit>
+	[Desc("Unit is able to move.")]
+	public class MobileInfo : ITraitInfo, IOccupySpaceInfo, IFacingInfo, UsesInit<FacingInit>, UsesInit<LocationInit>, UsesInit<SubCellInit>
 	{
 		[FieldLoader.LoadUsing("LoadSpeeds")]
+		[Desc("Set Water: 0 for ground units and lower the value on rough terrain.")]
 		public readonly Dictionary<string, TerrainInfo> TerrainSpeeds;
+		[Desc("e.g. crate, wall, infantry")]
 		public readonly string[] Crushes;
-		public readonly int WaitAverage = 60;
-		public readonly int WaitSpread = 20;
+		public readonly int WaitAverage = 5;
+		public readonly int WaitSpread = 2;
 		public readonly int InitialFacing = 128;
+		[Desc("Rate of Turning")]
 		public readonly int ROT = 255;
 		public readonly int Speed = 1;
 		public readonly bool OnRails = false;
+		[Desc("Allow multiple (infantry) units in one cell.")]
 		public readonly bool SharesCell = false;
-		public readonly int Altitude;
 
 		public virtual object Create(ActorInitializer init) { return new Mobile(init, this); }
 
@@ -67,14 +71,23 @@ namespace OpenRA.Mods.RA.Move
 			return TerrainSpeeds[type].Cost;
 		}
 
-		public readonly Dictionary<SubCell, PVecInt> SubCellOffsets = new Dictionary<SubCell, PVecInt>()
+		public int GetMovementClass(TileSet tileset)
 		{
-			{SubCell.TopLeft, new PVecInt(-7,-6)},
-			{SubCell.TopRight, new PVecInt(6,-6)},
-			{SubCell.Center, new PVecInt(0,0)},
-			{SubCell.BottomLeft, new PVecInt(-7,6)},
-			{SubCell.BottomRight, new PVecInt(6,6)},
-			{SubCell.FullCell, new PVecInt(0,0)},
+			/* collect our ability to cross *all* terraintypes, in a bitvector */
+			var passability = tileset.Terrain.OrderBy(t => t.Key)
+				.Select(t => TerrainSpeeds.ContainsKey(t.Key) && TerrainSpeeds[t.Key].Cost < int.MaxValue);
+
+			return passability.ToBits();
+		}
+
+		public static readonly Dictionary<SubCell, WVec> SubCellOffsets = new Dictionary<SubCell, WVec>()
+		{
+			{SubCell.TopLeft, new WVec(-299, -256, 0)},
+			{SubCell.TopRight, new WVec(256, -256, 0)},
+			{SubCell.Center, new WVec(0, 0, 0)},
+			{SubCell.BottomLeft, new WVec(-299, 256, 0)},
+			{SubCell.BottomRight, new WVec(256, 256, 0)},
+			{SubCell.FullCell, new WVec(0, 0, 0)},
 		};
 
 		static bool IsMovingInMyDirection(Actor self, Actor other)
@@ -95,6 +108,11 @@ namespace OpenRA.Mods.RA.Move
 			return true;
 		}
 
+		public bool CanEnterCell(World world, CPos cell)
+		{
+			return CanEnterCell(world, null, cell, null, true, true);
+		}
+
 		public bool CanEnterCell(World world, Actor self, CPos cell, Actor ignoreActor, bool checkTransientActors, bool blockedByMovers)
 		{
 			if (MovementCostForCell(world, cell) == int.MaxValue)
@@ -106,13 +124,13 @@ namespace OpenRA.Mods.RA.Move
 			var blockingActors = world.ActorMap.GetUnitsAt(cell)
 				.Where(x => x != ignoreActor)
 				// Neutral/enemy units are blockers. Allied units that are moving are not blockers.
-				.Where(x => blockedByMovers || ((self.Owner.Stances[x.Owner] != Stance.Ally) || !IsMovingInMyDirection(self, x)))
+				.Where(x => blockedByMovers || (self == null || self.Owner.Stances[x.Owner] != Stance.Ally || !IsMovingInMyDirection(self, x)))
 				.ToList();
 
 			if (checkTransientActors && blockingActors.Count > 0)
 			{
 				// Non-sharable unit can enter a cell with shareable units only if it can crush all of them
-				if (Crushes == null)
+				if (self == null || Crushes == null)
 					return false;
 
 				if (blockingActors.Any(a => !(a.HasTrait<ICrushable>() &&
@@ -122,9 +140,11 @@ namespace OpenRA.Mods.RA.Move
 
 			return true;
 		}
+
+		public int GetInitialFacing() { return InitialFacing; }
 	}
 
-	public class Mobile : IIssueOrder, IResolveOrder, IOrderVoice, IOccupySpace, IMove, IFacing, ISync
+	public class Mobile : IIssueOrder, IResolveOrder, IOrderVoice, IPositionable, IMove, IFacing, ISync, INotifyAddedToWorld, INotifyRemovedFromWorld
 	{
 		public readonly Actor self;
 		public readonly MobileInfo Info;
@@ -142,12 +162,9 @@ namespace OpenRA.Mods.RA.Move
 			set { __facing = value; }
 		}
 
-		[Sync] public int Altitude { get; set; }
-
 		public int ROT { get { return Info.ROT; } }
-		public int InitialFacing { get { return Info.InitialFacing; } }
 
-		[Sync] public PPos PxPosition { get; set; }
+		[Sync] public WPos CenterPosition { get; private set; }
 		[Sync] public CPos fromCell { get { return __fromCell; } }
 		[Sync] public CPos toCell { get { return __toCell; } }
 
@@ -155,7 +172,9 @@ namespace OpenRA.Mods.RA.Move
 
 		public void SetLocation(CPos from, SubCell fromSub, CPos to, SubCell toSub)
 		{
-			if (fromCell == from && toCell == to) return;
+			if (fromCell == from && toCell == to && fromSubCell == fromSub && toSubCell == toSub)
+				return;
+
 			RemoveInfluence();
 			__fromCell = from;
 			__toCell = to;
@@ -182,42 +201,67 @@ namespace OpenRA.Mods.RA.Move
 			if (init.Contains<LocationInit>())
 			{
 				this.__fromCell = this.__toCell = init.Get<LocationInit, CPos>();
-				this.PxPosition = Util.CenterOfCell(fromCell) + info.SubCellOffsets[fromSubCell];
+				SetVisualPosition(self, fromCell.CenterPosition + MobileInfo.SubCellOffsets[fromSubCell]);
 			}
 
 			this.Facing = init.Contains<FacingInit>() ? init.Get<FacingInit, int>() : info.InitialFacing;
-			this.Altitude = init.Contains<AltitudeInit>() ? init.Get<AltitudeInit, int>() : 0;
+
+			// Sets the visual position to WPos accuracy
+			// Use LocationInit if you want to insert the actor into the ActorMap!
+			if (init.Contains<CenterPositionInit>())
+				SetVisualPosition(self, init.Get<CenterPositionInit, WPos>());
 		}
 
 		public void SetPosition(Actor self, CPos cell)
 		{
 			SetLocation(cell,fromSubCell, cell,fromSubCell);
-			PxPosition = Util.CenterOfCell(fromCell) + Info.SubCellOffsets[fromSubCell];
+			SetVisualPosition(self, fromCell.CenterPosition + MobileInfo.SubCellOffsets[fromSubCell]);
 			FinishedMoving(self);
 		}
 
-		public void SetPxPosition(Actor self, PPos px)
+		public void SetPosition(Actor self, WPos pos)
 		{
-			var cell = px.ToCPos();
+			var cell = pos.ToCPos();
 			SetLocation(cell,fromSubCell, cell,fromSubCell);
-			PxPosition = px;
+			SetVisualPosition(self, pos);
 			FinishedMoving(self);
 		}
 
-		public void AdjustPxPosition(Actor self, PPos px)	/* visual hack only */
+		public void SetVisualPosition(Actor self, WPos pos)
 		{
-			PxPosition = px;
+			CenterPosition = pos;
+			if (self.IsInWorld)
+			{
+				self.World.ScreenMap.Update(self);
+				self.World.ActorMap.UpdatePosition(self, this);
+			}
 		}
 
-		public IEnumerable<IOrderTargeter> Orders { get { yield return new MoveOrderTargeter(Info); } }
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
+		}
+
+		public void RemovedFromWorld(Actor self)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
+		}
+
+		public IEnumerable<IOrderTargeter> Orders { get { yield return new MoveOrderTargeter(self, Info); } }
 
 		// Note: Returns a valid order even if the unit can't move to the target
 		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
 			if (order is MoveOrderTargeter)
 			{
-				if (Info.OnRails) return null;
-				return new Order("Move", self, queued) { TargetLocation = target.CenterLocation.ToCPos() };
+				if (Info.OnRails)
+					return null;
+
+				return new Order("Move", self, queued) { TargetLocation = target.CenterPosition.ToCPos() };
 			}
 			return null;
 		}
@@ -406,13 +450,13 @@ namespace OpenRA.Mods.RA.Move
 		public void AddInfluence()
 		{
 			if (self.IsInWorld)
-				self.World.ActorMap.Add(self, this);
+				self.World.ActorMap.AddInfluence(self, this);
 		}
 
 		public void RemoveInfluence()
 		{
 			if (self.IsInWorld)
-				self.World.ActorMap.Remove(self, this);
+				self.World.ActorMap.RemoveInfluence(self, this);
 		}
 
 		public void Nudge(Actor self, Actor nudger, bool force)
@@ -460,30 +504,31 @@ namespace OpenRA.Mods.RA.Move
 		class MoveOrderTargeter : IOrderTargeter
 		{
 			readonly MobileInfo unitType;
+			readonly bool rejectMove;
 
-			public MoveOrderTargeter(MobileInfo unitType)
+			public MoveOrderTargeter(Actor self, MobileInfo unitType)
 			{
 				this.unitType = unitType;
+				this.rejectMove = !self.AcceptsOrder("Move");
 			}
 
 			public string OrderID { get { return "Move"; } }
 			public int OrderPriority { get { return 4; } }
 			public bool IsQueued { get; protected set; }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor)
 			{
-				return false;
-			}
+				if (rejectMove || !target.IsValidFor(self))
+					return false;
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
-			{
-				IsQueued = forceQueued;
+				var location = target.CenterPosition.ToCPos();
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 				cursor = "move";
 
-				if (self.World.LocalPlayer.Shroud.IsExplored(location))
+				if (self.Owner.Shroud.IsExplored(location))
 					cursor = self.World.GetTerrainInfo(location).CustomCursor ?? cursor;
 
-				if (!self.World.Map.IsInMap(location) || (self.World.LocalPlayer.Shroud.IsExplored(location) &&
+				if (!self.World.Map.IsInMap(location) || (self.Owner.Shroud.IsExplored(location) &&
 						unitType.MovementCostForCell(self.World, location) == int.MaxValue))
 					cursor = "move-blocked";
 
@@ -494,7 +539,7 @@ namespace OpenRA.Mods.RA.Move
 		public Activity ScriptedMove(CPos cell) { return new Move(cell); }
 		public Activity MoveTo(CPos cell, int nearEnough) { return new Move(cell, nearEnough); }
 		public Activity MoveTo(CPos cell, Actor ignoredActor) { return new Move(cell, ignoredActor); }
-		public Activity MoveWithinRange(Target target, int range) { return new Move(target, range); }
+		public Activity MoveWithinRange(Target target, WRange range) { return new Move(target, range); }
 		public Activity MoveTo(Func<List<CPos>> pathFunc) { return new Move(pathFunc); }
 	}
 }

@@ -63,10 +63,11 @@ namespace OpenRA.Mods.RA
 
 		public void Damaged(Actor self, AttackInfo e)
 		{
-			Panic();
+			if (e.Damage > 0)
+				Panic();
 		}
 
-		public void Attacking(Actor self, Target target)
+		public void Attacking(Actor self, Target target, Armament a, Barrel barrel)
 		{
 			if (self.World.SharedRandom.Next(100 / Info.AttackPanicChance) == 0)
 				Panic();

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Air;
 using OpenRA.Mods.RA.Buildings;
@@ -28,29 +29,23 @@ namespace OpenRA.Mods.RA.Missions
 	{
 		public event Action<bool> OnObjectivesUpdated = notify => { };
 
-		public IEnumerable<Objective> Objectives { get { return objectives.Values; } }
+		public IEnumerable<Objective> Objectives { get { return new[] { evacuateUnits, destroyAirbases, evacuateMgg }; } }
 
-		Dictionary<int, Objective> objectives = new Dictionary<int, Objective>
-		{
-			{ EvacuateID, new Objective(ObjectiveType.Primary, Evacuate, ObjectiveStatus.InProgress) },
-			{ AirbaseID, new Objective(ObjectiveType.Secondary, Airbase, ObjectiveStatus.InProgress) },
-			{ GapGeneratorID, new Objective(ObjectiveType.Secondary, GapGenerator , ObjectiveStatus.InProgress) }
-		};
+		Objective evacuateUnits = new Objective(ObjectiveType.Primary, EvacuateUnitsText, ObjectiveStatus.InProgress);
+		Objective destroyAirbases = new Objective(ObjectiveType.Secondary, DestroyAirbasesText, ObjectiveStatus.InProgress);
+		Objective evacuateMgg = new Objective(ObjectiveType.Secondary, EvacuateMggText, ObjectiveStatus.InProgress);
 
-		const int EvacuateID = 0;
-		const int AirbaseID = 1;
-		const int GapGeneratorID = 2;
+		const string EvacuateUnitsText = "Following the rescue of Einstein, the Allies are now being flanked from both sides."
+									+ " Evacuate {0} units before the remaining Allied forces in the area are wiped out.";
+		const string DestroyAirbasesText = "Destroy the nearby Soviet airbases.";
+		const string EvacuateMggText = "Einstein has recently developed a technology which allows us to obscure units from the enemy."
+									+ " Evacuate at least one prototype mobile gap generator intact.";
 
-		const string Evacuate = "Following the rescue of Einstein, the Allies are now being flanked from both sides."
-								+ " Evacuate {0} units before the remaining Allied forces in the area are wiped out.";
-		const string Airbase = "Destroy the nearby Soviet airbases.";
-		const string GapGenerator = "Einstein has recently developed a technology which allows us to obscure units from the enemy."
-								+ " Evacuate at least one prototype mobile gap generator intact.";
+		const string ShortEvacuateTemplate = "{0}/{1} units evacuated";
 
 		int unitsEvacuatedThreshold;
 		int unitsEvacuated;
 		InfoWidget evacuateWidget;
-		const string ShortEvacuateTemplate = "{0}/{1} units evacuated";
 
 		World world;
 		Player allies1;
@@ -185,7 +180,7 @@ namespace OpenRA.Mods.RA.Missions
 			if (world.FrameNumber % 25 == 0)
 				ManageSovietUnits();
 
-			if (objectives[AirbaseID].Status != ObjectiveStatus.Completed)
+			if (destroyAirbases.Status != ObjectiveStatus.Completed)
 			{
 				if (world.FrameNumber % 25 == 0)
 					BuildSovietAircraft();
@@ -193,15 +188,15 @@ namespace OpenRA.Mods.RA.Missions
 				ManageSovietAircraft();
 			}
 
-			EvacuateAlliedUnits(exit1TopLeft.CenterLocation, exit1BottomRight.CenterLocation, exit1ExitPoint.Location);
-			EvacuateAlliedUnits(exit2TopLeft.CenterLocation, exit2BottomRight.CenterLocation, exit2ExitPoint.Location);
+			EvacuateAlliedUnits(exit1TopLeft.Location, exit1BottomRight.Location, exit1ExitPoint.Location);
+			EvacuateAlliedUnits(exit2TopLeft.Location, exit2BottomRight.Location, exit2ExitPoint.Location);
 
-			CheckSovietAirbase();
+			CheckSovietAirbases();
 
 			if (!world.Actors.Any(a => (a.Owner == allies1 || a.Owner == allies2) && a.IsInWorld && !a.IsDead()
 				&& ((a.HasTrait<Building>() && !a.HasTrait<Wall>()) || a.HasTrait<BaseBuilding>())))
 			{
-				objectives[EvacuateID].Status = ObjectiveStatus.Failed;
+				evacuateUnits.Status = ObjectiveStatus.Failed;
 				OnObjectivesUpdated(true);
 				MissionFailed("The remaining Allied forces in the area have been wiped out.");
 			}
@@ -209,7 +204,7 @@ namespace OpenRA.Mods.RA.Missions
 
 		Actor FirstUnshroudedOrDefault(IEnumerable<Actor> actors, World world, int shroudRange)
 		{
-			return actors.FirstOrDefault(u => world.FindAliveCombatantActorsInCircle(u.CenterLocation, shroudRange).All(a => !a.HasTrait<CreatesShroud>()));
+			return actors.FirstOrDefault(u => world.FindAliveCombatantActorsInCircle(u.CenterPosition, WRange.FromCells(shroudRange)).All(a => !a.HasTrait<CreatesShroud>()));
 		}
 
 		void ManageSovietAircraft()
@@ -221,23 +216,24 @@ namespace OpenRA.Mods.RA.Missions
 
 			foreach (var aircraft in SovietAircraft())
 			{
+				var pos = aircraft.CenterPosition;
 				var plane = aircraft.Trait<Plane>();
 				var ammo = aircraft.Trait<LimitedAmmo>();
-				if ((plane.Altitude == 0 && ammo.FullAmmo()) || (plane.Altitude != 0 && ammo.HasAmmo()))
+				if ((pos.Z == 0 && ammo.FullAmmo()) || (pos.Z != 0 && ammo.HasAmmo()))
 				{
-					var enemy = FirstUnshroudedOrDefault(enemies.OrderBy(u => (aircraft.CenterLocation - u.CenterLocation).LengthSquared), world, 10);
+					var enemy = FirstUnshroudedOrDefault(enemies.OrderBy(u => (aircraft.CenterPosition - u.CenterPosition).LengthSquared), world, 10);
 					if (enemy != null)
 					{
 						if (!aircraft.IsIdle && aircraft.GetCurrentActivity().GetType() != typeof(FlyAttack))
 							aircraft.CancelActivity();
 
-						if (plane.Altitude == 0)
+						if (pos.Z == 0)
 							plane.UnReserve();
 
 						aircraft.QueueActivity(new FlyAttack(Target.FromActor(enemy)));
 					}
 				}
-				else if (plane.Altitude != 0 && !LandIsQueued(aircraft))
+				else if (pos.Z != 0 && !LandIsQueued(aircraft))
 				{
 					aircraft.CancelActivity();
 					aircraft.QueueActivity(new ReturnToBase(aircraft, null));
@@ -266,11 +262,11 @@ namespace OpenRA.Mods.RA.Missions
 			return world.Actors.Where(a => a.HasTrait<AttackPlane>() && a.Owner == soviets && a.IsInWorld && !a.IsDead());
 		}
 
-		void CheckSovietAirbase()
+		void CheckSovietAirbases()
 		{
-			if (objectives[AirbaseID].Status != ObjectiveStatus.Completed && sovietAirfields.All(a => a.IsDead() || a.Owner != soviets))
+			if (destroyAirbases.Status != ObjectiveStatus.Completed && sovietAirfields.All(a => a.IsDead() || a.Owner != soviets))
 			{
-				objectives[AirbaseID].Status = ObjectiveStatus.Completed;
+				destroyAirbases.Status = ObjectiveStatus.Completed;
 				OnObjectivesUpdated(true);
 			}
 		}
@@ -301,16 +297,16 @@ namespace OpenRA.Mods.RA.Missions
 			var enemies = world.Actors.Where(u => u.AppearsHostileTo(self) && (u.Owner == allies1 || u.Owner == allies2)
 					&& ((u.HasTrait<Building>() && !u.HasTrait<Wall>()) || u.HasTrait<Mobile>()) && u.IsInWorld && !u.IsDead());
 
-			var enemy = FirstUnshroudedOrDefault(enemies.OrderBy(u => (self.CenterLocation - u.CenterLocation).LengthSquared), world, 10);
+			var enemy = FirstUnshroudedOrDefault(enemies.OrderBy(u => (self.CenterPosition - u.CenterPosition).LengthSquared), world, 10);
 			if (enemy != null)
-				self.QueueActivity(new AttackMove.AttackMoveActivity(self, new Attack(Target.FromActor(enemy), 3)));
+				self.QueueActivity(new AttackMove.AttackMoveActivity(self, new Attack(Target.FromActor(enemy), WRange.FromCells(3))));
 		}
 
 		void ManageSovietUnits()
 		{
 			foreach (var rallyPoint in sovietRallyPoints)
 			{
-				var units = world.FindAliveCombatantActorsInCircle(Util.CenterOfCell(rallyPoint), 10)
+				var units = world.FindAliveCombatantActorsInCircle(rallyPoint.CenterPosition, WRange.FromCells(10))
 					.Where(u => u.IsIdle && u.HasTrait<Mobile>() && u.HasTrait<AttackBase>() && u.Owner == soviets);
 				if (units.Count() >= SovietGroupSize)
 				{
@@ -321,7 +317,7 @@ namespace OpenRA.Mods.RA.Missions
 
 			var scatteredUnits = world.Actors.Where(u => u.IsInWorld && !u.IsDead() && u.HasTrait<Mobile>() && u.IsIdle && u.Owner == soviets)
 				.Except(world.WorldActor.Trait<SpawnMapActors>().Actors.Values)
-				.Except(sovietRallyPoints.SelectMany(rp => world.FindAliveCombatantActorsInCircle(Util.CenterOfCell(rp), 10)));
+				.Except(sovietRallyPoints.SelectMany(rp => world.FindAliveCombatantActorsInCircle(rp.CenterPosition, WRange.FromCells(10))));
 
 			foreach (var unit in scatteredUnits)
 				AttackNearestAlliedActor(unit);
@@ -340,7 +336,7 @@ namespace OpenRA.Mods.RA.Missions
 			{
 				new OwnerInit(owner),
 				new LocationInit(entry),
-				new FacingInit(Util.GetFacing(to - entry, 0))
+				new FacingInit(Traits.Util.GetFacing(to - entry, 0))
 			});
 			unit.QueueActivity(new Move.Move(to));
 			return unit;
@@ -349,17 +345,17 @@ namespace OpenRA.Mods.RA.Missions
 		void UpdateUnitsEvacuated()
 		{
 			evacuateWidget.Text = ShortEvacuateTemplate.F(unitsEvacuated, unitsEvacuatedThreshold);
-			if (objectives[EvacuateID].Status == ObjectiveStatus.InProgress && unitsEvacuated >= unitsEvacuatedThreshold)
+			if (evacuateUnits.Status == ObjectiveStatus.InProgress && unitsEvacuated >= unitsEvacuatedThreshold)
 			{
-				objectives[EvacuateID].Status = ObjectiveStatus.Completed;
+				evacuateUnits.Status = ObjectiveStatus.Completed;
 				OnObjectivesUpdated(true);
 				MissionAccomplished("The remaining Allied forces in the area have evacuated.");
 			}
 		}
 
-		void EvacuateAlliedUnits(PPos a, PPos b, CPos exit)
+		void EvacuateAlliedUnits(CPos tl, CPos br, CPos exit)
 		{
-			var units = world.FindAliveCombatantActorsInBox(a, b)
+			var units = world.FindAliveCombatantActorsInBox(tl, br)
 				.Where(u => u.HasTrait<Mobile>() && !u.HasTrait<Aircraft>() && (u.Owner == allies1 || u.Owner == allies2));
 
 			foreach (var unit in units)
@@ -369,9 +365,9 @@ namespace OpenRA.Mods.RA.Missions
 				unitsEvacuated++;
 
 				var createsShroud = unit.TraitOrDefault<CreatesShroud>();
-				if (createsShroud != null && objectives[GapGeneratorID].Status == ObjectiveStatus.InProgress)
+				if (createsShroud != null && evacuateMgg.Status == ObjectiveStatus.InProgress)
 				{
-					objectives[GapGeneratorID].Status = ObjectiveStatus.Completed;
+					evacuateMgg.Status = ObjectiveStatus.Completed;
 					OnObjectivesUpdated(true);
 				}
 
@@ -385,7 +381,7 @@ namespace OpenRA.Mods.RA.Missions
 			}
 		}
 
-		public void WorldLoaded(World w)
+		public void WorldLoaded(World w, WorldRenderer wr)
 		{
 			world = w;
 
@@ -416,7 +412,7 @@ namespace OpenRA.Mods.RA.Missions
 			sovietParadropTicks = difficulty == "Hard" ? 1500 * 17 : 1500 * 20;
 			sovietUnits2Ticks = difficulty == "Hard" ? 1500 * 12 : 1500 * 15;
 
-			objectives[EvacuateID].Text = objectives[EvacuateID].Text.F(unitsEvacuatedThreshold);
+			evacuateUnits.Text = evacuateUnits.Text.F(unitsEvacuatedThreshold);
 
 			allies = w.Players.Single(p => p.InternalName == "Allies");
 			soviets = w.Players.Single(p => p.InternalName == "Soviets");
@@ -452,10 +448,9 @@ namespace OpenRA.Mods.RA.Missions
 			paradropBox = new Rectangle(topLeft.Location.X, topLeft.Location.Y, bottomRight.Location.X - topLeft.Location.X, bottomRight.Location.Y - topLeft.Location.Y);
 
 			if (w.LocalPlayer == null || w.LocalPlayer == allies1)
-				Game.MoveViewport(allies1EntryPoint.Location.ToFloat2());
-
+				wr.Viewport.Center(allies1EntryPoint.CenterPosition);
 			else
-				Game.MoveViewport(allies2EntryPoint.Location.ToFloat2());
+				wr.Viewport.Center(allies2EntryPoint.CenterPosition);
 
 			OnObjectivesUpdated(false);
 			MissionUtils.PlayMissionMusic();

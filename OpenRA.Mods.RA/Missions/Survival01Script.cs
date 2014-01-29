@@ -1,4 +1,4 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
  * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
@@ -8,15 +8,16 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
 using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Mods.RA.Activities;
+using OpenRA.Mods.RA.Buildings;
 using OpenRA.Mods.RA.Move;
 using OpenRA.Traits;
 using OpenRA.Widgets;
-using OpenRA.Mods.RA.Buildings;
 
 namespace OpenRA.Mods.RA.Missions
 {
@@ -26,19 +27,13 @@ namespace OpenRA.Mods.RA.Missions
 	{
 		public event Action<bool> OnObjectivesUpdated = notify => { };
 
-		public IEnumerable<Objective> Objectives { get { return objectives.Values; } }
+		public IEnumerable<Objective> Objectives { get { return new[] { maintainPresence, destroySoviets }; } }
 
-		Dictionary<int, Objective> objectives = new Dictionary<int, Objective>
-		{
-			{ maintainPresenceID, new Objective(ObjectiveType.Primary, maintainPresence, ObjectiveStatus.InProgress) },
-			{ destroySovietsID, new Objective(ObjectiveType.Primary, destroySoviets, ObjectiveStatus.Inactive) }
-		};
+		Objective maintainPresence = new Objective(ObjectiveType.Primary, MaintainPresenceText, ObjectiveStatus.InProgress);
+		Objective destroySoviets = new Objective(ObjectiveType.Primary, DestroySovietsText, ObjectiveStatus.Inactive);
 
-		const int maintainPresenceID = 0;
-		const int destroySovietsID = 1;
-
-		const string maintainPresence = "Enforce your position and hold-out the onslaught until reinforcements arrive. We must not lose the base!";
-		const string destroySoviets = "Take control of french reinforcements and dismantle the nearby Soviet base.";
+		const string MaintainPresenceText = "Enforce your position and hold-out the onslaught until reinforcements arrive. We must not lose the base!";
+		const string DestroySovietsText = "Take control of French reinforcements and dismantle the nearby Soviet base.";
 
 		Player allies;
 		Player soviets;
@@ -155,11 +150,11 @@ namespace OpenRA.Mods.RA.Missions
 				spawningInfantry = false;
 			}
 
-			if (objectives[destroySovietsID].Status == ObjectiveStatus.InProgress)
+			if (destroySoviets.Status == ObjectiveStatus.InProgress)
 			{
 				if (barrack1.Destroyed)
 				{
-					objectives[destroySovietsID].Status = ObjectiveStatus.Completed;
+					destroySoviets.Status = ObjectiveStatus.Completed;
 					OnObjectivesUpdated(true);
 					MissionAccomplished("The French forces have survived and dismantled the soviet presence in the area!");
 				}
@@ -190,8 +185,8 @@ namespace OpenRA.Mods.RA.Missions
 			{
 				var units = world.CreateActor((sovietInfantry).Random(world.SharedRandom), new TypeDictionary { new LocationInit(sovietinfantryentry1.Location), new OwnerInit(soviets) });
 				units.QueueActivity(new Move.Move(sovietinfantryrally1.Location, 3));
-				var unitsincircle = world.FindAliveCombatantActorsInCircle(Util.CenterOfCell(sovietinfantryrally1.Location), 10)
-					.Where(a => a.Owner == soviets && a.IsIdle && a.HasTrait<IMove>());
+				var unitsincircle = world.FindAliveCombatantActorsInCircle(sovietinfantryrally1.CenterPosition, WRange.FromCells(10))
+					.Where(a => a.Owner == soviets && a.IsIdle && a.HasTrait<IPositionable>());
 				if (unitsincircle.Count() >= sovietInfantryGroupSize)
 				{
 					foreach (var scatteredunits in unitsincircle)
@@ -217,18 +212,17 @@ namespace OpenRA.Mods.RA.Missions
 		{
 			var enemies = world.Actors.Where(u => u.IsInWorld && !u.IsDead() && (u.Owner == allies)
 				&& ((u.HasTrait<Building>() && !u.HasTrait<Wall>()) || u.HasTrait<Mobile>()));
-			var targetEnemy = enemies.OrderBy(u => (self.CenterLocation - u.CenterLocation).LengthSquared).FirstOrDefault();
+
+			var targetEnemy = enemies.ClosestTo(self);
 			if (targetEnemy != null)
-			{
-				self.QueueActivity(new AttackMove.AttackMoveActivity(self, new Attack(Target.FromActor(targetEnemy), 3)));
-			}
+				self.QueueActivity(new AttackMove.AttackMoveActivity(self, new Attack(Target.FromActor(targetEnemy), WRange.FromCells(3))));
 		}
 
 		void ManageSovietUnits()
 		{
 			foreach (var rallyPoint in sovietRallyPoints)
 			{
-				var units = world.FindAliveCombatantActorsInCircle(Util.CenterOfCell(rallyPoint), 4)
+				var units = world.FindAliveCombatantActorsInCircle(rallyPoint.CenterPosition, WRange.FromCells(4))
 					.Where(u => u.IsIdle && u.HasTrait<Mobile>() && u.Owner == soviets);
 				if (units.Count() >= sovietAttackGroupSize)
 				{
@@ -240,7 +234,7 @@ namespace OpenRA.Mods.RA.Missions
 			}
 			var scatteredUnits = world.Actors.Where(u => u.IsInWorld && !u.IsDead() && u.HasTrait<Mobile>() && u.IsIdle && u.Owner == soviets)
 				.Except(world.WorldActor.Trait<SpawnMapActors>().Actors.Values)
-				.Except(sovietRallyPoints.SelectMany(rp => world.FindAliveCombatantActorsInCircle(Util.CenterOfCell(rp), 4)));
+				.Except(sovietRallyPoints.SelectMany(rp => world.FindAliveCombatantActorsInCircle(rp.CenterPosition, WRange.FromCells(4))));
 			foreach (var unit in scatteredUnits)
 			{
 				AttackNearestAlliedActor(unit);
@@ -273,12 +267,12 @@ namespace OpenRA.Mods.RA.Missions
 		{
 			survivalTimerWidget.Visible = false;
 			SendReinforcements();
-			objectives[maintainPresenceID].Status = ObjectiveStatus.Completed;
-			objectives[destroySovietsID].Status = ObjectiveStatus.InProgress;
+			maintainPresence.Status = ObjectiveStatus.Completed;
+			destroySoviets.Status = ObjectiveStatus.InProgress;
 			OnObjectivesUpdated(true);
 		}
 
-		public void WorldLoaded(World w)
+		public void WorldLoaded(World w, WorldRenderer wr)
 		{
 			world = w;
 
@@ -337,10 +331,12 @@ namespace OpenRA.Mods.RA.Missions
 			barrack1 = actors["Barrack1"];
 			sam1 = actors["Sam1"];
 			sam2 = actors["Sam2"];
-			var shroud = w.WorldActor.Trait<Shroud>();
+
+			var shroud = allies.PlayerActor.Trait<Shroud>();
 			shroud.Explore(w, sam1.Location, 4);
 			shroud.Explore(w, sam2.Location, 4);
-			Game.MoveViewport(alliesbase.Location.ToFloat2());
+
+			wr.Viewport.Center(alliesbase.CenterPosition);
 			StartCountDownTimer();
 			SendSquad1();
 			SendSquad2();

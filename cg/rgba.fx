@@ -2,6 +2,7 @@
 // Author: C. Forbes
 //--------------------------------------------------------
 
+float2 Scroll;
 float2 r1, r2;		// matrix elements
 
 sampler2D DiffuseTexture = sampler_state {
@@ -25,7 +26,7 @@ struct FragmentIn {
 
 VertexOut Simple_vp(VertexIn v) {
 	VertexOut o;	
-	float2 p = v.Position.xy * r1 + r2;
+	float2 p = (v.Position.xy - Scroll.xy) * r1 + r2;
 	o.Position = float4(p.x,p.y,0,1);
 	o.Tex0 = v.Tex0.xy;
 	return o;
@@ -38,26 +39,18 @@ float4 Simple_fp(FragmentIn f) : COLOR0 {
 
 technique high_quality {
 	pass p0	{
-		BlendEnable = true;
 		DepthTestEnable = false;
 		CullFaceEnable = false;
 		VertexProgram = compile latest Simple_vp();
 		FragmentProgram = compile latest Simple_fp();
-		
-		BlendEquation = FuncAdd;
-		BlendFunc = int2( SrcAlpha, OneMinusSrcAlpha );
 	}
 }
 
 technique high_quality_cg21 {
 	pass p0	{
-		BlendEnable = true;
 		DepthTestEnable = false;
 		CullFaceEnable = false;
 		VertexProgram = compile arbvp1 Simple_vp();
 		FragmentProgram = compile arbfp1 Simple_fp();
-		
-		BlendEquation = FuncAdd;
-		BlendFunc = int2( SrcAlpha, OneMinusSrcAlpha );
 	}
 }

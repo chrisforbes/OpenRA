@@ -1,6 +1,6 @@
 Selectable: True
 
-MapFormat: 5
+MapFormat: 6
 
 RequiresMod: ra
 
@@ -12,8 +12,6 @@ Author: Scott_NZ
 
 Tileset: TEMPERAT
 
-Difficulties: Easy,Normal,Hard
-
 MapSize: 128,128
 
 Bounds: 16,16,96,96
@@ -22,10 +20,24 @@ UseAsShellmap: False
 
 Type: Campaign
 
+Options:
+	Crates: False
+	Fog: True
+	Shroud: True
+	AllyBuildRadius: False
+	FragileAlliances: False
+	StartingCash: 5000
+	ConfigurableStartingUnits: False
+	Difficulties: Easy,Normal,Hard
+
 Players:
 	PlayerReference@Neutral:
 		Name: Neutral
 		OwnsWorld: True
+		NonCombatant: True
+		Race: allies
+	PlayerReference@Creeps:
+		Name: Creeps
 		NonCombatant: True
 		Race: allies
 		Enemies: Soviets
@@ -33,10 +45,11 @@ Players:
 		Name: Allies1
 		Playable: True
 		AllowBots: False
+		Required: True
 		LockRace: True
 		Race: allies
 		LockColor: True
-		ColorRamp: 161,134,200,30
+		ColorRamp: 161,134,200
 		LockSpawn: True
 		LockTeam: True
 		Allies: Allies2,Allies
@@ -48,7 +61,7 @@ Players:
 		LockRace: True
 		Race: allies
 		LockColor: True
-		ColorRamp: 76,196,190,20
+		ColorRamp: 76,196,190
 		LockSpawn: True
 		LockTeam: True
 		Allies: Allies1,Allies
@@ -56,28 +69,28 @@ Players:
 	PlayerReference@Allies:
 		Name: Allies
 		Race: allies
-		ColorRamp: 115,115,143,16
+		ColorRamp: 115,115,143
 		Allies: Allies1,Allies2
 		Enemies: Soviets
 	PlayerReference@Soviets:
 		Name: Soviets
 		Race: soviet
-		ColorRamp: 3,255,127,28
-		Enemies: Allies1,Allies2,Allies,Neutral
+		ColorRamp: 3,255,127
+		Enemies: Allies1,Allies2,Allies,Creeps
 
 Actors:
 	Actor2: v07
 		Location: 58,83
-		Owner: Neutral
+		Owner: Creeps
 	Actor1: v05
 		Location: 54,89
-		Owner: Neutral
+		Owner: Creeps
 	Actor56: t01
 		Location: 68,97
 		Owner: Neutral
 	Actor5: v03
 		Location: 66,84
-		Owner: Neutral
+		Owner: Creeps
 	Actor25: t16
 		Location: 69,64
 		Owner: Neutral
@@ -104,10 +117,10 @@ Actors:
 		Owner: Neutral
 	Actor8: v07
 		Location: 66,95
-		Owner: Neutral
+		Owner: Creeps
 	Actor0: v04
 		Location: 58,90
-		Owner: Neutral
+		Owner: Creeps
 	Actor41: t12
 		Location: 73,69
 		Owner: Neutral
@@ -116,10 +129,10 @@ Actors:
 		Owner: Neutral
 	Actor47: v01
 		Location: 70,84
-		Owner: Neutral
+		Owner: Creeps
 	Actor10: v02
 		Location: 73,90
-		Owner: Neutral
+		Owner: Creeps
 	Actor236: sbag
 		Location: 66,36
 		Owner: Soviets
@@ -170,7 +183,7 @@ Actors:
 		Owner: Neutral
 	Actor9: v01
 		Location: 64,94
-		Owner: Neutral
+		Owner: Creeps
 	Actor53: powr
 		Location: 86,65
 		Owner: Soviets
@@ -482,7 +495,7 @@ Actors:
 		Owner: Soviets
 	Actor297: v08
 		Location: 68,95
-		Owner: Neutral
+		Owner: Creeps
 	Actor142: fenc
 		Location: 91,16
 		Owner: Soviets
@@ -986,13 +999,13 @@ Actors:
 		Owner: Soviets
 	Actor114: c1
 		Location: 69,84
-		Owner: Neutral
+		Owner: Creeps
 	Actor217: c3
 		Location: 63,96
-		Owner: Neutral
+		Owner: Creeps
 	Actor54: c1
 		Location: 67,99
-		Owner: Neutral
+		Owner: Creeps
 	Actor302: tsla
 		Location: 103,34
 		Owner: Soviets
@@ -1061,19 +1074,19 @@ Actors:
 		Owner: Soviets
 	Actor340: v09
 		Location: 72,86
-		Owner: Neutral
+		Owner: Creeps
 	Actor339: e1
 		Location: 21,35
 		Owner: Soviets
 	Actor342: v05
 		Location: 68,88
-		Owner: Neutral
+		Owner: Creeps
 	Actor341: e1
 		Location: 24,27
 		Owner: Soviets
 	Actor344: v08
 		Location: 65,99
-		Owner: Neutral
+		Owner: Creeps
 	Actor345: v16
 		Location: 59,97
 		Owner: Neutral
@@ -1085,7 +1098,7 @@ Actors:
 		Owner: Neutral
 	Actor348: v06
 		Location: 60,96
-		Owner: Neutral
+		Owner: Creeps
 	Actor349: v14
 		Location: 66,83
 		Owner: Neutral
@@ -1133,7 +1146,7 @@ Actors:
 		Owner: Neutral
 	Actor273: v10
 		Location: 58,86
-		Owner: Neutral
+		Owner: Creeps
 	Actor343: e1
 		Location: 28,49
 		Owner: Soviets
@@ -1486,7 +1499,7 @@ Actors:
 		Owner: Neutral
 	Actor115: c2
 		Location: 56,89
-		Owner: Neutral
+		Owner: Creeps
 	Actor459: e1
 		Location: 79,102
 		Owner: Soviets
@@ -1574,28 +1587,28 @@ Actors:
 		Owner: Soviets
 	Actor313: c3
 		Location: 65,86
-		Owner: Neutral
+		Owner: Creeps
 	Actor314: c4
 		Location: 72,91
-		Owner: Neutral
+		Owner: Creeps
 	Actor315: c4
 		Location: 58,92
-		Owner: Neutral
+		Owner: Creeps
 	Actor458: c8
 		Location: 68,94
-		Owner: Neutral
+		Owner: Creeps
 	Actor476: c9
 		Location: 59,98
-		Owner: Neutral
+		Owner: Creeps
 	Actor477: c10
 		Location: 57,82
-		Owner: Neutral
+		Owner: Creeps
 	Actor478: c7
 		Location: 69,89
-		Owner: Neutral
+		Owner: Creeps
 	Actor479: c6
 		Location: 73,89
-		Owner: Neutral
+		Owner: Creeps
 	Actor150: silo
 		Location: 109,31
 		Owner: Soviets
@@ -1715,7 +1728,7 @@ Actors:
 		Owner: Neutral
 	Actor143: v11
 		Location: 72,95
-		Owner: Neutral
+		Owner: Creeps
 	Actor517: wood
 		Location: 64,100
 		Owner: Neutral
@@ -1760,22 +1773,22 @@ Actors:
 		Owner: Soviets
 	Actor92: hosp
 		Location: 57,78
-		Owner: Neutral
+		Owner: Creeps
 	Actor523: v02
 		Location: 56,87
-		Owner: Neutral
+		Owner: Creeps
 	Actor524: v03
 		Location: 60,90
-		Owner: Neutral
+		Owner: Creeps
 	Actor525: c1
 		Location: 55,90
-		Owner: Neutral
+		Owner: Creeps
 	Actor526: c9
 		Location: 60,94
-		Owner: Neutral
+		Owner: Creeps
 	Actor527: v11
 		Location: 59,94
-		Owner: Neutral
+		Owner: Creeps
 	Actor528: brl3
 		Location: 60,95
 		Owner: Neutral
@@ -1788,6 +1801,9 @@ Actors:
 	Actor533: brl3
 		Location: 54,88
 		Owner: Neutral
+	Actor1000: camera.large
+		Location: 1,1
+		Owner: Soviets
 
 Smudges:
 
@@ -1795,7 +1811,7 @@ Rules:
 	Player:
 		-ConquestVictoryConditions:
 	World:
-		-CrateDrop:
+		-CrateSpawner:
 		-SpawnMPUnits:
 		-MPStartLocations:
 		Allies04Script:
@@ -1809,6 +1825,8 @@ Rules:
 		AutoTargetIgnore:
 		Allies04TransformOnLabInfiltrate:
 			ToActor: MISS
+		Infiltratable:
+			Type: Lab
 	LST.Unselectable:
 		Inherits: LST
 		Buildable:
@@ -1828,25 +1846,24 @@ Rules:
 		Buildable:
 			Owner: None
 		SpyToolTip:
-			Icon: SPY
+			Icon: spyicon
 		RenderSpy:
 			Image: SPY
 		Health:
 			HP: 100
-		DontDestroyWhenInfiltrating:
 		RevealsShroud:
 			Range: 6
 		Spy:
 		Infiltrates:
-			InfiltrateTypes: MissionObjective
+			Types: Lab, Truck
 	DOG.Patrol:
 		Inherits: DOG
 		Buildable:
 			Owner: None
 		Tooltip:
-			Icon: DOG
+			Icon: dogicon
 		Mobile:
-			Speed: 4
+			Speed: 56
 		RenderInfantry:
 			Image: DOG
 	TRUK.Hijackable:
@@ -1858,6 +1875,8 @@ Rules:
 			MaxWeight: 5
 			PipCount: 5
 		AutoTargetIgnore:
+		Infiltratable:
+			Type: Truck
 		Allies04Hijackable:
 		Allies04RenderHijacked:
 			Image: TRUK
@@ -1867,7 +1886,7 @@ Rules:
 		-RenderUnit:
 		Selectable:
 			Voice: SpyVoice
-		RevealsShroud:	
+		RevealsShroud:
 			Range: 6
 	BARL:
 		Allies04TrivialBuilding:
@@ -1965,9 +1984,16 @@ Rules:
 	MGG:
 		Buildable:
 			Owner: None
+	MRJ:
+		Buildable:
+			Owner: None
 	GAP:
 		Buildable:
 			Owner: None
+	CAMERA.Large:
+		Inherits: CAMERA
+		RevealsShroud:
+			Range: 1000
 
 Sequences:
 	truk:
@@ -1975,8 +2001,12 @@ Sequences:
 			Start: 0
 			Facings: 32
 
+VoxelSequences:
+
 Weapons:
 
 Voices:
 
 Notifications:
+
+Translations:

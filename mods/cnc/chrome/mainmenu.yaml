@@ -3,26 +3,40 @@ Container@MENU_BACKGROUND:
 	Height:WINDOW_BOTTOM
 	Logic:CncMenuLogic
 	Children:
-		Image@RETICLE:
-			X:(WINDOW_RIGHT-WIDTH)/2
-			Y:(WINDOW_BOTTOM-HEIGHT)/2
-			Width:512
-			Height:512
-			ImageCollection:shellmap
-			ImageName:reticle
-		Label@REC:
-			X:(WINDOW_RIGHT-512)/2+10
-			Y:(WINDOW_BOTTOM+512)/2-28
-			Height:18
-			Font:Bold
-			Text:REC
-		Image@RECBLOCK:
-			X:(WINDOW_RIGHT-512)/2+40
-			Y:(WINDOW_BOTTOM+512)/2-25
-			Width:16
-			Height:16
-			ImageCollection:shellmapbits
-			ImageName:record
+		Container@SHELLMAP_DECORATIONS:
+			Children:
+				Image@RETICLE:
+					X:(WINDOW_RIGHT-WIDTH)/2
+					Y:(WINDOW_BOTTOM-HEIGHT)/2
+					Width:512
+					Height:512
+					ImageCollection:shellmap
+					ImageName:reticle
+				Label@REC:
+					X:(WINDOW_RIGHT-512)/2+10
+					Y:(WINDOW_BOTTOM+512)/2-28
+					Height:18
+					Font:Bold
+					Text:REC
+				Image@RECBLOCK:
+					X:(WINDOW_RIGHT-512)/2+40
+					Y:(WINDOW_BOTTOM+512)/2-25
+					Width:16
+					Height:16
+					ImageCollection:shellmapbits
+					ImageName:record
+		Container@SHELLMAP_DISABLED_DECORATIONS:
+			Children:
+				Image@NOD:
+					X:WINDOW_RIGHT/2-384
+					Y:(WINDOW_BOTTOM-256)/2
+					ImageCollection:logos
+					ImageName:nod-load
+				Image@GDI:
+					X:WINDOW_RIGHT/2+128
+					Y:(WINDOW_BOTTOM-256)/2
+					ImageCollection:logos
+					ImageName:gdi-load
 		Image@EVA:
 			X:WINDOW_RIGHT-128-43
 			Y:43
@@ -45,11 +59,11 @@ Container@MENU_BACKGROUND:
 			Y:WINDOW_BOTTOM-33-HEIGHT-10
 			Width:740
 			Height:35
-			Children:		
+			Children:
 				Container@MAIN_MENU:
 					Width:PARENT_RIGHT
-					Children:	
-						Label@TITLE:
+					Children:
+						Label@MAINMENU_LABEL_TITLE:
 							X:0
 							Y:0-30
 							Width:PARENT_RIGHT
@@ -92,7 +106,7 @@ Container@MENU_BACKGROUND:
 					Width:PARENT_RIGHT
 					Visible:false
 					Children:
-						Label@TITLE:
+						Label@MULTIPLAYER_MENU_TITLE:
 							X:0
 							Y:0-30
 							Width:PARENT_RIGHT
@@ -129,8 +143,8 @@ Container@MENU_BACKGROUND:
 				Container@SETTINGS_MENU:
 					Width:PARENT_RIGHT
 					Visible:False
-					Children:	
-						Label@TITLE:
+					Children:
+						Label@OPTIONS_MENU_TITLE:
 							X:0
 							Y:0-30
 							Width:PARENT_RIGHT
@@ -157,6 +171,12 @@ Container@MENU_BACKGROUND:
 							Width:140
 							Height:35
 							Text:Settings
+						Button@CREDITS_BUTTON:
+							X:450
+							Y:0
+							Width:140
+							Height:35
+							Text:Credits
 						Button@BACK_BUTTON:
 							Key:escape
 							X:600
@@ -165,7 +185,7 @@ Container@MENU_BACKGROUND:
 							Height:35
 							Text:Back
 		Container@PERFORMANCE_INFO:
-			Logic:CncPerfDebugLogic
+			Logic:PerfDebugLogic
 			Children:
 				Label@PERF_TEXT:
 					X:40

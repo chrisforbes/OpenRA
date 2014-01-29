@@ -20,23 +20,23 @@ namespace OpenRA.Mods.Cnc
 {
 	public class HarvesterDockSequence : Activity
 	{
-		enum State { Wait, Turn, DragIn, Dock, Loop, Undock, DragOut };
+		enum State { Wait, Turn, DragIn, Dock, Loop, Undock, DragOut }
+		static readonly WVec DockOffset = new WVec(-640, 341, 0);
 
 		readonly Actor proc;
 		readonly Harvester harv;
 		readonly RenderUnit ru;
 		State state;
 
-		PPos startDock;
-		PPos endDock;
+		WPos startDock, endDock;
 		public HarvesterDockSequence(Actor self, Actor proc)
 		{
 			this.proc = proc;
 			state = State.Turn;
 			harv = self.Trait<Harvester>();
 			ru = self.Trait<RenderUnit>();
-			startDock = self.Trait<IHasLocation>().PxPosition;
-			endDock = proc.Trait<IHasLocation>().PxPosition + new PVecInt(-15,8);
+			startDock = self.CenterPosition;
+			endDock = proc.CenterPosition + DockOffset;
 		}
 
 		public override Activity Tick(Actor self)
@@ -52,11 +52,11 @@ namespace OpenRA.Mods.Cnc
 					state = State.Dock;
 					return Util.SequenceActivities(new Drag(startDock, endDock, 12), this);
 				case State.Dock:
-					ru.PlayCustomAnimation(self, "dock", () => {ru.PlayCustomAnimRepeating(self, "dock-loop"); state = State.Loop;});
+					ru.PlayCustomAnimation(self, "dock", () => { ru.PlayCustomAnimRepeating(self, "dock-loop"); state = State.Loop; });
 					state = State.Wait;
 					return this;
 				case State.Loop:
-					if (harv.TickUnload(self, proc))
+					if (!proc.IsInWorld || proc.IsDead() || harv.TickUnload(self, proc))
 						state = State.Undock;
 					return this;
 				case State.Undock:
@@ -66,6 +66,7 @@ namespace OpenRA.Mods.Cnc
 				case State.DragOut:
 					return Util.SequenceActivities(new Drag(endDock, startDock, 12), NextActivity);
 			}
+
 			throw new InvalidOperationException("Invalid harvester dock state");
 		}
 
@@ -74,10 +75,9 @@ namespace OpenRA.Mods.Cnc
 			state = State.Undock;
 		}
 
-		public override IEnumerable<Target> GetTargets( Actor self )
+		public override IEnumerable<Target> GetTargets(Actor self)
 		{
 			yield return Target.FromActor(proc);
 		}
 	}
 }
-

@@ -11,32 +11,34 @@
 using System.Collections.Generic;
 using OpenRA.Effects;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
 	public class Smoke : IEffect
 	{
-		readonly PPos pos;
+		readonly World world;
+		readonly WPos pos;
+		readonly CPos cell;
 		readonly Animation anim;
 
-		public Smoke(World world, PPos pos, string trail)
+		public Smoke(World world, WPos pos, string trail)
 		{
+			this.world = world;
 			this.pos = pos;
+			this.cell = pos.ToCPos();
 			anim = new Animation(trail);
 			anim.PlayThen("idle",
 				() => world.AddFrameEndTask(w => w.Remove(this)));
 		}
 
-		public void Tick( World world )
-		{
-			anim.Tick();
-		}
+		public void Tick(World world) { anim.Tick(); }
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			yield return new Renderable(anim.Image, pos.ToFloat2() - .5f * anim.Image.size,
-				wr.Palette("effect"), (int)pos.Y);
+			if (world.FogObscures(cell))
+				return SpriteRenderable.None;
+
+			return anim.Render(pos, wr.Palette("effect"));
 		}
 	}
 }

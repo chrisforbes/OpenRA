@@ -15,95 +15,35 @@ using OpenRA.Graphics;
 
 namespace OpenRA.Traits
 {
-	public class RenderSimpleInfo : ITraitInfo
+	public class RenderSimpleInfo : RenderSpritesInfo, Requires<IBodyOrientationInfo>
 	{
-		public readonly string Image = null;
-		public readonly string Palette = null;
-		public readonly string PlayerPalette = "player";
-		public readonly float Scale = 1f;
+		public override object Create(ActorInitializer init) { return new RenderSimple(init.self); }
 
-		public virtual object Create(ActorInitializer init) { return new RenderSimple(init.self); }
-
-		public virtual IEnumerable<Renderable> RenderPreview(ActorInfo building, PaletteReference pr)
+		public virtual IEnumerable<IRenderable> RenderPreview(ActorInfo ai, PaletteReference pr)
 		{
-			var anim = new Animation(RenderSimple.GetImage(building), () => 0);
+			var anim = new Animation(RenderSimple.GetImage(ai), () => 0);
 			anim.PlayRepeating("idle");
 
-			yield return new Renderable(anim.Image, 0.5f * anim.Image.size * (1 - Scale), pr, 0, Scale);
+			return anim.Render(WPos.Zero, WVec.Zero, 0, pr, Scale);
 		}
 	}
 
-	public class RenderSimple : IRender, IAutoSelectionSize, ITick, INotifyOwnerChanged
+	public class RenderSimple : RenderSprites, IAutoSelectionSize
 	{
-		public Dictionary<string, AnimationWithOffset> anims = new Dictionary<string, AnimationWithOffset>();
-
-		public static Func<int> MakeFacingFunc(Actor self)
-		{
-			var facing = self.TraitOrDefault<IFacing>();
-			if (facing == null) return () => 0;
-			return () => facing.Facing;
-		}
-
-		public Animation anim
-		{
-			get { return anims[""].Animation; }
-			protected set { anims[""].Animation = value; }
-		}
-
-		public static string GetImage(ActorInfo actor)
-		{
-			var Info = actor.Traits.Get<RenderSimpleInfo>();
-			return Info.Image ?? actor.Name;
-		}
-
-		public string GetImage(Actor self)
-		{
-			if (cachedImage != null)
-				return cachedImage;
-
-			return cachedImage = GetImage(self.Info);
-		}
-
 		RenderSimpleInfo Info;
-		string cachedImage = null;
-		bool initializePalette = true;
-		protected PaletteReference palette;
 
 		public RenderSimple(Actor self, Func<int> baseFacing)
+			: base(self)
 		{
 			anims.Add("", new Animation(GetImage(self), baseFacing));
 			Info = self.Info.Traits.Get<RenderSimpleInfo>();
 		}
 
-		public RenderSimple(Actor self) : this( self, MakeFacingFunc(self) )
+		public RenderSimple(Actor self)
+			: this(self, MakeFacingFunc(self))
 		{
 			anim.PlayRepeating("idle");
-		}
-
-		protected virtual string PaletteName(Actor self)
-		{
-			return Info.Palette ?? Info.PlayerPalette + self.Owner.InternalName;
-		}
-
-		protected void UpdatePalette() { initializePalette = true; }
-		public void OnOwnerChanged(Actor self, Player oldOwner, Player newOwner) { UpdatePalette(); }
-
-		public virtual IEnumerable<Renderable> Render(Actor self, WorldRenderer wr)
-		{
-			if (initializePalette)
-			{
-				palette = wr.Palette(PaletteName(self));
-				initializePalette = false;
-			}
-
-			foreach (var a in anims.Values)
-				if (a.DisableFunc == null || !a.DisableFunc())
-				{
-					Renderable ret = a.Image(self, palette);
-					if (Info.Scale != 1f)
-						ret = ret.WithScale(Info.Scale).WithPos(ret.Pos + 0.5f * ret.Sprite.size * (1 - Info.Scale));
-					yield return ret;
-				}
+			self.Trait<IBodyOrientation>().SetAutodetectedFacings(anim.CurrentSequence.Facings);
 		}
 
 		public int2 SelectionSize(Actor self)
@@ -114,19 +54,9 @@ namespace OpenRA.Traits
 				.FirstOrDefault();
 		}
 
-		public virtual void Tick(Actor self)
+		public string NormalizeSequence(Actor self, string baseSequence)
 		{
-			foreach (var a in anims.Values)
-				a.Animation.Tick();
-		}
-
-		protected virtual string NormalizeSequence(Actor self, string baseSequence)
-		{
-			string damageState = self.GetDamageState() >= DamageState.Heavy ? "damaged-" : "";
-			if (anim.HasSequence(damageState + baseSequence))
-				return damageState + baseSequence;
-			else
-				return baseSequence;
+			return NormalizeSequence(anim, self.GetDamageState(), baseSequence);
 		}
 
 		public void PlayCustomAnim(Actor self, string name)

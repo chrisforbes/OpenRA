@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Traits;
+using OpenRA.Mods.RA.Buildings;
 
 namespace OpenRA.Mods.RA.Render
 {
@@ -20,22 +21,18 @@ namespace OpenRA.Mods.RA.Render
 		public override object Create(ActorInitializer init) { return new RenderBuildingWarFactory( init, this ); }
 
 		/* get around unverifiability */
-		IEnumerable<Renderable> BaseBuildingPreview(ActorInfo building, PaletteReference pr)
+		IEnumerable<IRenderable> BaseBuildingPreview(ActorInfo building, PaletteReference pr)
 		{
 			return base.RenderPreview(building, pr);
 		}
 
-		public override IEnumerable<Renderable> RenderPreview(ActorInfo building, PaletteReference pr)
+		public override IEnumerable<IRenderable> RenderPreview(ActorInfo building, PaletteReference pr)
 		{
 			var p = BaseBuildingPreview(building, pr);
-			foreach (var r in p)
-				yield return r;
-
-			var anim = new Animation(RenderSimple.GetImage(building), () => 0);
+			var anim = new Animation(RenderSprites.GetImage(building), () => 0);
 			anim.PlayRepeating("idle-top");
-			var rb = building.Traits.Get<RenderBuildingInfo>();
-			yield return new Renderable(anim.Image, rb.Origin + 0.5f*anim.Image.size*(1 - Scale),
-				pr, 0, Scale);
+
+			return p.Concat(anim.Render(WPos.Zero, WVec.Zero, 0, pr, Scale));
 		}
 	}
 
@@ -50,9 +47,12 @@ namespace OpenRA.Mods.RA.Render
 			: base(init, info)
 		{
 			roof = new Animation(GetImage(init.self));
-			var offset = new AnimationWithOffset( roof ) { ZOffset = 24 };
-			offset.DisableFunc = () => !buildComplete;
-			anims.Add("roof", offset);
+			var bi = init.self.Info.Traits.Get<BuildingInfo>();
+
+			// Additional 512 units move from center -> top of cell
+			var offset = FootprintUtils.CenterOffset(bi).Y + 512;
+			anims.Add("roof", new AnimationWithOffset(roof, null,
+				() => !buildComplete, offset));
 		}
 
 		public void BuildingComplete( Actor self )

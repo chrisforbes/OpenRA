@@ -18,9 +18,11 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.Cnc
 {
+	[Desc("Deliver the unit in production via skylift.")]
 	public class ProductionAirdropInfo : ProductionInfo
 	{
 		public readonly string ReadyAudio = "Reinforce";
+		[Desc("Cargo aircraft used.")]
 		[ActorReference] public readonly string ActorType = "c17";
 
 		public override object Create(ActorInitializer init) { return new ProductionAirdrop(this); }
@@ -28,9 +30,10 @@ namespace OpenRA.Mods.Cnc
 
 	class ProductionAirdrop : Production
 	{
-		public ProductionAirdrop(ProductionAirdropInfo info) : base(info) {}
+		public ProductionAirdrop(ProductionAirdropInfo info)
+			: base(info) { }
 
-		public override bool Produce( Actor self, ActorInfo producee )
+		public override bool Produce(Actor self, ActorInfo producee)
 		{
 			var owner = self.Owner;
 
@@ -49,15 +52,15 @@ namespace OpenRA.Mods.Cnc
 
 			owner.World.AddFrameEndTask(w =>
 			{
+				var altitude = Rules.Info[actorType].Traits.Get<PlaneInfo>().CruiseAltitude;
 				var a = w.CreateActor(actorType, new TypeDictionary
 				{
-					new LocationInit( startPos ),
-					new OwnerInit( owner ),
-					new FacingInit( 64 ),
-					new AltitudeInit( Rules.Info[actorType].Traits.Get<PlaneInfo>().CruiseAltitude ),
+					new CenterPositionInit(startPos.CenterPosition + new WVec(WRange.Zero, WRange.Zero, altitude)),
+					new OwnerInit(owner),
+					new FacingInit(64)
 				});
 
-				a.QueueActivity(Fly.ToCell(self.Location + new CVec(6, 0)));
+				a.QueueActivity(Fly.ToCell(self.Location + new CVec(9, 0)));
 				a.QueueActivity(new Land(Target.FromActor(self)));
 				a.QueueActivity(new CallFunc(() =>
 				{

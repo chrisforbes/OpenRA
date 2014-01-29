@@ -11,19 +11,22 @@
 using System.Collections.Generic;
 using OpenRA.Effects;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
 	public class Corpse : IEffect
 	{
-		readonly Animation anim;
-		readonly float2 pos;
+		readonly World world;
+		readonly WPos pos;
+		readonly CPos cell;
 		readonly string paletteName;
+		readonly Animation anim;
 
-		public Corpse(World world, float2 pos, string image, string sequence, string paletteName)
+		public Corpse(World world, WPos pos, string image, string sequence, string paletteName)
 		{
+			this.world = world;
 			this.pos = pos;
+			this.cell = pos.ToCPos();
 			this.paletteName = paletteName;
 			anim = new Animation(image);
 			anim.PlayThen(sequence, () => world.AddFrameEndTask(w => w.Remove(this)));
@@ -31,9 +34,12 @@ namespace OpenRA.Mods.RA.Effects
 
 		public void Tick(World world) { anim.Tick(); }
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			yield return new Renderable(anim.Image, pos - .5f * anim.Image.size, wr.Palette(paletteName), (int)pos.Y);
+			if (world.FogObscures(cell))
+				return SpriteRenderable.None;
+
+			return anim.Render(pos, wr.Palette(paletteName));
 		}
 	}
 }

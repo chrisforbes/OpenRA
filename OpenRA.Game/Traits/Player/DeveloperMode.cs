@@ -8,8 +8,6 @@
  */
 #endregion
 
-using System;
-
 namespace OpenRA.Traits
 {
 	public class DeveloperModeInfo : ITraitInfo
@@ -21,6 +19,8 @@ namespace OpenRA.Traits
 		public bool PathDebug = false;
 		public bool UnlimitedPower;
 		public bool BuildAnywhere;
+		public bool ShowCombatGeometry;
+		public bool ShowDebugGeometry;
 
 		public object Create (ActorInitializer init) { return new DeveloperMode(this); }
 	}
@@ -36,6 +36,10 @@ namespace OpenRA.Traits
 		[Sync] public bool UnlimitedPower;
 		[Sync] public bool BuildAnywhere;
 
+		// Client size only
+		public bool ShowCombatGeometry;
+		public bool ShowDebugGeometry;
+
 		public DeveloperMode(DeveloperModeInfo info)
 		{
 			Info = info;
@@ -45,6 +49,8 @@ namespace OpenRA.Traits
 			PathDebug = info.PathDebug;
 			UnlimitedPower = info.UnlimitedPower;
 			BuildAnywhere = info.BuildAnywhere;
+			ShowCombatGeometry = info.ShowCombatGeometry;
+			ShowDebugGeometry = info.ShowDebugGeometry;
 		}
 
 		public void ResolveOrder (Actor self, Order order)
@@ -77,6 +83,8 @@ namespace OpenRA.Traits
 					{
 						DisableShroud ^= true;
 						self.Owner.Shroud.Disabled = DisableShroud;
+						if (self.World.LocalPlayer == self.Owner)
+							self.World.RenderPlayer = DisableShroud ? null : self.Owner;
 						break;
 					}
 				case "DevPathDebug":

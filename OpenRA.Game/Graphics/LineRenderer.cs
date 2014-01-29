@@ -15,70 +15,83 @@ namespace OpenRA.Graphics
 {
 	public class LineRenderer : Renderer.IBatchRenderer
 	{
-		public float LineWidth = 1f;
-		static float2 offset = new float2(0.5f,0.5f);
-
+		static float2 offset = new float2(0.5f, 0.5f);
+		float lineWidth = 1f;
 		Renderer renderer;
 		IShader shader;
 
-		Vertex[] vertices = new Vertex[ Renderer.TempBufferSize ];
+		Vertex[] vertices = new Vertex[Renderer.TempBufferSize];
 		int nv = 0;
 
-		public LineRenderer( Renderer renderer, IShader shader )
+		public LineRenderer(Renderer renderer, IShader shader)
 		{
 			this.renderer = renderer;
 			this.shader = shader;
 		}
 
+
+		public float LineWidth
+		{
+			get { return lineWidth; }
+			set
+			{
+				if (LineWidth != value)
+					Flush();
+
+				lineWidth = value;
+			}
+		}
+
 		public void Flush()
 		{
-			if( nv > 0 )
+			if (nv > 0)
 			{
-				shader.Render( () =>
+				renderer.Device.SetBlendMode(BlendMode.Alpha);
+				shader.Render(() =>
 				{
 					var vb = renderer.GetTempVertexBuffer();
-					vb.SetData( vertices, nv );
-					renderer.SetLineWidth(LineWidth * Game.viewport.Zoom);
-					renderer.DrawBatch( vb,	0, nv, PrimitiveType.LineList );
-				} );
-
+					vb.SetData(vertices, nv);
+					renderer.SetLineWidth(LineWidth);
+					renderer.DrawBatch(vb, 0, nv, PrimitiveType.LineList);
+				});
+				renderer.Device.SetBlendMode(BlendMode.None);
 				nv = 0;
 			}
 		}
 
-		public void DrawRect( float2 tl, float2 br, Color c )
+		public void DrawRect(float2 tl, float2 br, Color c)
 		{
-			var tr = new float2( br.X, tl.Y );
-			var bl = new float2( tl.X, br.Y );
-			DrawLine( tl, tr, c, c );
-			DrawLine( tl, bl, c, c );
-			DrawLine( tr, br, c, c );
-			DrawLine( bl, br, c, c );
+			var tr = new float2(br.X, tl.Y);
+			var bl = new float2(tl.X, br.Y);
+			DrawLine(tl, tr, c, c);
+			DrawLine(tl, bl, c, c);
+			DrawLine(tr, br, c, c);
+			DrawLine(bl, br, c, c);
 		}
 
-		public void DrawLine( float2 start, float2 end, Color startColor, Color endColor )
+		public void DrawLine(float2 start, float2 end, Color startColor, Color endColor)
 		{
 			Renderer.CurrentBatchRenderer = this;
 
-			if( nv + 2 > Renderer.TempBufferSize )
+			if (nv + 2 > Renderer.TempBufferSize)
 				Flush();
 
-			vertices[ nv++ ] = new Vertex( start + offset,
-				new float2( startColor.R / 255.0f, startColor.G / 255.0f ),
-				new float2( startColor.B / 255.0f, startColor.A / 255.0f ) );
+			vertices[nv++] = new Vertex(start + offset,
+				new float2(startColor.R / 255.0f, startColor.G / 255.0f),
+				new float2(startColor.B / 255.0f, startColor.A / 255.0f));
 
-			vertices[ nv++ ] = new Vertex( end + offset,
-				new float2( endColor.R / 255.0f, endColor.G / 255.0f ),
-				new float2( endColor.B / 255.0f, endColor.A / 255.0f ) );
+			vertices[nv++] = new Vertex(end + offset,
+				new float2(endColor.R / 255.0f, endColor.G / 255.0f),
+				new float2(endColor.B / 255.0f, endColor.A / 255.0f));
 		}
 
-		public void FillRect( RectangleF r, Color color )
+		public void FillRect(RectangleF r, Color color)
 		{
-			for (float y = r.Top; y < r.Bottom; y++)
+			for (var y = r.Top; y < r.Bottom; y++)
 				DrawLine(new float2(r.Left, y), new float2(r.Right, y), color, color);
 		}
 
-		public void SetShaderParams(ITexture palette, Size screen, float zoom, float2 scroll)
+		public void SetViewportParams(Size screen, float zoom, float2 scroll)
 		{
 			shader.SetVec("Scroll", (int)scroll.X, (int)scroll.Y);
 			shader.SetVec("r1", zoom*2f/screen.Width, -zoom*2f/screen.Height);

@@ -9,8 +9,8 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
+using OpenRA.Effects;
 using OpenRA.FileFormats;
 using OpenRA.Graphics;
 using OpenRA.Traits;
@@ -21,6 +21,8 @@ namespace OpenRA.Mods.RA
 	{
 		public readonly bool Long = false;
 
+		[Desc("Delay (in ticks) between repairing adjacent spans in long bridges")]
+		public readonly int RepairPropagationDelay = 20;
 
 		public readonly ushort Template = 0;
 		public readonly ushort DamagedTemplate = 0;
@@ -62,14 +64,10 @@ namespace OpenRA.Mods.RA
 		}
 	}
 
-	class Bridge: IRenderAsTerrain, INotifyDamageStateChanged
+	class Bridge: IRender, INotifyDamageStateChanged
 	{
-		static string cachedTileset;
-		static Cache<TileReference<ushort,byte>, Sprite> sprites;
-
-		Dictionary<ushort, Dictionary<CPos, Sprite>> TileSprites = new Dictionary<ushort, Dictionary<CPos, Sprite>>();
-		Dictionary<ushort, TileTemplate> Templates = new Dictionary<ushort, TileTemplate>();
-		ushort currentTemplate;
+		ushort template;
+		Dictionary<CPos, byte> footprint;
 
 		Actor self;
 		BridgeInfo Info;
@@ -86,38 +84,21 @@ namespace OpenRA.Mods.RA
 			this.Type = self.Info.Name;
 		}
 
-		public void Create(ushort template, Dictionary<CPos, byte> subtiles)
+		public void Create(ushort template, Dictionary<CPos, byte> footprint)
 		{
-			currentTemplate = template;
-
-			// Create a new cache to store the tile data
-			if (cachedTileset != self.World.Map.Tileset)
-			{
-				cachedTileset = self.World.Map.Tileset;
-				sprites = new Cache<TileReference<ushort,byte>, Sprite>(
-				x => Game.modData.SheetBuilder.Add(self.World.TileSet.GetBytes(x),
-					new Size(Game.CellSize, Game.CellSize)));
-			}
-
-			// Cache templates and tiles for the different states
-			foreach (var t in Info.Templates)
-			{
-				Templates.Add(t.First,self.World.TileSet.Templates[t.First]);
-				TileSprites.Add(t.First, subtiles.ToDictionary(
-					a => a.Key,
-					a => sprites[new TileReference<ushort,byte>(t.First, (byte)a.Value)]));
-			}
+			this.template = template;
+			this.footprint = footprint;
 
 			// Set the initial custom terrain types
-			foreach (var c in TileSprites[currentTemplate].Keys)
+			foreach (var c in footprint.Keys)
 				self.World.Map.CustomTerrain[c.X, c.Y] = GetTerrainType(c);
 		}
 
-		public string GetTerrainType(CPos cell)
+		string GetTerrainType(CPos cell)
 		{
 			var dx = cell - self.Location;
-			var index = dx.X + Templates[currentTemplate].Size.X * dx.Y;
-			return self.World.TileSet.GetTerrainType(new TileReference<ushort, byte>(currentTemplate,(byte)index));
+			var index = dx.X + self.World.TileSet.Templates[template].Size.X * dx.Y;
+			return self.World.TileSet.GetTerrainType(new TileReference<ushort, byte>(template, (byte)index));
 		}
 
 		public void LinkNeighbouringBridges(World world, BridgeLayer bridges)
@@ -131,85 +112,211 @@ namespace OpenRA.Mods.RA
 
 		public Bridge GetNeighbor(int[] offset, BridgeLayer bridges)
 		{
-			if (offset == null) return null;
+			if (offset == null)
+				return null;
+
 			return bridges.GetBridge(self.Location + new CVec(offset[0], offset[1]));
 		}
 
-		bool initializePalettes = true;
-		PaletteReference terrainPalette;
-		public IEnumerable<Renderable> RenderAsTerrain(WorldRenderer wr, Actor self)
+		IRenderable[] TemplateRenderables(WorldRenderer wr, PaletteReference palette, ushort template)
 		{
-			if (initializePalettes)
-			{
-				terrainPalette = wr.Palette("terrain");
-				initializePalettes = false;
-			}
-
-			foreach (var t in TileSprites[currentTemplate])
-				yield return new Renderable(t.Value, t.Key.ToPPos().ToFloat2(), terrainPalette, Game.CellSize * t.Key.Y);
+			return footprint.Select(c => (IRenderable)(new SpriteRenderable(
+				wr.Theater.TileSprite(new TileReference<ushort, byte>(template, c.Value)),
+				c.Key.CenterPosition, WVec.Zero, -512, palette, 1f, true))).ToArray();
 		}
 
-		bool IsIntact(Bridge b)
+		bool initialized;
+		Dictionary<ushort, IRenderable[]> renderables;
+		public IEnumerable<IRenderable> Render(Actor self, WorldRenderer wr)
 		{
-			return b != null && !b.self.IsDead();
+			if (!initialized)
+			{
+				var palette = wr.Palette("terrain");
+				renderables = new Dictionary<ushort, IRenderable[]>();
+				foreach (var t in Info.Templates)
+					renderables.Add(t.First, TemplateRenderables(wr, palette, t.First));
+
+				initialized = true;
+			}
+
+			return renderables[template];
 		}
 
 		void KillUnitsOnBridge()
 		{
-			foreach (var c in TileSprites[currentTemplate].Keys)
+			foreach (var c in footprint.Keys)
 				foreach (var a in self.World.ActorMap.GetUnitsAt(c))
-					if (a.HasTrait<IMove>() && !a.Trait<IMove>().CanEnterCell(c))
+					if (a.HasTrait<IPositionable>() && !a.Trait<IPositionable>().CanEnterCell(c))
 						a.Kill(self);
 		}
 
-		bool dead = false;
-		void UpdateState()
+		bool NeighbourIsDeadShore(Bridge neighbour)
 		{
-			// If this is a long bridge next to a destroyed shore piece, we need die to give clean edges to the break
-			if (Info.Long && Health.DamageState != DamageState.Dead &&
-				((southNeighbour != null && Info.ShorePieces.Contains(southNeighbour.Type) && !IsIntact(southNeighbour)) ||
-				(northNeighbour != null && Info.ShorePieces.Contains(northNeighbour.Type) && !IsIntact(northNeighbour))))
-			{
-				self.Kill(self); // this changes the damagestate
-			}
-			var oldTemplate = currentTemplate;
-			var ds = Health.DamageState;
-			currentTemplate = (ds == DamageState.Dead && Info.DestroyedTemplate > 0) ? Info.DestroyedTemplate :
-							  (ds >= DamageState.Heavy && Info.DamagedTemplate > 0) ? Info.DamagedTemplate : Info.Template;
+			return neighbour != null && Info.ShorePieces.Contains(neighbour.Type) && neighbour.Health.IsDead;
+		}
 
-			if (Info.Long && ds == DamageState.Dead)
+		bool LongBridgeSegmentIsDead()
+		{
+			// The long bridge artwork requires a hack to display correctly
+			// if the adjacent shore piece is dead
+			if (!Info.Long)
+				return Health.IsDead;
+
+			if (NeighbourIsDeadShore(northNeighbour))
+				return true;
+
+			if (NeighbourIsDeadShore(southNeighbour))
+				return true;
+
+			return Health.IsDead;
+		}
+
+		ushort ChooseTemplate()
+		{
+			if (Info.Long && LongBridgeSegmentIsDead())
 			{
 				// Long bridges have custom art for multiple segments being destroyed
-				bool waterToSouth = !IsIntact(southNeighbour);
-				bool waterToNorth = !IsIntact(northNeighbour);
+				var northIsDead = northNeighbour != null && northNeighbour.LongBridgeSegmentIsDead();
+				var southIsDead = southNeighbour != null && southNeighbour.LongBridgeSegmentIsDead();
+				if (northIsDead && southIsDead)
+					return Info.DestroyedPlusBothTemplate;
+				if (northIsDead)
+					return Info.DestroyedPlusNorthTemplate;
+				if (southIsDead)
+					return Info.DestroyedPlusSouthTemplate;
 
-				if (waterToSouth && waterToNorth)
-					currentTemplate = Info.DestroyedPlusBothTemplate;
-				else if (waterToNorth)
-					currentTemplate = Info.DestroyedPlusNorthTemplate;
-				else if (waterToSouth)
-					currentTemplate = Info.DestroyedPlusSouthTemplate;
+				return Info.DestroyedTemplate;
 			}
 
-			if (currentTemplate == oldTemplate)
+			var ds = Health.DamageState;
+			return (ds == DamageState.Dead && Info.DestroyedTemplate > 0) ? Info.DestroyedTemplate :
+				   (ds >= DamageState.Heavy && Info.DamagedTemplate > 0) ? Info.DamagedTemplate : Info.Template;
+		}
+
+		bool killedUnits = false;
+		void UpdateState()
+		{
+			var oldTemplate = template;
+
+			template = ChooseTemplate();
+			if (template == oldTemplate)
 				return;
 
 			// Update map
-			foreach (var c in TileSprites[currentTemplate].Keys)
+			foreach (var c in footprint.Keys)
 				self.World.Map.CustomTerrain[c.X, c.Y] = GetTerrainType(c);
 
-			if (ds == DamageState.Dead && !dead)
+			// If this bridge repair operation connects two pathfinding domains,
+			// update the domain index.
+			var domainIndex = self.World.WorldActor.TraitOrDefault<DomainIndex>();
+			if (domainIndex != null)
+				domainIndex.UpdateCells(self.World, footprint.Keys);
+
+			if (LongBridgeSegmentIsDead() && !killedUnits)
 			{
-				dead = true;
+				killedUnits = true;
 				KillUnitsOnBridge();
+			}
+		}
+
+		public void Repair(Actor repairer, bool continueNorth, bool continueSouth)
+		{
+			// Repair self
+			var initialDamage = Health.DamageState;
+			self.World.AddFrameEndTask(w =>
+			{
+				if (Health.IsDead)
+				{
+					Health.Resurrect(self, repairer);
+					killedUnits = false;
+					KillUnitsOnBridge();
+				}
+				else
+					Health.InflictDamage(self, repairer, -Health.MaxHP, null, true);
+			});
+
+			// Repair adjacent spans (long bridges)
+			if (continueNorth && northNeighbour != null)
+			{
+				var delay = initialDamage == DamageState.Undamaged || NeighbourIsDeadShore(northNeighbour) ?
+					0 : Info.RepairPropagationDelay;
+
+				self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
+					northNeighbour.Repair(repairer, true, false))));
+			}
+
+			if (continueSouth && southNeighbour != null)
+			{
+				var delay = initialDamage == DamageState.Undamaged || NeighbourIsDeadShore(southNeighbour) ?
+					0 : Info.RepairPropagationDelay;
+
+				self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
+					southNeighbour.Repair(repairer, false, true))));
 			}
 		}
 
 		public void DamageStateChanged(Actor self, AttackInfo e)
 		{
 			UpdateState();
-			if (northNeighbour != null) northNeighbour.UpdateState();
-			if (southNeighbour != null) southNeighbour.UpdateState();
+			if (northNeighbour != null)
+				northNeighbour.UpdateState();
+			if (southNeighbour != null)
+				southNeighbour.UpdateState();
+
+			// Need to update the neighbours neighbour to correctly
+			// display the broken shore hack
+			if (Info.ShorePieces.Contains(Type))
+			{
+				if (northNeighbour != null && northNeighbour.northNeighbour != null)
+					northNeighbour.northNeighbour.UpdateState();
+				if (southNeighbour != null && southNeighbour.southNeighbour != null)
+					southNeighbour.southNeighbour.UpdateState();
+			}
+		}
+
+		public DamageState AggregateDamageState()
+		{
+			// Find the worst span damage in the entire bridge
+			var br = this;
+			while (br.northNeighbour != null)
+				br = br.northNeighbour;
+
+			var damage = Health.DamageState;
+			for (var b = br; b != null; b = b.southNeighbour)
+				if (b.Health.DamageState > damage)
+					damage = b.Health.DamageState;
+
+			return damage;
+		}
+
+		public void Demolish(Actor saboteur, bool continueNorth, bool continueSouth)
+		{
+			var initialDamage = Health.DamageState;
+			self.World.AddFrameEndTask(w =>
+			{
+				Combat.DoExplosion(saboteur, "Demolish", self.CenterPosition);
+				self.World.WorldActor.Trait<ScreenShaker>().AddEffect(15, self.CenterPosition, 6);
+				self.Kill(saboteur);
+			});
+
+			// Destroy adjacent spans (long bridges)
+			if (continueNorth && northNeighbour != null)
+			{
+				var delay = initialDamage == DamageState.Dead || NeighbourIsDeadShore(northNeighbour) ?
+					0 : Info.RepairPropagationDelay;
+
+				self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
+					northNeighbour.Demolish(saboteur, true, false))));
+			}
+
+			if (continueSouth && southNeighbour != null)
+			{
+				var delay = initialDamage == DamageState.Dead || NeighbourIsDeadShore(southNeighbour) ?
+					0 : Info.RepairPropagationDelay;
+
+				self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
+					southNeighbour.Demolish(saboteur, false, true))));
+			}
 		}
 	}
 }

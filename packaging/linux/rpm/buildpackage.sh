@@ -13,10 +13,10 @@ sed -i "s/{VERSION_FIELD}/$PKGVERSION/" openra.spec
 rootdir=`readlink -f $2`
 sed -i "s|{ROOT_DIR}|$rootdir|" openra.spec
 
-for x in `find $rootdir -type f`
+for x in `find $rootdir/usr/lib/openra -type d`
 do
     y="${x#$rootdir}"
-    sed -i "/%files/ a $y" openra.spec
+    sed -i "/%files/ a ${y}" openra.spec
 done
 
 cp openra.spec "$3/SPECS/"
@@ -30,4 +30,3 @@ fi
 
 cd RPMS/noarch/
 mv openra-$PKGVERSION-1.noarch.rpm $4
-

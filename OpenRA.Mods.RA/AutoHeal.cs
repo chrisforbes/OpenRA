@@ -10,27 +10,29 @@
 
 using System.Linq;
 using OpenRA.Traits;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Used together with AttackMedic: to make the healer do it's job automatically to nearby units.")]
 	class AutoHealInfo : TraitInfo<AutoHeal>, Requires<AttackBaseInfo> { }
 
 	class AutoHeal : INotifyIdle
 	{
-		public void TickIdle( Actor self )
+		public void TickIdle(Actor self)
 		{
 			var attack = self.Trait<AttackBase>();
-			var inRange = self.World.FindUnitsInCircle(self.CenterLocation, (int)(Game.CellSize * attack.GetMaximumRange()));
+			var inRange = self.World.FindActorsInCircle(self.CenterPosition, attack.GetMaximumRange());
 
 			var target = inRange
 				.Where(a => a != self && a.AppearsFriendlyTo(self))
 				.Where(a => a.IsInWorld && !a.IsDead())
 				.Where(a => a.GetDamageState() > DamageState.Undamaged)
 				.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-				.ClosestTo( self.CenterLocation );
+				.ClosestTo(self);
 
-			if( target != null )
-				self.QueueActivity(attack.GetAttackActivity(self, Target.FromActor( target ), false ));
+			if (target != null)
+				self.QueueActivity(attack.GetAttackActivity(self, Target.FromActor(target), false));
 		}
 	}
 }

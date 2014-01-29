@@ -32,15 +32,18 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 			var baseHeight = widget.Bounds.Height;
 			var timeOffset = timeLabel.Bounds.X;
 
-			SupportPowerManager.SupportPowerInstance lastPower = null;
+			SupportPowerInstance lastPower = null;
 			tooltipContainer.BeforeRender = () =>
 			{
 				var sp = palette.TooltipPower;
 				if (sp == null)
 					return;
 
+				if (sp.Info == null)
+					return;		// no instances actually exist (race with destroy)
+
 				time = "{0} / {1}".F(WidgetUtils.FormatTime(sp.RemainingTime),
-									 WidgetUtils.FormatTime(sp.Info.ChargeTime*25));
+									 WidgetUtils.FormatTime(sp.Info.ChargeTime * 25));
 
 				if (sp == lastPower)
 					return;
@@ -50,7 +53,7 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 				var timeWidth = timeFont.Measure(time).X;
 				var topWidth = nameFont.Measure(name).X + timeWidth + timeOffset;
 				var descSize = descFont.Measure(desc);
-				widget.Bounds.Width = 2*nameLabel.Bounds.X + Math.Max(topWidth, descSize.X);
+				widget.Bounds.Width = 2 * nameLabel.Bounds.X + Math.Max(topWidth, descSize.X);
 				widget.Bounds.Height = baseHeight + descSize.Y;
 				timeLabel.Bounds.X = widget.Bounds.Width - nameLabel.Bounds.X - timeWidth;
 				lastPower = sp;
@@ -62,4 +65,3 @@ namespace OpenRA.Mods.Cnc.Widgets.Logic
 		}
 	}
 }
-

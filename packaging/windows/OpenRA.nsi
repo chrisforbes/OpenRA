@@ -1,4 +1,4 @@
-; Copyright 2007,2009,2010 Chris Forbes, Robert Pepperell, Matthew Bowra-Dean, Paul Chote, Alli Witheford.
+; Copyright 2007-2013 OpenRA developers (see AUTHORS)
 ; This file is part of OpenRA.
 ; 
 ;  OpenRA is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 
 
 !include "MUI2.nsh"
-!include "ZipDLL.nsh"
 !include "FileFunc.nsh"
 !include "WordFunc.nsh"
 
@@ -40,7 +39,7 @@ SetCompressor lzma
 Var StartMenuFolder
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 
-;!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -49,23 +48,6 @@ Var StartMenuFolder
 
 !insertmacro MUI_LANGUAGE "English"
 
-Var DownloadCount
-!macro DownloadDependency name saveas
-	IntOp $DownloadCount 0 + 1
-	download:
-		NSISdl::download "http://open-ra.org/get-dependency.php?file=${name}" ${saveas}
-		Pop $R0
-		StrCmp $R0 "success" success
-		IntCmp $DownloadCount 3 failure retry
-	failure:
-		MessageBox MB_OK "Download of ${saveas} did not succeed. Aborting installation. $\n$\n$R0"
-		Abort
-	retry:
-		IntOp $DownloadCount $DownloadCount + 1
-		Goto download
-	success:
-!macroend
-
 ;***************************
 ;Section Definitions
 ;***************************
@@ -73,7 +55,13 @@ Section "-Reg" Reg
 	WriteRegStr HKLM "Software\OpenRA" "InstallDir" $INSTDIR
 SectionEnd
 
-Section "Client" Client
+Section "Game" GAME
+	RMDir /r "$INSTDIR\mods"
+	SetOutPath "$INSTDIR\mods"
+	File /r "${SRCDIR}\mods\common"
+	File /r "${SRCDIR}\mods\cnc"
+	File /r "${SRCDIR}\mods\d2k"
+	File /r "${SRCDIR}\mods\ra"
 	SetOutPath "$INSTDIR"
 	File "${SRCDIR}\OpenRA.Game.exe"
 	File "${SRCDIR}\OpenRA.Utility.exe"
@@ -82,21 +70,33 @@ Section "Client" Client
 	File "${SRCDIR}\OpenRA.Renderer.Gl.dll"
 	File "${SRCDIR}\OpenRA.Renderer.Cg.dll"
 	File "${SRCDIR}\OpenRA.Renderer.Null.dll"
+	File "${SRCDIR}\OpenRA.Irc.dll"
 	File "${SRCDIR}\ICSharpCode.SharpZipLib.dll"
 	File "${SRCDIR}\FuzzyLogicLibrary.dll"
+	File "${SRCDIR}\Mono.Nat.dll"
+	File "${SRCDIR}\AUTHORS"
+	File "${SRCDIR}\CHANGELOG"
 	File "${SRCDIR}\COPYING"
-	File "${SRCDIR}\HACKING"
-	File "${SRCDIR}\INSTALL"
 	File "${SRCDIR}\*.ttf"
 	File "${SRCDIR}\OpenRA.ico"
 	File "${SRCDIR}\Tao.*.dll"
-		
+	File "${SRCDIR}\SharpFont.dll"
+	File "${SRCDIR}\global mix database.dat"
+	File "${SRCDIR}\GeoIP.dll"
+	File "${SRCDIR}\GeoIP.dat"
+	File "${SRCDIR}\KopiLua.dll"
+	File "${SRCDIR}\NLua.dll"
+	File OpenAL32.dll
+	File SDL.dll
+	File freetype6.dll
+	File zlib1.dll
+
 	!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 		CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 		CreateShortCut "$SMPROGRAMS\$StartMenuFolder\OpenRA.lnk" $OUTDIR\OpenRA.Game.exe "" \
 			"$OUTDIR\OpenRA.Game.exe" "" "" "" ""
 	!insertmacro MUI_STARTMENU_WRITE_END
-	
+
 	SetOutPath "$INSTDIR\cg"
 	File "${SRCDIR}\cg\*.fx"
 	SetOutPath "$INSTDIR\glsl"
@@ -104,10 +104,10 @@ Section "Client" Client
 	File "${SRCDIR}\glsl\*.vert"
 SectionEnd
 
-Section "Editor" Editor
+Section "Editor" EDITOR
 	SetOutPath "$INSTDIR"
 	File "${SRCDIR}\OpenRA.Editor.exe"
-	
+
 	!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 		CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 		CreateShortCut "$SMPROGRAMS\$StartMenuFolder\OpenRA Editor.lnk" $OUTDIR\OpenRA.Editor.exe "" \
@@ -115,94 +115,24 @@ Section "Editor" Editor
 	!insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
-SectionGroup /e "Mods"
-	Section "Red Alert" RA
-		RMDir /r "$INSTDIR\mods\ra"
-		SetOutPath "$INSTDIR\mods\ra"
-		File "${SRCDIR}\mods\ra\*.*"
-		File /r "${SRCDIR}\mods\ra\maps"
-		File /r "${SRCDIR}\mods\ra\chrome"
-		File /r "${SRCDIR}\mods\ra\bits"
-		File /r "${SRCDIR}\mods\ra\rules"
-		File /r "${SRCDIR}\mods\ra\tilesets"
-		File /r "${SRCDIR}\mods\ra\uibits"
+SectionGroup /e "Settings"
+	Section "Portable Install" PORTABLE
+		CreateDirectory $INSTDIR\Support
 	SectionEnd
-	Section "Command & Conquer" CNC
-		RMDir /r "$INSTDIR\mods\cnc"
-		SetOutPath "$INSTDIR\mods\cnc"
-		File "${SRCDIR}\mods\cnc\*.*"
-		File /r "${SRCDIR}\mods\cnc\maps"
-		File /r "${SRCDIR}\mods\cnc\chrome"
-		File /r "${SRCDIR}\mods\cnc\bits"
-		File /r "${SRCDIR}\mods\cnc\rules"
-		File /r "${SRCDIR}\mods\cnc\sequences"
-		File /r "${SRCDIR}\mods\cnc\tilesets"
-		File /r "${SRCDIR}\mods\cnc\uibits"
-	SectionEnd
-	Section "Dune 2000" D2K
-		RMDir /r "$INSTDIR\mods\d2k"
-		SetOutPath "$INSTDIR\mods\d2k"
-		File "${SRCDIR}\mods\d2k\*.*"
-		File /r "${SRCDIR}\mods\d2k\maps"
-		File /r "${SRCDIR}\mods\d2k\chrome"
-		File /r "${SRCDIR}\mods\d2k\bits"
-		File /r "${SRCDIR}\mods\d2k\rules"
-		File /r "${SRCDIR}\mods\d2k\tilesets"
-		File /r "${SRCDIR}\mods\d2k\uibits"
+	Section "Desktop Shortcut" DESKTOPSHORTCUT
+		SetOutPath "$INSTDIR"
+		CreateShortCut "$DESKTOP\OpenRA.lnk" $INSTDIR\OpenRA.Game.exe "" \
+			"$INSTDIR\OpenRA.Game.exe" "" "" "" ""
 	SectionEnd
 SectionGroupEnd
+
+Function .onInit
+	SectionSetFlags ${PORTABLE} 0
+FunctionEnd
 
 ;***************************
 ;Dependency Sections
 ;***************************
-Section "-OpenAl" OpenAl
-	AddSize 768
-	ClearErrors
-	${GetFileVersion} $SYSDIR\OpenAL32.dll $0
-	IfErrors installal 0
-	${VersionCompare} $0 "6.14.357.24" $1
-	IntCmp $1 1 done done installal
-	installal:
-		SetOutPath "$TEMP"
-		NSISdl::download http://connect.creativelabs.com/openal/Downloads/oalinst.zip oalinst.zip
-		Pop $R0
-		StrCmp $R0 "success" +2
-			Abort
-		!insertmacro ZIPDLL_EXTRACT oalinst.zip OpenAL oalinst.exe
-		ExecWait "$TEMP\OpenAL\oalinst.exe"
-	done:
-SectionEnd
-
-Section "-Sdl" SDL
-	AddSize 317
-	IfFileExists $INSTDIR\SDL.dll done installsdl
-	installsdl:
-		SetOutPath "$TEMP"
-		NSISdl::download http://www.libsdl.org/release/SDL-1.2.14-win32.zip sdl.zip
-		!insertmacro ZIPDLL_EXTRACT sdl.zip $INSTDIR SDL.dll
-	done:
-SectionEnd
-
-Section "-Freetype" Freetype
-	AddSize 583
-	SetOutPath "$TEMP"
-	IfFileExists $INSTDIR\zlib1.dll done installfreetype
-	installfreetype:
-		!insertmacro DownloadDependency "freetype" "freetype-zlib.zip"
-		ZipDLL::extractall "freetype-zlib.zip" "$INSTDIR"
-	done:
-SectionEnd
-
-Section "-Cg" Cg
-	AddSize 1500
-	SetOutPath "$TEMP"
-	IfFileExists $INSTDIR\cg.dll done installcg
-	installcg:
-		!insertmacro DownloadDependency "cg" "cg-win32.zip"
-		ZipDLL::extractall "cg-win32.zip" "$INSTDIR"
-	done:
-SectionEnd
-
 Section "-DotNet" DotNet
 	ClearErrors
 	ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" "Install"
@@ -234,7 +164,7 @@ Section "-Uninstaller"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "UninstallString" "$INSTDIR\uninstaller.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "InstallLocation" "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "DisplayIcon" "$INSTDIR\OpenRA.ico"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "Publisher" "IJW Software (New Zealand)"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "Publisher" "OpenRA developers"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "URLInfoAbout" "http://open-ra.org"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "NoModify" "1"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA" "NoRepair" "1"
@@ -260,25 +190,34 @@ Function ${UN}Clean
 	Delete $INSTDIR\OpenRA.Renderer.Cg.dll
 	Delete $INSTDIR\OpenRA.Renderer.Null.dll
 	Delete $INSTDIR\OpenRA.Renderer.SdlCommon.dll
+	Delete $INSTDIR\OpenRA.Irc.dll
 	Delete $INSTDIR\ICSharpCode.SharpZipLib.dll
 	Delete $INSTDIR\FuzzyLogicLibrary.dll
+	Delete $INSTDIR\Mono.Nat.dll
 	Delete $INSTDIR\Tao.*.dll
+	Delete $INSTDIR\SharpFont.dll
+	Delete $INSTDIR\AUTHORS
+	Delete $INSTDIR\CHANGELOG
 	Delete $INSTDIR\COPYING
-	Delete $INSTDIR\HACKING
-	Delete $INSTDIR\INSTALL
 	Delete $INSTDIR\OpenRA.ico
 	Delete $INSTDIR\*.ttf
-	Delete $INSTDIR\freetype6.dll
+	Delete "$INSTDIR\global mix database.dat"
+	Delete $INSTDIR\GeoIP.dat
+	Delete $INSTDIR\GeoIP.dll
+	Delete $INSTDIR\KopiLua.dll
+	Delete $INSTDIR\NLua.dll
+	Delete $INSTDIR\OpenAL32.dll
 	Delete $INSTDIR\SDL.dll
-	Delete $INSTDIR\cg.dll
-	Delete $INSTDIR\cgGL.dll
+	Delete $INSTDIR\freetype6.dll
 	Delete $INSTDIR\zlib1.dll
+	RMDir /r $INSTDIR\Support
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenRA"
 	Delete $INSTDIR\uninstaller.exe
 	RMDir $INSTDIR
 	
 	!insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
 	RMDir /r "$SMPROGRAMS\$StartMenuFolder"
+	Delete $DESKTOP\OpenRA.lnk
 	DeleteRegKey HKLM "Software\OpenRA"
 FunctionEnd
 !macroend
@@ -293,16 +232,16 @@ SectionEnd
 ;***************************
 ;Section Descriptions
 ;***************************
-LangString DESC_Client ${LANG_ENGLISH} "OpenRA client and dependencies"
-LangString DESC_RA ${LANG_ENGLISH} "Base Red Alert mod"
-LangString DESC_CNC ${LANG_ENGLISH} "Base Command and Conquer mod"
-LangString DESC_D2K ${LANG_ENGLISH} "Base Dune 2000 mod"
+LangString DESC_GAME ${LANG_ENGLISH} "OpenRA engine, official mods and dependencies"
+LangString DESC_EDITOR ${LANG_ENGLISH} "OpenRA map editor"
+LangString DESC_PORTABLE ${LANG_ENGLISH} "Store support files in the install directory."
+LangString DESC_DESKTOPSHORTCUT ${LANG_ENGLISH} "Place shortcut on the Desktop."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-	!insertmacro MUI_DESCRIPTION_TEXT ${Client} $(DESC_Client)
-	!insertmacro MUI_DESCRIPTION_TEXT ${RA} $(DESC_RA)
-	!insertmacro MUI_DESCRIPTION_TEXT ${CNC} $(DESC_CNC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${D2K} $(DESC_D2K)
+	!insertmacro MUI_DESCRIPTION_TEXT ${GAME} $(DESC_GAME)
+	!insertmacro MUI_DESCRIPTION_TEXT ${EDITOR} $(DESC_EDITOR)
+	!insertmacro MUI_DESCRIPTION_TEXT ${PORTABLE} $(DESC_PORTABLE)
+	!insertmacro MUI_DESCRIPTION_TEXT ${DESKTOPSHORTCUT} $(DESC_DESKTOPSHORTCUT)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;***************************

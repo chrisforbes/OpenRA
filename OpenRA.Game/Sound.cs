@@ -31,11 +31,19 @@ namespace OpenRA
 		{
 			if (!FileSystem.Exists(filename))
 			{
-				Log.Write("debug", "LoadSound, file does not exist: {0}", filename);
+				Log.Write("sound", "LoadSound, file does not exist: {0}", filename);
 				return null;
 			}
 
-			return LoadSoundRaw(AudLoader.LoadSound(FileSystem.Open(filename)));
+			if (filename.ToLowerInvariant().EndsWith("wav"))
+				return LoadWave(new WavLoader(FileSystem.Open(filename)));
+			else
+				return LoadSoundRaw(AudLoader.LoadSound(FileSystem.Open(filename)));
+		}
+
+		static ISoundSource LoadWave(WavLoader wave)
+		{
+			return soundEngine.AddSoundSourceFromMemory(wave.RawOutput, wave.Channels, wave.BitsPerSample, wave.SampleRate);
 		}
 
 		static ISoundSource LoadSoundRaw(byte[] rawData)
@@ -45,9 +53,9 @@ namespace OpenRA
 
 		static ISoundEngine CreateEngine(string engine)
 		{
-			engine = Game.Settings.Server.Dedicated?"Null":engine;
+			engine = Game.Settings.Server.Dedicated ? "Null" : engine;
 			switch (engine)
-			{	/* todo: if someone cares about pluggable crap here, ship this out */
+			{	/* TODO: if someone cares about pluggable crap here, ship this out */
 			case "AL": return new OpenAlSoundEngine();
 			case "Null": return new NullSoundEngine();
 
@@ -69,9 +77,23 @@ namespace OpenRA
 			video = null;
 		}
 
-		public static void SetListenerPosition(float2 position) { soundEngine.SetListenerPosition(position); }
+		public static SoundDevice[] AvailableDevices()
+		{
+			var defaultDevices = new []
+			{
+				new SoundDevice("AL", null, "Default Output"),
+				new SoundDevice("Null", null, "Output Disabled")
+			};
 
-		static ISound Play(Player player, string name, bool headRelative, PPos pos, float volumeModifier)
+			var alDevices = OpenAlSoundEngine.AvailableDevices()
+				.Select(d => new SoundDevice("AL", d, d));
+
+			return defaultDevices.Concat(alDevices).ToArray();
+		}
+
+		public static void SetListenerPosition(WPos position) { soundEngine.SetListenerPosition(position); }
+
+		static ISound Play(Player player, string name, bool headRelative, WPos pos, float volumeModifier)
 		{
 			if (String.IsNullOrEmpty(name))
 				return null;
@@ -79,21 +101,21 @@ namespace OpenRA
 				return null;
 
 			return soundEngine.Play2D(sounds[name],
-				false, headRelative, pos.ToFloat2(),
+				false, headRelative, pos,
 				InternalSoundVolume * volumeModifier, true);
 		}
 
-		public static ISound Play(string name) { return Play(null, name, true, PPos.Zero, 1); }
-		public static ISound Play(string name, PPos pos) { return Play(null, name, false, pos, 1); }
-		public static ISound Play(string name, float volumeModifier) { return Play(null, name, true, PPos.Zero, volumeModifier); }
-		public static ISound Play(string name, PPos pos, float volumeModifier) { return Play(null, name, false, pos, volumeModifier); }
-		public static ISound PlayToPlayer(Player player, string name) { return Play(player, name, true, PPos.Zero, 1); }
-		public static ISound PlayToPlayer(Player player, string name, PPos pos) { return Play(player, name, false, pos, 1); }
+		public static ISound Play(string name) { return Play(null, name, true, WPos.Zero, 1); }
+		public static ISound Play(string name, WPos pos) { return Play(null, name, false, pos, 1); }
+		public static ISound Play(string name, float volumeModifier) { return Play(null, name, true, WPos.Zero, volumeModifier); }
+		public static ISound Play(string name, WPos pos, float volumeModifier) { return Play(null, name, false, pos, volumeModifier); }
+		public static ISound PlayToPlayer(Player player, string name) { return Play(player, name, true, WPos.Zero, 1); }
+		public static ISound PlayToPlayer(Player player, string name, WPos pos) { return Play(player, name, false, pos, 1); }
 
 		public static void PlayVideo(byte[] raw)
 		{
 			rawSource = LoadSoundRaw(raw);
-			video = soundEngine.Play2D(rawSource, false, true, float2.Zero, InternalSoundVolume, false);
+			video = soundEngine.Play2D(rawSource, false, true, WPos.Zero, InternalSoundVolume, false);
 		}
 
 		public static void PlayVideo()
@@ -143,14 +165,16 @@ namespace OpenRA
 			if (m == currentMusic && music != null)
 			{
 				soundEngine.PauseSound(music, false);
+				MusicPlaying = true;
 				return;
 			}
 			StopMusic();
 
 			var sound = sounds[m.Filename];
-			if (sound == null) return;
+			if (sound == null)
+				return;
 
-			music = soundEngine.Play2D(sound, false, true, float2.Zero, MusicVolume, false);
+			music = soundEngine.Play2D(sound, false, true, WPos.Zero, MusicVolume, false);
 			currentMusic = m;
 			MusicPlaying = true;
 		}
@@ -248,7 +272,7 @@ namespace OpenRA
 		}
 
 		// Returns true if played successfully
-		public static bool PlayPredefined(Player p, Actor voicedUnit, string type, string definition, string variant, bool attentuateVolume)
+		public static bool PlayPredefined(Player p, Actor voicedUnit, string type, string definition, string variant, bool attenuateVolume)
 		{
 			if (definition == null) return false;
 
@@ -259,9 +283,7 @@ namespace OpenRA
 
 			var ID = (voicedUnit != null) ? voicedUnit.ActorID : 0;
 
-			var clip = (voicedUnit != null) ? rules.VoicePools.Value[definition].GetNext() : rules.NotificationsPools.Value[definition].GetNext();
-			if (clip == null) return false;
-
+			string clip;
 			var suffix = rules.DefaultVariant;
 			var prefix = rules.DefaultPrefix;
 
@@ -272,7 +294,21 @@ namespace OpenRA
 
 				if (!rules.VoicePools.Value.ContainsKey("AttackMove"))
 					rules.VoicePools.Value.Add("AttackMove", rules.VoicePools.Value["Move"]);
+
+				if (!rules.VoicePools.Value.ContainsKey(definition))
+					throw new InvalidOperationException("Can't find {0} in voice pool.".F(definition));
+
+				clip = rules.VoicePools.Value[definition].GetNext();
 			}
+			else
+			{
+				if (!rules.NotificationsPools.Value.ContainsKey(definition))
+					throw new InvalidOperationException("Can't find {0} in notification pool.".F(definition));
+
+				clip = rules.NotificationsPools.Value[definition].GetNext();
+			}
+
+			if (String.IsNullOrEmpty(clip)) return false;
 
 			if (variant != null)
 			{
@@ -286,8 +322,8 @@ namespace OpenRA
 
 			if (!String.IsNullOrEmpty(name)	&& (p == null || p == p.World.LocalPlayer))
 				soundEngine.Play2D(sounds[name],
-					false, true, float2.Zero,
-					InternalSoundVolume, attentuateVolume);
+					false, true, WPos.Zero,
+					InternalSoundVolume, attenuateVolume);
 
 			return true;
 		}
@@ -318,14 +354,32 @@ namespace OpenRA
 	interface ISoundEngine
 	{
 		ISoundSource AddSoundSourceFromMemory(byte[] data, int channels, int sampleBits, int sampleRate);
-		ISound Play2D(ISoundSource sound, bool loop, bool relative, float2 pos, float volume, bool attenuateVolume);
+		ISound Play2D(ISoundSource sound, bool loop, bool relative, WPos pos, float volume, bool attenuateVolume);
 		float Volume { get; set; }
 		void PauseSound(ISound sound, bool paused);
 		void StopSound(ISound sound);
 		void SetAllSoundsPaused(bool paused);
 		void StopAllSounds();
-		void SetListenerPosition(float2 position);
+		void SetListenerPosition(WPos position);
 		void SetSoundVolume(float volume, ISound music, ISound video);
+	}
+
+	public class SoundDevice
+	{
+		public readonly string Engine;
+		public readonly string Device;
+		public readonly string Label;
+
+		public SoundDevice(string engine, string device, string label)
+		{
+			Engine = engine;
+			Device = device;
+			Label = label;
+
+			// Limit label to 32 characters
+			if (Label.Length > 32)
+				Label = "..." + Label.Substring(Label.Length - 32);
+		}
 	}
 
 	interface ISoundSource { }
@@ -343,7 +397,7 @@ namespace OpenRA
 		{
 			public bool isActive;
 			public int frameStarted;
-			public float2 pos;
+			public WPos pos;
 			public bool isRelative;
 			public ISoundSource sound;
 		}
@@ -352,12 +406,51 @@ namespace OpenRA
 		Dictionary<int, PoolSlot> sourcePool = new Dictionary<int, PoolSlot>();
 		const int POOL_SIZE = 32;
 
+		static string[] QueryDevices(string label, int type)
+		{
+			// Clear error bit
+			Al.alGetError();
+
+			var devices = Alc.alcGetStringv(IntPtr.Zero, type);
+			if (Al.alGetError() != Al.AL_NO_ERROR)
+			{
+				Log.Write("sound", "Failed to query OpenAL device list using {0}", label);
+				return new string[] {};
+			}
+
+			return devices;
+		}
+
+		public static string[] AvailableDevices()
+		{
+			// Returns all devices under windows vista and newer
+			if (Alc.alcIsExtensionPresent(IntPtr.Zero, "ALC_ENUMERATE_ALL_EXT") == Alc.ALC_TRUE)
+				return QueryDevices("ALC_ENUMERATE_ALL_EXT", Alc.ALC_ALL_DEVICES_SPECIFIER);
+
+			if (Alc.alcIsExtensionPresent(IntPtr.Zero, "ALC_ENUMERATION_EXT") == Alc.ALC_TRUE)
+				return QueryDevices("ALC_ENUMERATION_EXT", Alc.ALC_DEVICE_SPECIFIER);
+
+			return new string[] {};
+		}
+
 		public OpenAlSoundEngine()
 		{
-			//var str = Alc.alcGetString(IntPtr.Zero, Alc.ALC_DEFAULT_DEVICE_SPECIFIER);
-			var dev = Alc.alcOpenDevice(null);
+			Console.WriteLine("Using OpenAL sound engine");
+
+			if (Game.Settings.Sound.Device != null)
+				Console.WriteLine("Using device `{0}`", Game.Settings.Sound.Device);
+			else
+				Console.WriteLine("Using default device");
+
+			var dev = Alc.alcOpenDevice(Game.Settings.Sound.Device);
 			if (dev == IntPtr.Zero)
-				throw new InvalidOperationException("Can't create OpenAL device");
+			{
+				Console.WriteLine("Failed to open device. Falling back to default");
+				dev = Alc.alcOpenDevice(null);
+				if (dev == IntPtr.Zero)
+					throw new InvalidOperationException("Can't create OpenAL device");
+			}
+
 			var ctx = Alc.alcCreateContext(dev, IntPtr.Zero);
 			if (ctx == IntPtr.Zero)
 				throw new InvalidOperationException("Can't create OpenAL context");
@@ -369,7 +462,7 @@ namespace OpenRA
 				Al.alGenSources(1, out source);
 				if (0 != Al.alGetError())
 				{
-					Log.Write("debug", "Failed generating OpenAL source {0}", i);
+					Log.Write("sound", "Failed generating OpenAL source {0}", i);
 					return;
 				}
 
@@ -414,14 +507,14 @@ namespace OpenRA
 		}
 
 		const int maxInstancesPerFrame = 3;
-		const int groupDistance = 64;
+		const int groupDistance = 2730;
 		const int groupDistanceSqr = groupDistance * groupDistance;
 
-		public ISound Play2D(ISoundSource sound, bool loop, bool relative, float2 pos, float volume, bool attenuateVolume)
+		public ISound Play2D(ISoundSource sound, bool loop, bool relative, WPos pos, float volume, bool attenuateVolume)
 		{
 			if (sound == null)
 			{
-				Log.Write("debug", "Attempt to Play2D a null `ISoundSource`");
+				Log.Write("sound", "Attempt to Play2D a null `ISoundSource`");
 				return null;
 			}
 
@@ -479,7 +572,8 @@ namespace OpenRA
 
 		public void PauseSound(ISound sound, bool paused)
 		{
-			if (sound == null) return;
+			if (sound == null)
+				return;
 
 			int key = ((OpenAlSound)sound).source;
 			int state;
@@ -500,7 +594,6 @@ namespace OpenRA
 					Al.alSourcePause(key);
 				else if (state == Al.AL_PAUSED && !paused)
 					Al.alSourcePlay(key);
-
 			}
 		}
 
@@ -511,8 +604,8 @@ namespace OpenRA
 				int state;
 				Al.alGetSourcei(b, Al.AL_SOURCE_STATE, out state);
 				return ((state == Al.AL_PLAYING || state == Al.AL_PAUSED) &&
-					   ((music != null) ? b != ((OpenAlSound)music).source : true) &&
-					   ((video != null) ? b != ((OpenAlSound)video).source : true));
+					   ((music == null) || b != ((OpenAlSound)music).source) &&
+					   ((video == null) || b != ((OpenAlSound)video).source));
 			}).ToList();
 			foreach (var s in sounds)
 			{
@@ -542,11 +635,12 @@ namespace OpenRA
 			}
 		}
 
-		public void SetListenerPosition(float2 position)
+		public void SetListenerPosition(WPos position)
 		{
-			var orientation = new[] { 0f, 0f, 1f, 0f, -1f, 0f };
+			// Move the listener out of the plane so that sounds near the middle of the screen aren't too positional
+			Al.alListener3f(Al.AL_POSITION, position.X, position.Y, position.Z + 2133);
 
-			Al.alListener3f(Al.AL_POSITION, position.X, position.Y, 50);
+			var orientation = new[] { 0f, 0f, 1f, 0f, -1f, 0f };
 			Al.alListenerfv(Al.AL_ORIENTATION, ref orientation[0]);
 			Al.alListenerf(Al.AL_METERS_PER_UNIT, .01f);
 		}
@@ -576,19 +670,20 @@ namespace OpenRA
 		public readonly int source = -1;
 		float volume = 1f;
 
-		public OpenAlSound(int source, int buffer, bool looping, bool relative, float2 pos, float volume)
+		public OpenAlSound(int source, int buffer, bool looping, bool relative, WPos pos, float volume)
 		{
 			if (source == -1) return;
 			this.source = source;
 			Al.alSourcef(source, Al.AL_PITCH, 1f);
 			Volume = volume;
-			Al.alSource3f(source, Al.AL_POSITION, pos.X, pos.Y, 0f);
+			Al.alSource3f(source, Al.AL_POSITION, pos.X, pos.Y, pos.Z);
 			Al.alSource3f(source, Al.AL_VELOCITY, 0f, 0f, 0f);
 			Al.alSourcei(source, Al.AL_BUFFER, buffer);
 			Al.alSourcei(source, Al.AL_LOOPING, looping ? Al.AL_TRUE : Al.AL_FALSE);
 			Al.alSourcei(source, Al.AL_SOURCE_RELATIVE, relative ? 1 : 0);
-			Al.alSourcef(source, Al.AL_REFERENCE_DISTANCE, 160);
-			Al.alSourcef(source, Al.AL_MAX_DISTANCE, 3200 / Game.viewport.Zoom);
+
+			Al.alSourcef(source, Al.AL_REFERENCE_DISTANCE, 6826);
+			Al.alSourcef(source, Al.AL_MAX_DISTANCE, 136533);
 			Al.alSourcePlay(source);
 		}
 
@@ -625,12 +720,17 @@ namespace OpenRA
 
 	class NullSoundEngine : ISoundEngine
 	{
+		public NullSoundEngine()
+		{
+			Console.WriteLine("Using Null sound engine which disables SFX completely");
+		}
+
 		public ISoundSource AddSoundSourceFromMemory(byte[] data, int channels, int sampleBits, int sampleRate)
 		{
 			return new NullSoundSource();
 		}
 
-		public ISound Play2D(ISoundSource sound, bool loop, bool relative, float2 pos, float volume, bool attenuateVolume)
+		public ISound Play2D(ISoundSource sound, bool loop, bool relative, WPos pos, float volume, bool attenuateVolume)
 		{
 			return new NullSound();
 		}
@@ -639,7 +739,7 @@ namespace OpenRA
 		public void StopSound(ISound sound) {}
 		public void SetAllSoundsPaused(bool paused) {}
 		public void StopAllSounds() {}
-		public void SetListenerPosition(float2 position) {}
+		public void SetListenerPosition(WPos position) {}
 		public void SetSoundVolume(float volume, ISound music, ISound video) {}
 
 		public float Volume { get; set; }

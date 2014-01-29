@@ -11,50 +11,81 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenRA.Graphics;
 
 namespace OpenRA.Traits
 {
-	class ScreenShakerInfo : TraitInfo<ScreenShaker> {}
-
-	public class ScreenShaker : ITick
+	public class ScreenShakerInfo : ITraitInfo
 	{
-		int ticks = 0;
-		List<ShakeEffect> shakeEffects = new List<ShakeEffect>();
+		public readonly float2 MinMultiplier = new float2(-3, -3);
+		public readonly float2 MaxMultiplier = new float2(3, 3);
 
-		public void Tick (Actor self)
+		public object Create(ActorInitializer init) { return new ScreenShaker(this); }
+	}
+
+	public class ScreenShaker : ITick, IWorldLoaded
+	{
+		readonly ScreenShakerInfo info;
+		WorldRenderer worldRenderer;
+		List<ShakeEffect> shakeEffects = new List<ShakeEffect>();
+		int ticks = 0;
+
+		public ScreenShaker(ScreenShakerInfo info)
 		{
-			if(shakeEffects.Any())
+			this.info = info;
+		}
+
+		public void WorldLoaded(World w, WorldRenderer wr) { worldRenderer = wr; }
+
+		public void Tick(Actor self)
+		{
+			if (shakeEffects.Any())
 			{
-				Game.viewport.Scroll(GetScrollOffset(), true);
+				worldRenderer.Viewport.Scroll(GetScrollOffset(), true);
 				shakeEffects.RemoveAll(t => t.ExpiryTime == ticks);
 			}
+
 			ticks++;
 		}
 
-		public void AddEffect(int time, float2 position, int intensity)
+		public void AddEffect(int time, WPos position, int intensity)
 		{
-			shakeEffects.Add(new ShakeEffect { ExpiryTime = ticks + time, Position = position, Intensity = intensity });
+			AddEffect(time, position, intensity, new float2(1, 1));
+		}
+
+		public void AddEffect(int time, WPos position, int intensity, float2 multiplier)
+		{
+			shakeEffects.Add(new ShakeEffect { ExpiryTime = ticks + time, Position = position, Intensity = intensity, Multiplier = multiplier });
 		}
 
 		float2 GetScrollOffset()
 		{
-			int xFreq = 4;
-			int yFreq = 5;
+			return GetMultiplier() * GetIntensity() * new float2(
+				(float)Math.Sin((ticks * 2 * Math.PI) / 4),
+				(float)Math.Cos((ticks * 2 * Math.PI) / 5));
+		}
 
-			return GetIntensity() * new float2(
-				(float) Math.Sin((ticks*2*Math.PI)/xFreq) ,
-				(float) Math.Cos((ticks*2*Math.PI)/yFreq));
+		float2 GetMultiplier()
+		{
+			return shakeEffects.Aggregate(float2.Zero, (sum, next) => sum + next.Multiplier)
+				.Constrain(info.MinMultiplier, info.MaxMultiplier);
 		}
 
 		float GetIntensity()
 		{
-			var cp = Game.viewport.CenterLocation;
-			var intensity = Game.CellSize * Game.CellSize * 100 * shakeEffects.Sum(
-				e => e.Intensity / (e.Position - cp).LengthSquared);
+			var cp = worldRenderer.Position(worldRenderer.Viewport.CenterLocation);
+			var intensity = 100 * 1024 * 1024 * shakeEffects.Sum(
+				e => (float)e.Intensity / (e.Position - cp).LengthSquared);
 
 			return Math.Min(intensity, 10);
 		}
 	}
 
-	class ShakeEffect { public int ExpiryTime; public float2 Position; public int Intensity; }
+	struct ShakeEffect
+	{
+		public int ExpiryTime;
+		public WPos Position;
+		public int Intensity;
+		public float2 Multiplier;
+	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -28,14 +28,15 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			panel.Get<ButtonWidget>("CANCEL_BUTTON").OnClick = () => { Ui.CloseWindow(); onExit(); };
 
 			var rl = panel.Get<ScrollPanelWidget>("REPLAY_LIST");
-			var replayDir = Path.Combine(Platform.SupportDir, "Replays");
-
 			var template = panel.Get<ScrollItemWidget>("REPLAY_TEMPLATE");
 
+			var mod = Game.modData.Manifest.Mod;
+			var dir = new[] { Platform.SupportDir, "Replays", mod.Id, mod.Version }.Aggregate(Path.Combine);
+
 			rl.RemoveChildren();
-			if (Directory.Exists(replayDir))
+			if (Directory.Exists(dir))
 			{
-				var files = Directory.GetFiles(replayDir, "*.rep").Reverse();
+				var files = Directory.GetFiles(dir, "*.rep").Reverse();
 				foreach (var replayFile in files)
 					AddReplay(rl, replayFile, template);
 
@@ -44,15 +45,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 			var watch = panel.Get<ButtonWidget>("WATCH_BUTTON");
 			watch.IsDisabled = () => currentReplay == null || currentMap == null || currentReplay.Duration == 0;
-			watch.OnClick = () =>
-			{
-				if (currentReplay != null)
-				{
-					Game.JoinReplay(currentReplay.Filename);
-					Ui.CloseWindow();
-					onStart();
-				}
-			};
+			watch.OnClick = () => { WatchReplay(); onStart(); };
 
 			panel.Get("REPLAY_INFO").IsVisible = () => currentReplay != null;
 		}
@@ -71,7 +64,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				currentMap = currentReplay.Map();
 
 				panel.Get<LabelWidget>("DURATION").GetText =
-					() => WidgetUtils.FormatTime(currentReplay.Duration * 3	/* todo: 3:1 ratio isnt always true. */);
+					() => WidgetUtils.FormatTime(currentReplay.Duration);
 				panel.Get<MapPreviewWidget>("MAP_PREVIEW").Map = () => currentMap;
 				panel.Get<LabelWidget>("MAP_TITLE").GetText =
 					() => currentMap != null ? currentMap.Title : "(Unknown Map)";
@@ -88,11 +81,21 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			}
 		}
 
+		void WatchReplay()
+		{
+			if (currentReplay != null)
+			{
+				Game.JoinReplay(currentReplay.Filename);
+				Ui.CloseWindow();
+			}
+		}
+
 		void AddReplay(ScrollPanelWidget list, string filename, ScrollItemWidget template)
 		{
 			var item = ScrollItemWidget.Setup(template,
 				() => currentReplay != null && currentReplay.Filename == filename,
-				() => SelectReplay(filename));
+				() => SelectReplay(filename),
+				() => WatchReplay());
 			var f = Path.GetFileName(filename);
 			item.Get<LabelWidget>("TITLE").GetText = () => f;
 			list.AddChild(item);

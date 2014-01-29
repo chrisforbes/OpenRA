@@ -10,11 +10,22 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using OpenRA.FileFormats;
 using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	static class PrimaryExts
+	{
+		public static bool IsPrimaryBuilding(this Actor a)
+		{
+			var pb = a.TraitOrDefault<PrimaryBuilding>();
+			return pb != null && pb.IsPrimary;
+		}
+	}
+
+	[Desc("Used together with ClassicProductionQueue.")]
 	class PrimaryBuildingInfo : TraitInfo<PrimaryBuilding> { }
 
 	class PrimaryBuilding : IIssueOrder, IResolveOrder, ITags
@@ -24,18 +35,18 @@ namespace OpenRA.Mods.RA
 
 		public IEnumerable<TagType> GetTags()
 		{
-			yield return (isPrimary) ? TagType.Primary : TagType.None;
+			yield return isPrimary ? TagType.Primary : TagType.None;
 		}
 
 		public IEnumerable<IOrderTargeter> Orders
 		{
-			get { yield return new DeployOrderTargeter( "PrimaryProducer", 1 ); }
+			get { yield return new DeployOrderTargeter("PrimaryProducer", 1); }
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order.OrderID == "PrimaryProducer" )
-				return new Order( order.OrderID, self, false );
+			if (order.OrderID == "PrimaryProducer")
+				return new Order(order.OrderID, self, false);
 
 			return null;
 		}
@@ -54,28 +65,19 @@ namespace OpenRA.Mods.RA
 				return;
 			}
 
-			// THIS IS SHIT
+			// TODO: THIS IS SHIT
 			// Cancel existing primaries
 			foreach (var p in self.Info.Traits.Get<ProductionInfo>().Produces)
 				foreach (var b in self.World
 					.ActorsWithTrait<PrimaryBuilding>()
 					.Where(a => a.Actor.Owner == self.Owner)
 					.Where(x => x.Trait.IsPrimary
-						&& (x.Actor.Info.Traits.Get<ProductionInfo>().Produces.Contains(p))))
+						&& x.Actor.Info.Traits.Get<ProductionInfo>().Produces.Contains(p)))
 					b.Trait.SetPrimaryProducer(b.Actor, false);
 
 			isPrimary = true;
 
 			Sound.PlayNotification(self.Owner, "Speech", "PrimaryBuildingSelected", self.Owner.Country.Race);
-		}
-	}
-
-	static class PrimaryExts
-	{
-		public static bool IsPrimaryBuilding(this Actor a)
-		{
-			var pb = a.TraitOrDefault<PrimaryBuilding>();
-			return pb != null && pb.IsPrimary;
 		}
 	}
 }

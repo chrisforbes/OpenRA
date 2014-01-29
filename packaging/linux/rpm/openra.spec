@@ -1,6 +1,9 @@
 %define name openra
 %define version {VERSION_FIELD}
 %define root {ROOT_DIR}
+%define _use_internal_dependency_generator 0
+%define __find_provides ""
+%define __find_requires ""
 Name: %{name}
 Version: %{version}
 Release: 1
@@ -10,9 +13,12 @@ URL: http://open-ra.org
 Group: Amusements/Games
 Packager: Matthew Bowra-Dean <matthew@ijw.co.nz>
 Requires: mono-core mono-devel SDL openal
+# TODO: make both Fedora and the rest of the RPM world happy
+#Requires: freetype
+#Requires: freetype2
 Prefix: /usr
 Source: %{name}-%{version}.tar.gz
-Buildroot: /tmp/openra
+BuildRoot: /tmp/openra
 
 %description
 A multiplayer reimplementation of the Command & Conquer: Red Alert game
@@ -23,9 +29,14 @@ and includes Command & Conquer: Tiberian Dawn as an official mod.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-cp -r %{root} $RPM_BUILD_ROOT 
+cp -r %{root} $RPM_BUILD_ROOT
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
+/usr/bin/openra
+/usr/bin/openra-editor
+/usr/share/applications/*.desktop
+/usr/share/icons/hicolor/*/apps/*.png
+/usr/share/icons/hicolor/*/apps/*.svg

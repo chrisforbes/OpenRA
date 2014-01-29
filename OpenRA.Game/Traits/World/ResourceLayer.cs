@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,173 +9,231 @@
 #endregion
 
 using System;
-using System.Drawing;
-using System.Linq;
-using OpenRA.Graphics;
 using System.Collections.Generic;
+using System.Linq;
+using OpenRA.FileFormats;
+using OpenRA.Graphics;
 
 namespace OpenRA.Traits
 {
-	public class ResourceLayerInfo : TraitInfo<ResourceLayer> { }
+	public class ResourceLayerInfo : TraitInfo<ResourceLayer>, Requires<ResourceTypeInfo> { }
 
-	public class ResourceLayer : IRenderOverlay, IWorldLoaded
+	public class ResourceLayer : IRenderOverlay, IWorldLoaded, ITickRender
 	{
+		static readonly CellContents EmptyCell = new CellContents();
+
 		World world;
-
-		public ResourceType[] resourceTypes;
-		CellContents[,] content;
-
-		bool hasSetupPalettes;
+		protected CellContents[,] content;
+		protected CellContents[,] render;
+		List<CPos> dirty;
 
 		public void Render(WorldRenderer wr)
 		{
-			if (!hasSetupPalettes)
+			var clip = wr.Viewport.CellBounds;
+			for (var x = clip.Left; x < clip.Right; x++)
 			{
-				hasSetupPalettes = true;
-				foreach (var rt in world.WorldActor.TraitsImplementing<ResourceType>())
-					rt.info.PaletteRef = wr.Palette(rt.info.Palette);
+				for (var y = clip.Top; y < clip.Bottom; y++)
+				{
+					var pos = new CPos(x, y);
+					if (world.ShroudObscures(pos))
+						continue;
+
+					var c = render[x, y];
+					if (c.Sprite != null)
+						new SpriteRenderable(c.Sprite, pos.CenterPosition,
+							WVec.Zero, -511, c.Type.Palette, 1f, true).Render(wr);
+				}
 			}
-
-			var clip = Game.viewport.WorldBounds(world);
-			for (int x = clip.Left; x < clip.Right; x++)
-				for (int y = clip.Top; y < clip.Bottom; y++)
-				{
-					if (!world.RenderedShroud.IsExplored(new CPos(x, y)))
-						continue;
-
-					var c = content[x, y];
-					if (c.image != null)
-						c.image[c.density].DrawAt(
-							new CPos(x, y).ToPPos().ToFloat2(),
-							c.type.info.PaletteRef.Index);
-				}
-		}
-
-		public void WorldLoaded(World w)
-		{
-			this.world = w;
-			content = new CellContents[w.Map.MapSize.X, w.Map.MapSize.Y];
-
-			resourceTypes = w.WorldActor.TraitsImplementing<ResourceType>().ToArray();
-			foreach (var rt in resourceTypes)
-				rt.info.Sprites = rt.info.SpriteNames.Select(a => Game.modData.SpriteLoader.LoadAllSprites(a)).ToArray();
-
-			var map = w.Map;
-
-			for (int x = map.Bounds.Left; x < map.Bounds.Right; x++)
-				for (int y = map.Bounds.Top; y < map.Bounds.Bottom; y++)
-				{
-					var type = resourceTypes.FirstOrDefault(
-						r => r.info.ResourceType == w.Map.MapResources.Value[x, y].type);
-
-					if (type == null)
-						continue;
-
-					if (!AllowResourceAt(type, new CPos(x,y)))
-						continue;
-
-					content[x, y].type = type;
-					content[x, y].image = ChooseContent(type);
-				}
-
-			for (int x = map.Bounds.Left; x < map.Bounds.Right; x++)
-				for (int y = map.Bounds.Top; y < map.Bounds.Bottom; y++)
-					if (content[x, y].type != null)
-					{
-						content[x, y].density = GetIdealDensity(x, y);
-						w.Map.CustomTerrain[x, y] = content[x, y].type.info.TerrainType;
-					}
-		}
-
-		public bool AllowResourceAt(ResourceType rt, CPos a)
-		{
-			if (!world.Map.IsInMap(a.X, a.Y)) return false;
-			if (!rt.info.AllowedTerrainTypes.Contains(world.GetTerrainInfo(a).Type)) return false;
-			if (!rt.info.AllowUnderActors && world.ActorMap.AnyUnitsAt(a)) return false;
-			return true;
-		}
-
-		Sprite[] ChooseContent(ResourceType t)
-		{
-			return t.info.Sprites[world.SharedRandom.Next(t.info.Sprites.Length)];
 		}
 
 		int GetAdjacentCellsWith(ResourceType t, int i, int j)
 		{
-			int sum = 0;
+			var sum = 0;
 			for (var u = -1; u < 2; u++)
 				for (var v = -1; v < 2; v++)
-					if (content[i + u, j + v].type == t)
+					if (content[i + u, j + v].Type == t)
 						++sum;
 			return sum;
 		}
 
-		int GetIdealDensity(int x, int y)
+		public void WorldLoaded(World w, WorldRenderer wr)
 		{
-			return (GetAdjacentCellsWith(content[x, y].type, x, y) *
-				(content[x, y].image.Length - 1)) / 9;
-		}
+			this.world = w;
+			content = new CellContents[w.Map.MapSize.X, w.Map.MapSize.Y];
+			render = new CellContents[w.Map.MapSize.X, w.Map.MapSize.Y];
+			dirty = new List<CPos>();
 
-		public void AddResource(ResourceType t, int i, int j, int n)
-		{
-			if (content[i, j].type == null)
+			var resources = w.WorldActor.TraitsImplementing<ResourceType>()
+				.ToDictionary(r => r.Info.ResourceType, r => r);
+
+			var map = w.Map;
+			for (var x = map.Bounds.Left; x < map.Bounds.Right; x++)
 			{
-				content[i, j].type = t;
-				content[i, j].image = ChooseContent(t);
-				content[i, j].density = -1;
+				for (var y = map.Bounds.Top; y < map.Bounds.Bottom; y++)
+				{
+					var cell = new CPos(x, y);
+					ResourceType t;
+					if (!resources.TryGetValue(w.Map.MapResources.Value[x, y].Type, out t))
+						continue;
+
+					if (!AllowResourceAt(t, cell))
+						continue;
+
+					content[x, y] = CreateResourceCell(t, cell);
+				}
 			}
 
-			if (content[i, j].type != t)
-				return;
+			// Set initial density based on the number of neighboring resources
+			for (var x = map.Bounds.Left; x < map.Bounds.Right; x++)
+			{
+				for (var y = map.Bounds.Top; y < map.Bounds.Bottom; y++)
+				{
+					var type = content[x, y].Type;
+					if (type != null)
+					{
+						// Adjacent includes the current cell, so is always >= 1
+						var adjacent = GetAdjacentCellsWith(type, x, y);
+						var density = int2.Lerp(0, type.Info.MaxDensity, adjacent, 9);
+						content[x, y].Density = density;
 
-			content[i, j].density = Math.Min(
-				content[i, j].image.Length - 1,
-				content[i, j].density + n);
-
-			world.Map.CustomTerrain[i, j] = t.info.TerrainType;
+						render[x, y] = content[x, y];
+						UpdateRenderedSprite(new CPos(x, y));
+					}
+				}
+			}
 		}
 
-		public bool IsFull(int i, int j) { return content[i, j].density == content[i, j].image.Length - 1; }
+		protected virtual void UpdateRenderedSprite(CPos p)
+		{
+			var t = render[p.X, p.Y];
+			if (t.Density > 0)
+			{
+				var sprites = t.Type.Variants[t.Variant];
+				var frame = int2.Lerp(0, sprites.Length - 1, t.Density - 1, t.Type.Info.MaxDensity);
+				t.Sprite = sprites[frame];
+			}
+			else
+				t.Sprite = null;
+
+			render[p.X, p.Y] = t;
+		}
+
+		protected virtual string ChooseRandomVariant(ResourceType t)
+		{
+			return t.Variants.Keys.Random(Game.CosmeticRandom);
+		}
+
+		public void TickRender(WorldRenderer wr, Actor self)
+		{
+			var remove = new List<CPos>();
+			foreach (var c in dirty)
+			{
+				if (!self.World.FogObscures(c))
+				{
+					render[c.X, c.Y] = content[c.X, c.Y];
+					UpdateRenderedSprite(c);
+					remove.Add(c);
+				}
+			}
+
+			foreach (var r in remove)
+				dirty.Remove(r);
+		}
+
+		public bool AllowResourceAt(ResourceType rt, CPos a)
+		{
+			if (!world.Map.IsInMap(a.X, a.Y))
+				return false;
+
+			if (!rt.Info.AllowedTerrainTypes.Contains(world.GetTerrainInfo(a).Type))
+				return false;
+
+			if (!rt.Info.AllowUnderActors && world.ActorMap.AnyUnitsAt(a))
+				return false;
+
+			return true;
+		}
+
+		CellContents CreateResourceCell(ResourceType t, CPos p)
+		{
+			world.Map.CustomTerrain[p.X, p.Y] = t.Info.TerrainType;
+			return new CellContents
+			{
+				Type = t,
+				Variant = ChooseRandomVariant(t),
+			};
+		}
+
+		public void AddResource(ResourceType t, CPos p, int n)
+		{
+			var cell = content[p.X, p.Y];
+			if (cell.Type == null)
+				cell = CreateResourceCell(t, p);
+
+			if (cell.Type != t)
+				return;
+
+			cell.Density = Math.Min(cell.Type.Info.MaxDensity, cell.Density + n);
+			content[p.X, p.Y] = cell;
+
+			if (!dirty.Contains(p))
+				dirty.Add(p);
+		}
+
+		public bool IsFull(int i, int j)
+		{
+			return content[i, j].Density == content[i, j].Type.Info.MaxDensity;
+		}
 
 		public ResourceType Harvest(CPos p)
 		{
-			var type = content[p.X, p.Y].type;
-			if (type == null) return null;
+			var type = content[p.X, p.Y].Type;
+			if (type == null)
+				return null;
 
-			if (--content[p.X, p.Y].density < 0)
+			if (--content[p.X, p.Y].Density < 0)
 			{
-				content[p.X, p.Y].type = null;
-				content[p.X, p.Y].image = null;
+				content[p.X, p.Y] = EmptyCell;
 				world.Map.CustomTerrain[p.X, p.Y] = null;
 			}
+
+			if (!dirty.Contains(p))
+				dirty.Add(p);
+
 			return type;
 		}
 
 		public void Destroy(CPos p)
 		{
 			// Don't break other users of CustomTerrain if there are no resources
-			if (content[p.X, p.Y].type == null)
+			if (content[p.X, p.Y].Type == null)
 				return;
 
-			content[p.X, p.Y].type = null;
-			content[p.X, p.Y].image = null;
-			content[p.X, p.Y].density = 0;
+			// Clear cell
+			content[p.X, p.Y] = EmptyCell;
 			world.Map.CustomTerrain[p.X, p.Y] = null;
+
+			if (!dirty.Contains(p))
+				dirty.Add(p);
 		}
 
-		public ResourceType GetResource(CPos p) { return content[p.X, p.Y].type; }
-		public int GetResourceDensity(CPos p) { return content[p.X, p.Y].density; }
+		public ResourceType GetResource(CPos p) { return content[p.X, p.Y].Type; }
+		public ResourceType GetRenderedResource(CPos p) { return render[p.X, p.Y].Type; }
+		public int GetResourceDensity(CPos p) { return content[p.X, p.Y].Density; }
 		public int GetMaxResourceDensity(CPos p)
 		{
-			if (content[p.X, p.Y].image == null) return 0;
-			return content[p.X, p.Y].image.Length - 1;
+			if (content[p.X, p.Y].Type == null)
+				return 0;
+
+			return content[p.X, p.Y].Type.Info.MaxDensity;
 		}
 
 		public struct CellContents
 		{
-			public ResourceType type;
-			public Sprite[] image;
-			public int density;
+			public ResourceType Type;
+			public int Density;
+			public string Variant;
+			public Sprite Sprite;
 		}
 	}
 }

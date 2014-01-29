@@ -21,10 +21,10 @@ namespace OpenRA.Mods.RA
 		public override object Create(ActorInitializer init) { return new AttackTesla(init.self); }
 	}
 
-	class AttackTesla : AttackOmni, ITick, INotifyAttack
+	class AttackTesla : AttackOmni, ITick, INotifyAttack, ISync
 	{
-		int charges;
-		int timeToRecharge;
+		[Sync] int charges;
+		[Sync] int timeToRecharge;
 
 		public AttackTesla( Actor self )
 			: base( self )
@@ -40,7 +40,7 @@ namespace OpenRA.Mods.RA
 			base.Tick( self );
 		}
 
-		public void Attacking(Actor self, Target target)
+		public void Attacking(Actor self, Target target, Armament a, Barrel barrel)
 		{
 			--charges;
 			timeToRecharge = self.Info.Traits.Get<AttackTeslaInfo>().ReloadTime;
@@ -67,14 +67,15 @@ namespace OpenRA.Mods.RA
 
 			public override Activity Tick( Actor self )
 			{
-				if( IsCanceled || !target.IsValid ) return NextActivity;
+				if (IsCanceled || !target.IsValidFor(self))
+					return NextActivity;
 
 				var attack = self.Trait<AttackTesla>();
 				if( attack.charges == 0 || !attack.CanAttack( self, target ) )
 					return this;
 
 				self.Trait<RenderBuildingCharge>().PlayCharge(self);
-				return Util.SequenceActivities( new Wait( 8 ), new TeslaZap( target ), this );
+				return Util.SequenceActivities( new Wait( 22 ), new TeslaZap( target ), this );
 			}
 		}
 
@@ -85,7 +86,8 @@ namespace OpenRA.Mods.RA
 
 			public override Activity Tick( Actor self )
 			{
-				if( IsCanceled || !target.IsValid ) return NextActivity;
+				if (IsCanceled || !target.IsValidFor(self))
+					return NextActivity;
 
 				var attack = self.Trait<AttackTesla>();
 				if( attack.charges == 0 ) return NextActivity;

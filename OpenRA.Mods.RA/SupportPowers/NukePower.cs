@@ -9,23 +9,29 @@
 #endregion
 
 using OpenRA.Mods.RA.Effects;
-using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class NukePowerInfo : SupportPowerInfo
+	class NukePowerInfo : SupportPowerInfo, Requires<IBodyOrientationInfo>
 	{
 		[WeaponReference]
 		public readonly string MissileWeapon = "";
-		public readonly int2 SpawnOffset = int2.Zero;
+		public readonly WVec SpawnOffset = WVec.Zero;
 
 		public override object Create(ActorInitializer init) { return new NukePower(init.self, this); }
 	}
 
 	class NukePower : SupportPower
 	{
-		public NukePower(Actor self, NukePowerInfo info) : base(self, info) { }
+		IBodyOrientation body;
+
+		public NukePower(Actor self, NukePowerInfo info)
+			: base(self, info)
+		{
+			body = self.Trait<IBodyOrientation>();
+		}
+
 		public override IOrderGenerator OrderGenerator(string order, SupportPowerManager manager)
 		{
 			Sound.PlayToPlayer(manager.self.Owner, Info.SelectTargetSound);
@@ -34,15 +40,16 @@ namespace OpenRA.Mods.RA
 
 		public override void Activate(Actor self, Order order)
 		{
-			// Play to everyone but the current player
-			if (self.Owner != self.World.LocalPlayer)
+			if (self.Owner.IsAlliedWith(self.World.RenderPlayer))
 				Sound.Play(Info.LaunchSound);
+			else
+				Sound.Play(Info.IncomingSound);
 
 			var npi = Info as NukePowerInfo;
-
-			self.Trait<RenderBuilding>().PlayCustomAnim(self, "active");
+			var rb = self.Trait<RenderSimple>();
+			rb.PlayCustomAnim(self, "active");
 			self.World.AddFrameEndTask(w => w.Add(
-				new NukeLaunch(self.Owner, self, npi.MissileWeapon, (PVecInt)npi.SpawnOffset, order.TargetLocation)));
+				new NukeLaunch(self.Owner, self, npi.MissileWeapon, self.CenterPosition + body.LocalToWorld(npi.SpawnOffset), order.TargetLocation)));
 		}
 	}
 }

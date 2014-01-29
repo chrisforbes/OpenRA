@@ -18,6 +18,7 @@ namespace OpenRA.Widgets
 		public string Image = "";
 		public int Frame = 0;
 		public string Palette = "chrome";
+		public bool LoopAnimation = false;
 
 		public Func<string> GetImage;
 		public Func<int> GetFrame;
@@ -26,12 +27,12 @@ namespace OpenRA.Widgets
 		readonly WorldRenderer worldRenderer;
 
 		[ObjectCreator.UseCtor]
-		public ShpImageWidget(  WorldRenderer worldRenderer)
-			: base()
+		public ShpImageWidget(WorldRenderer worldRenderer)
 		{
 			GetImage = () => { return Image; };
 			GetFrame = () => { return Frame; };
 			GetPalette = () => { return Palette; };
+
 			this.worldRenderer = worldRenderer;
 		}
 
@@ -41,9 +42,12 @@ namespace OpenRA.Widgets
 			Image = other.Image;
 			Frame = other.Frame;
 			Palette = other.Palette;
+			LoopAnimation = other.LoopAnimation;
+
 			GetImage = other.GetImage;
 			GetFrame = other.GetFrame;
 			GetPalette = other.GetPalette;
+
 			worldRenderer = other.worldRenderer;
 		}
 
@@ -52,6 +56,7 @@ namespace OpenRA.Widgets
 		Sprite sprite = null;
 		string cachedImage = null;
 		int cachedFrame = -1;
+		float2 cachedOffset = float2.Zero;
 
 		public override void Draw()
 		{
@@ -64,9 +69,37 @@ namespace OpenRA.Widgets
 				sprite = Game.modData.SpriteLoader.LoadAllSprites(image)[frame];
 				cachedImage = image;
 				cachedFrame = frame;
+				cachedOffset = 0.5f * (new float2(RenderBounds.Size) - sprite.size);
 			}
 
-			Game.Renderer.SpriteRenderer.DrawSprite(sprite, RenderOrigin, worldRenderer, palette);
+			Game.Renderer.SpriteRenderer.DrawSprite(sprite, RenderOrigin + cachedOffset, worldRenderer.Palette(palette));
+		}
+
+		public int FrameCount
+		{
+			get { return Game.modData.SpriteLoader.LoadAllSprites(Image).Length-1; }
+		}
+
+		public void RenderNextFrame()
+		{
+			if (Frame < FrameCount)
+				Frame++;
+			else
+				Frame = 0;
+		}
+
+		public void RenderPreviousFrame()
+		{
+			if (Frame > 0)
+				Frame--;
+			else
+				Frame = FrameCount;
+		}
+
+		public override void Tick()
+		{
+			if (LoopAnimation)
+				RenderNextFrame();
 		}
 	}
 }

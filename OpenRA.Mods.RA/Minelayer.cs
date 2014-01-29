@@ -1,4 +1,4 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
  * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
@@ -10,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Mods.RA.Activities;
@@ -34,33 +33,39 @@ namespace OpenRA.Mods.RA
 		public CPos[] minefield = null;
 		[Sync] CPos minefieldStart;
 		Actor self;
+		Sprite tile;
 
-		public Minelayer(Actor self) { this.self = self; }
+		public Minelayer(Actor self)
+		{
+			this.self = self;
+
+			var tileset = self.World.TileSet.Id.ToLower();
+			tile = SequenceProvider.GetSequence("overlay", "build-valid-{0}".F(tileset)).GetSprite(0);
+		}
 
 		public IEnumerable<IOrderTargeter> Orders
 		{
 			get { yield return new BeginMinefieldOrderTargeter(); }
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order is BeginMinefieldOrderTargeter )
-			{
-				var start = target.CenterLocation.ToCPos();
-				self.World.OrderGenerator = new MinefieldOrderGenerator( self, start );
-				return new Order("BeginMinefield", self, false) { TargetLocation = start };
-			}
-			return null;
+			if (!(order is BeginMinefieldOrderTargeter))
+				return null;
+
+			var start = target.CenterPosition.ToCPos();
+			self.World.OrderGenerator = new MinefieldOrderGenerator(self, start);
+			return new Order("BeginMinefield", self, false) { TargetLocation = start };
 		}
 
 		public void ResolveOrder(Actor self, Order order)
 		{
-			if( order.OrderString == "BeginMinefield" )
+			if (order.OrderString == "BeginMinefield")
 				minefieldStart = order.TargetLocation;
 
 			if (order.OrderString == "PlaceMinefield")
 			{
-				var movement = self.Trait<IMove>();
+				var movement = self.Trait<IPositionable>();
 
 				minefield = GetMinefieldCells(minefieldStart, order.TargetLocation,
 					self.Info.Traits.Get<MinelayerInfo>().MinefieldDepth)
@@ -76,7 +81,7 @@ namespace OpenRA.Mods.RA
 			var mins = CPos.Min(start, end);
 			var maxs = CPos.Max(start, end);
 
-			/* todo: proper endcaps, if anyone cares (which won't happen unless depth is large) */
+			/* TODO: proper endcaps, if anyone cares (which won't happen unless depth is large) */
 
 			var p = end - start;
 			var q = new float2(p.Y, -p.X);
@@ -91,12 +96,33 @@ namespace OpenRA.Mods.RA
 						yield return new CPos(i, j);
 		}
 
+		public void RenderAfterWorld(WorldRenderer wr)
+		{
+			if (self.Owner != self.World.LocalPlayer || minefield == null)
+				return;
+
+			var pal = wr.Palette("terrain");
+			foreach (var c in minefield)
+				new SpriteRenderable(tile, c.CenterPosition,
+					WVec.Zero, -511, pal, 1f, true).Render(wr);
+		}
+
 		class MinefieldOrderGenerator : IOrderGenerator
 		{
 			readonly Actor minelayer;
 			readonly CPos minefieldStart;
+			readonly Sprite tileOk;
+			readonly Sprite tileBlocked;
 
-			public MinefieldOrderGenerator(Actor self, CPos xy ) { minelayer = self; minefieldStart = xy; }
+			public MinefieldOrderGenerator(Actor self, CPos xy)
+			{
+				minelayer = self;
+				minefieldStart = xy;
+
+				var tileset = self.World.TileSet.Id.ToLower();
+				tileOk = SequenceProvider.GetSequence("overlay", "build-valid-{0}".F(tileset)).GetSprite(0);
+				tileBlocked = SequenceProvider.GetSequence("overlay", "build-invalid").GetSprite(0);
+			}
 
 			public IEnumerable<Order> Order(World world, CPos xy, MouseInput mi)
 			{
@@ -106,7 +132,8 @@ namespace OpenRA.Mods.RA
 					yield break;
 				}
 
-				var underCursor = world.FindUnitsAtMouse(mi.Location)
+				var underCursor = world.ScreenMap.ActorsAt(mi)
+					.Where(a => !world.FogObscures(a))
 					.OrderByDescending(a => a.Info.Traits.Contains<SelectableInfo>()
 						? a.Info.Traits.Get<SelectableInfo>().Priority : int.MinValue)
 					.FirstOrDefault();
@@ -125,31 +152,26 @@ namespace OpenRA.Mods.RA
 			}
 
 			CPos lastMousePos;
+			public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
 			public void RenderAfterWorld(WorldRenderer wr, World world)
 			{
 				if (!minelayer.IsInWorld)
 					return;
 
-				var movement = minelayer.Trait<IMove>();
+				var movement = minelayer.Trait<IPositionable>();
 				var minefield = GetMinefieldCells(minefieldStart, lastMousePos,
-					minelayer.Info.Traits.Get<MinelayerInfo>().MinefieldDepth)
-					.Where(p => movement.CanEnterCell(p)).ToArray();
+					minelayer.Info.Traits.Get<MinelayerInfo>().MinefieldDepth);
 
-				wr.DrawLocus(Color.Cyan, minefield);
+				var pal = wr.Palette("terrain");
+				foreach (var c in minefield)
+				{
+					var tile = movement.CanEnterCell(c) ? tileOk : tileBlocked;
+					new SpriteRenderable(tile, c.CenterPosition,
+						WVec.Zero, -511, pal, 1f, true).Render(wr);
+				}
 			}
 
-			public void RenderBeforeWorld(WorldRenderer wr, World world) { }
-
-			public string GetCursor(World world, CPos xy, MouseInput mi) { lastMousePos = xy; return "ability"; }	/* todo */
-		}
-
-		public void RenderAfterWorld(WorldRenderer wr)
-		{
-			if (self.Owner != self.World.LocalPlayer)
-				return;
-
-			if (minefield != null)
-				wr.DrawLocus(Color.Cyan, minefield);
+			public string GetCursor(World world, CPos xy, MouseInput mi) { lastMousePos = xy; return "ability"; }	/* TODO */
 		}
 
 		class BeginMinefieldOrderTargeter : IOrderTargeter
@@ -157,21 +179,21 @@ namespace OpenRA.Mods.RA
 			public string OrderID { get { return "BeginMinefield"; } }
 			public int OrderPriority { get { return 5; } }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor)
 			{
-				return false;
-			}
+				if (target.Type != TargetType.Terrain)
+					return false;
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
-			{
+				var location = target.CenterPosition.ToCPos();
 				if (!self.World.Map.IsInMap(location))
 					return false;
 
 				cursor = "ability";
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 
-				return (actorsAtLocation.Count == 0 && forceAttack);
+				return !othersAtTarget.Any() && modifiers.HasModifier(TargetModifiers.ForceAttack);
 			}
+
 			public bool IsQueued { get; protected set; }
 		}
 	}

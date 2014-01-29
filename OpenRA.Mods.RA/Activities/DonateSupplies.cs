@@ -8,7 +8,6 @@
  */
 #endregion
 
-using System.Linq;
 using OpenRA.Traits;
 using OpenRA.Mods.RA.Effects;
 
@@ -16,26 +15,29 @@ namespace OpenRA.Mods.RA.Activities
 {
 	class DonateSupplies : Activity
 	{
-		Actor target;
+		Target target;
 		int payload;
 
 		public DonateSupplies(Actor target, int payload)
 		{
-			this.target = target;
+			this.target = Target.FromActor(target);
 			this.payload = payload;
 		}
 
 		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead()) return NextActivity;
-			if (!target.OccupiesSpace.OccupiedCells().Any(x => x.First == self.Location))
+			if (IsCanceled || !target.IsValidFor(self))
 				return NextActivity;
 
-			target.Owner.PlayerActor.Trait<PlayerResources>().GiveCash(payload);
+			if (target.Type != TargetType.Actor)
+				return NextActivity;
+
+			var targetActor = target.Actor;
+			targetActor.Owner.PlayerActor.Trait<PlayerResources>().GiveCash(payload);
 			self.Destroy();
-			if (self.World.LocalPlayer == null || self.Owner.Stances[self.World.LocalPlayer] == Stance.Ally)
-				self.World.AddFrameEndTask(w => w.Add(new CashTick(payload, 30, 2, target.CenterLocation, target.Owner.ColorRamp.GetColor(0))));
+
+			if (self.Owner.IsAlliedWith(self.World.RenderPlayer))
+				self.World.AddFrameEndTask(w =>	w.Add(new CashTick(targetActor.CenterPosition, targetActor.Owner.Color.RGB, payload)));
 
 			return this;
 		}

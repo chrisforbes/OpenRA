@@ -15,18 +15,17 @@ ROOTDIR=root
 # Clean up
 rm -rf $ROOTDIR
 
-# Game files
-mkdir -p $ROOTDIR/usr/bin/
-cp -T openra-bin $ROOTDIR/usr/bin/openra
-mkdir -p $ROOTDIR/usr/share/openra/
-cp -R $BUILTDIR/* "$ROOTDIR/usr/share/openra/" || exit 3
+cd ../..
+# Copy files for OpenRA.Game.exe and OpenRA.Editor.exe as well as all dependencies.
+make install-all prefix="/usr" DESTDIR="$PWD/packaging/linux/$ROOTDIR"
 
-# Desktop Icons
-mkdir -p $ROOTDIR/usr/share/applications/
-cp openra.desktop "$ROOTDIR/usr/share/applications/"
+# Launch scripts (executed by Desura)
+cp *.sh "$PWD/packaging/linux/$ROOTDIR/usr/lib/openra/" || exit 3
 
-mkdir -p $ROOTDIR/usr/share/icons/
-cp -r hicolor $ROOTDIR/usr/share/icons/
+# Icons and .desktop files
+make install-shortcuts prefix="/usr" DESTDIR="$PWD/packaging/linux/$ROOTDIR"
+
+cd packaging/linux
 
 (
     echo "Building Debian package."
@@ -45,7 +44,7 @@ cp -r hicolor $ROOTDIR/usr/share/icons/
         echo "Arch-Linux package build failed, refer to $PWD/package.log."
     fi
 ) &
-     
+
 (
     echo "Building RPM package."
     cd rpm
@@ -54,6 +53,6 @@ cp -r hicolor $ROOTDIR/usr/share/icons/
         echo "RPM package build failed, refer to $PWD/package.log."
     fi
 ) &
- 
+
 wait
 

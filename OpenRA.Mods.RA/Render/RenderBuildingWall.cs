@@ -9,7 +9,6 @@
 #endregion
 
 using System.Linq;
-using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Render
@@ -37,16 +36,7 @@ namespace OpenRA.Mods.RA.Render
 
 		public override void DamageStateChanged(Actor self, AttackInfo e)
 		{
-			if (e.DamageState == DamageState.Medium && anim.HasSequence("scratched-idle"))
-				seqName = "scratched-idle";
-			else if (e.DamageState <= DamageState.Medium)
-				seqName = "idle";
-			else if (e.DamageState == DamageState.Critical && anim.HasSequence("critical-idle"))
-				seqName = "critical-idle";
-			else if (e.DamageState <= DamageState.Critical)
-				seqName = "damaged-idle";
-
-			anim.PlayFetchIndex(seqName, () => adjacentWalls);
+			anim.PlayFetchIndex(NormalizeSequence(anim, e.DamageState, "idle"), () => adjacentWalls);
 		}
 
 		bool hasTicked = false;
@@ -56,7 +46,8 @@ namespace OpenRA.Mods.RA.Render
 
 			if (!hasTicked)
 			{
-				var adjWalls = self.World.FindUnits(self.CenterLocation - PVecInt.OneCell, self.CenterLocation + PVecInt.OneCell)
+				var vec = new CVec(1, 1);
+				var adjWalls = self.World.FindActorsInBox(self.Location - vec, self.Location + vec)
 					.Where(a => a.Info == self.Info && a != self);
 
 				foreach (var w in adjWalls)

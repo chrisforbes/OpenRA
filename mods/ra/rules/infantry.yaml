@@ -17,13 +17,12 @@ DOG:
 	Health:
 		HP: 12
 	Mobile:
-		Speed: 7
+		Speed: 99
 	RevealsShroud:
 		Range: 5
-	AutoTarget:
+	Armament:
+		Weapon: DogJaw
 	AttackLeap:
-		PrimaryWeapon: DogJaw
-		CanAttackGround: no
 	RenderInfantry:
 		IdleAnimations: idle1,idle2
 	IgnoresDisguise:
@@ -45,13 +44,15 @@ E1:
 	Health:
 		HP: 50
 	Mobile:
-		Speed: 4
+		Speed: 56
+	Armament:
+		Weapon: M1Carbine
 	AttackFrontal:
-		PrimaryWeapon: M1Carbine
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E2:
 	Inherits: ^Infantry
@@ -71,18 +72,20 @@ E2:
 	Health:
 		HP: 50
 	Mobile:
-		Speed: 5
-	AttackFrontal:
-		PrimaryWeapon: Grenade
-		PrimaryOffset: 0,0,0,-13
+		Speed: 71
+	Armament:
+		Weapon: Grenade
+		LocalOffset: 0,0,555
 		FireDelay: 15
+	AttackFrontal:
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 	Explodes:
 		Weapon: UnitExplodeSmall
-		Chance: 50		
+		Chance: 50
 
 E3:
 	Inherits: ^Infantry
@@ -101,15 +104,19 @@ E3:
 	Health:
 		HP: 45
 	Mobile:
-		Speed: 3
+		Speed: 56
+	Armament@PRIMARY:
+		Weapon: RedEye
+		LocalOffset: 0,0,555
+	Armament@SECONDARY:
+		Weapon: Dragon
+		LocalOffset: 0,0,555
 	AttackFrontal:
-		PrimaryWeapon: RedEye
-		SecondaryWeapon: Dragon
-		PrimaryOffset: 0,0,0,-13
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E4:
 	Inherits: ^Infantry
@@ -129,15 +136,17 @@ E4:
 	Health:
 		HP: 40
 	Mobile:
-		Speed: 3
-	AttackFrontal:
-		PrimaryWeapon: Flamer
-		PrimaryOffset: 0,-10,0,-8
+		Speed: 56
+	Armament:
+		Weapon: Flamer
+		LocalOffset: 427,0,341
 		FireDelay: 8
+	AttackFrontal:
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E6:
 	Inherits: ^Infantry
@@ -157,18 +166,19 @@ E6:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Passenger:
 		PipType: Yellow
 	EngineerRepair:
-	Captures:
+	RepairsBridges:
+	ExternalCaptures:
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 SPY:
 	Inherits: ^Infantry
@@ -189,7 +199,7 @@ SPY:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
 		Range: 5
 	Passenger:
@@ -197,15 +207,16 @@ SPY:
 	TakeCover:
 	Spy:
 	Infiltrates:
-		InfiltrateTypes: Cash, SupportPower, Exploration
+		Types: Cash, SupportPower, Exploration
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	-RenderInfantry:
 	RenderSpy:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
+	Armament:
+		Weapon: SilencedPPK
 	AttackFrontal:
-		PrimaryWeapon: SilencedPPK
 
 E7:
 	Inherits: ^Infantry
@@ -227,61 +238,22 @@ E7:
 	Health:
 		HP: 100
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
 		Range: 6
 	C4Demolition:
 		C4Delay: 45
 	Passenger:
 		PipType: Red
+	Armament@PRIMARY:
+		Weapon: Colt45
+	Armament@SECONDARY:
+		Weapon: Colt45
 	AttackFrontal:
-		PrimaryWeapon: Colt45
-		SecondaryWeapon: Colt45
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
-
-E8:
-	Inherits: ^Infantry
-	Buildable:
-		Queue: Infantry
-		BuildPaletteOrder: 110
-		Prerequisites: stek
-		Owner: soviet
-		Hotkey: v
-		BuildLimit: 1
-	Valued:
-		Cost: 1800
-	Tooltip:
-		Name: Volkov
-		Description: Elite commando cyborg, armed with \nmodular cannons and grenade launcher.\n  Strong vs Vehicles, Infantry\n  Weak vs Aircraft\n\nMaximum 1 can be trained
-	Selectable:
-		Voice: VolkovVoice
-		Bounds: 12,17,0,-9
-	Health:
-		HP: 200
-	Armor:
-		Type: Cybernetic
-	Mobile:
-		Speed: 5
-		Crushes: atmine, crate
-	RevealsShroud:
-		Range: 4
-	Passenger:
-		PipType: Red
-	AttackFrontal:
-		PrimaryWeapon: VolkAT
-		SecondaryWeapon: VolkNapalm
-	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
-		IdleAnimations: idle1
-	CrushableInfantry:
-		CrushSound: crunchy2.aud
-	RepairableNear:
-		Buildings: fix
-		CloseEnough: 1
 
 MEDI:
 	Inherits: ^Infantry
@@ -292,7 +264,7 @@ MEDI:
 		Prerequisites: tent
 		Hotkey: m
 	Valued:
-		Cost: 300
+		Cost: 200
 	Tooltip:
 		Name: Medic
 		Description: Heals nearby infantry.\n  Strong vs Nothing\n  Weak vs Everything
@@ -302,18 +274,19 @@ MEDI:
 	Health:
 		HP: 80
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
 		Range: 3
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Heal
 	AttackMedic:
-		PrimaryWeapon: Heal
+		Cursor: heal
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
@@ -327,7 +300,7 @@ MECH:
 		Prerequisites: fix
 		Hotkey: c
 	Valued:
-		Cost: 800
+		Cost: 500
 	Tooltip:
 		Name: Mechanic
 		Description: Repairs nearby vehicles.\n  Strong vs Nothing\n  Weak vs Everything
@@ -337,18 +310,19 @@ MECH:
 	Health:
 		HP: 80
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
 		Range: 3
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Repair
 	AttackMedic:
-		PrimaryWeapon: Repair
+		Cursor: repair
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
@@ -365,12 +339,11 @@ EINSTEIN:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
 		Range: 2
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	ProximityCaptor:
 		Types: CivilianInfantry
 	-RenderInfantry:
@@ -389,12 +362,11 @@ DELPHI:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
 		Range: 2
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 	ProximityCaptor:
 		Types: CivilianInfantry
 	-RenderInfantry:
@@ -410,6 +382,8 @@ GNRL:
 	Inherits: ^CivInfantry
 	Tooltip:
 		Name: General
+	Selectable:
+		Voice: StavrosVoice
 
 THF:
 	Inherits: ^Infantry
@@ -424,7 +398,7 @@ THF:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
 		Range: 5
 	Passenger:
@@ -434,17 +408,17 @@ THF:
 	TakeCover:
 	-AutoTarget:
 	AttackMove:
-		JustMove: true
 
 SHOK:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
+		BuildPaletteOrder: 70
 		Prerequisites: stek,tsla
 		Owner: soviet
 		Hotkey: l
 	Valued:
-		Cost: 500
+		Cost: 400
 	Tooltip:
 		Name: Tesla Trooper
 		Description: Infantry with tesla coils\n Strong vs Infantry\n Weak vs Vehicles
@@ -454,16 +428,18 @@ SHOK:
 	Health:
 		HP: 80
 	Mobile:
-		Speed: 3
+		Speed: 56
 	RevealsShroud:
 		Range: 4
+	Armament:
+		Weapon: PortaTesla
+		LocalOffset: 427,0,341
 	AttackFrontal:
-		PrimaryWeapon: PortaTesla
-		PrimaryOffset: 0,-10,0,-8
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 	-CrushableInfantry:
 
 SNIPER:
@@ -471,33 +447,34 @@ SNIPER:
 	Valued:
 		Cost: 700
 	Tooltip:
-		Icon: snipericon
 		Name: Sniper
 		Description: Elite sniper infantry unit.\n  Strong vs Infantry\n  Weak vs Vehicles
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 50
+		BuildPaletteOrder: 80
 		Owner: soviet
 		Prerequisites: dome
-		Hotkey: n
+		Hotkey: h
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
-		HP: 200
+		HP: 80
 	Passenger:
 		PipType: Red
 	RevealsShroud:
 		Range: 6
 	AutoTarget:
 		InitialStance: HoldFire
+	Armament:
+		Weapon: Sniper
 	AttackFrontal:
-		PrimaryWeapon: Sniper
 	TakeCover:
 	-RenderInfantry:
 	RenderInfantryProne:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 	Cloak:
 		InitialDelay: 250
 		CloakDelay: 120
@@ -505,5 +482,60 @@ SNIPER:
 		UncloakSound:
 		UncloakOnMove: yes
 	Captures:
-		CaptureTypes: civilianbuilding
-		AllowAllies: true
+		CaptureTypes: CivilianBuilding
+		Sabotage: no
+		SabotageHPRemoval: 0
+
+Zombie:
+	Inherits: ^Infantry
+	Valued:
+		Cost: 100
+	Tooltip:
+		Name: Zombie
+		Description: Slow undead. Attacks in close combat.
+	Buildable:
+		Queue: Infantry
+		BuildPaletteOrder: 200
+		Owner: Umbrella
+		Prerequisites: bio
+	Selectable:
+		Voice: AntVoice
+		Bounds: 12,17,0,-9
+	Health:
+		HP: 250
+	Mobile:
+		Speed: 42
+	AutoTarget:
+		ScanRadius: 5
+	AttackFrontal:
+	Armament:
+		Weapon: claw
+
+Ant:
+	Inherits: ^Infantry
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: Giant Ant
+		Description: Irradiated insect that grew oversize.
+	Buildable:
+		Queue: Infantry
+		BuildPaletteOrder: 1954
+		Owner: Them
+		Prerequisites: bio
+	Selectable:
+		Voice: AntVoice
+		Bounds: 30,30,0,-2
+	Health:
+		HP: 750
+		Radius: 469
+	Mobile:
+		Speed: 99
+		ROT: 12
+		SharesCell: no
+	AutoTarget:
+		ScanRadius: 5
+	AttackFrontal:
+	Armament:
+		Weapon: mandible
+

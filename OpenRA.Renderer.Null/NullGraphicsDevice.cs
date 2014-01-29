@@ -11,7 +11,6 @@
 using System;
 using System.Drawing;
 using OpenRA.FileFormats.Graphics;
-using OpenRA.Graphics;
 
 [assembly: Renderer(typeof(OpenRA.Renderer.Null.DeviceFactory))]
 
@@ -21,7 +20,7 @@ namespace OpenRA.Renderer.Null
 	{
 		public IGraphicsDevice Create(Size size, WindowMode windowMode)
 		{
-			return new NullGraphicsDevice( size, windowMode );
+			return new NullGraphicsDevice(size, windowMode);
 		}
 	}
 
@@ -35,8 +34,15 @@ namespace OpenRA.Renderer.Null
 			WindowSize = size;
 		}
 
+		public void Quit() { }
+
 		public void EnableScissor(int left, int top, int width, int height) { }
 		public void DisableScissor() { }
+
+		public void EnableDepthBuffer() { }
+		public void DisableDepthBuffer() { }
+
+		public void SetBlendMode(BlendMode mode) { }
 
 		public void Clear() { }
 		public void Present() { }
@@ -48,18 +54,22 @@ namespace OpenRA.Renderer.Null
 		}
 
 		public void DrawPrimitives(PrimitiveType pt, int firstVertex, int numVertices) { }
-		public void SetLineWidth( float width ) { }
+		public void SetLineWidth(float width) { }
 
 		public IVertexBuffer<Vertex> CreateVertexBuffer(int size) { return new NullVertexBuffer<Vertex>(); }
 		public ITexture CreateTexture() { return new NullTexture(); }
 		public ITexture CreateTexture(Bitmap bitmap) { return new NullTexture(); }
+		public IFrameBuffer CreateFrameBuffer(Size s) { return new NullFrameBuffer(); }
 		public IShader CreateShader(string name) { return new NullShader(); }
 	}
 
 	public class NullShader : IShader
 	{
+		public void SetVec(string name, float x) { }
 		public void SetVec(string name, float x, float y) { }
+		public void SetVec(string name, float[] vec, int length) { }
 		public void SetTexture(string param, ITexture texture) { }
+		public void SetMatrix(string param, float[] mtx) { }
 		public void Commit() { }
 		public void Render(Action a) { }
 	}
@@ -69,6 +79,15 @@ namespace OpenRA.Renderer.Null
 		public void SetData(Bitmap bitmap) { }
 		public void SetData(uint[,] colors) { }
 		public void SetData(byte[] colors, int width, int height) { }
+		public byte[] GetData() { return new byte[0]; }
+		public Size Size { get { return new Size(0, 0); } }
+	}
+
+	public class NullFrameBuffer : IFrameBuffer
+	{
+		public void Bind() { }
+		public void Unbind() { }
+		public ITexture Texture { get { return new NullTexture(); } }
 	}
 
 	class NullVertexBuffer<T> : IVertexBuffer<T>

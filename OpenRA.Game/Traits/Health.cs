@@ -17,7 +17,8 @@ namespace OpenRA.Traits
 	public class HealthInfo : ITraitInfo, UsesInit<HealthInit>
 	{
 		public readonly int HP = 0;
-		public readonly float Radius = 10;
+		[Desc("Physical size of the unit used for damage calculations.  Impacts within this radius apply full damage")]
+		public readonly WRange Radius = new WRange(426);
 		public virtual object Create(ActorInitializer init) { return new Health(init, this); }
 	}
 
@@ -69,13 +70,42 @@ namespace OpenRA.Traits
 			}
 		}
 
+		public void Resurrect(Actor self, Actor repairer)
+		{
+			if (!IsDead)
+				return;
+
+			hp = MaxHP;
+
+			var ai = new AttackInfo
+			{
+				Attacker = repairer,
+				Damage = -MaxHP,
+				DamageState = this.DamageState,
+				PreviousDamageState = DamageState.Dead,
+				Warhead = null,
+			};
+
+			foreach (var nd in self.TraitsImplementing<INotifyDamage>()
+			         .Concat(self.Owner.PlayerActor.TraitsImplementing<INotifyDamage>()))
+				nd.Damaged(self, ai);
+
+			foreach (var nd in self.TraitsImplementing<INotifyDamageStateChanged>())
+				nd.DamageStateChanged(self, ai);
+
+			if (repairer != null && repairer.IsInWorld && !repairer.IsDead())
+				foreach (var nd in repairer.TraitsImplementing<INotifyAppliedDamage>()
+				         .Concat(repairer.Owner.PlayerActor.TraitsImplementing<INotifyAppliedDamage>()))
+					nd.AppliedDamage(repairer, self, ai);
+		}
+
 		public void InflictDamage(Actor self, Actor attacker, int damage, WarheadInfo warhead, bool ignoreModifiers)
 		{
 			if (IsDead) return;		/* overkill! don't count extra hits as more kills! */
 
 			var oldState = this.DamageState;
 			/* apply the damage modifiers, if we have any. */
-			var modifier = (float)self.TraitsImplementing<IDamageModifier>()
+			var modifier = self.TraitsImplementing<IDamageModifier>()
 				.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
 				.Select(t => t.GetDamageModifier(attacker, warhead)).Product();
 
@@ -108,14 +138,11 @@ namespace OpenRA.Traits
 
 			if (hp == 0)
 			{
-				attacker.Owner.Kills++;
-				self.Owner.Deaths++;
-
 				foreach (var nd in self.TraitsImplementing<INotifyKilled>()
 						.Concat(self.Owner.PlayerActor.TraitsImplementing<INotifyKilled>()))
 					nd.Killed(self, ai);
 
-				if( RemoveOnDeath )
+				if (RemoveOnDeath)
 					self.Destroy();
 
 				Log.Write("debug", "{0} #{1} killed by {2} #{3}", self.Info.Name, self.ActorID, attacker.Info.Name, attacker.ActorID);
@@ -142,17 +169,10 @@ namespace OpenRA.Traits
 
 	public static class HealthExts
 	{
-		public static bool IsDead(this Actor self)
-		{
-			if (self.Destroyed)	return true;
-
-			var health = self.TraitOrDefault<Health>();
-			return (health == null) ? false : health.IsDead;
-		}
-
 		public static DamageState GetDamageState(this Actor self)
 		{
-			if (self.Destroyed) return DamageState.Dead;
+			if (self.Destroyed)
+				return DamageState.Dead;
 
 			var health = self.TraitOrDefault<Health>();
 			return (health == null) ? DamageState.Undamaged : health.DamageState;
@@ -160,16 +180,10 @@ namespace OpenRA.Traits
 
 		public static void InflictDamage(this Actor self, Actor attacker, int damage, WarheadInfo warhead)
 		{
+			if (self.Destroyed) return;
 			var health = self.TraitOrDefault<Health>();
 			if (health == null) return;
 			health.InflictDamage(self, attacker, damage, warhead, false);
-		}
-
-		public static void Kill(this Actor self, Actor attacker)
-		{
-			var health = self.TraitOrDefault<Health>();
-			if (health == null) return;
-			health.InflictDamage(self, attacker, health.MaxHP, null, true);
 		}
 	}
 }

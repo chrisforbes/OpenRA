@@ -10,7 +10,6 @@
 
 using System.Drawing;
 using OpenRA.Graphics;
-using OpenRA.Effects;
 using System.Collections.Generic;
 
 namespace OpenRA.Traits
@@ -52,8 +51,6 @@ namespace OpenRA.Traits
 
 		public void RenderAfterWorld(WorldRenderer wr)
 		{
-			//if (self.IsIdle) return;
-
 			var force = Game.GetModifierKeys().HasModifier(Modifiers.Alt);
 			if ((lifetime <= 0 || --lifetime <= 0) && !force)
 				return;
@@ -61,28 +58,17 @@ namespace OpenRA.Traits
 			if (targets == null || targets.Count == 0)
 				return;
 
-			var move = self.TraitOrDefault<IMove>();
-			var origin = (move != null ? self.CenterLocation - new PVecInt(0, move.Altitude) : self.CenterLocation).ToFloat2();
-
-			var wlr = Game.Renderer.WorldLineRenderer;
-
+			var from = wr.ScreenPxPosition(self.CenterPosition);
 			foreach (var target in targets)
 			{
-				if (!target.IsValid)
+				if (target.Type == TargetType.Invalid)
 					continue;
 
-				wlr.DrawLine(origin, target.CenterLocation.ToFloat2(), c, c);
-				DrawTargetMarker(wlr, target.CenterLocation.ToFloat2());
-				DrawTargetMarker(wlr, origin);
+				var to = wr.ScreenPxPosition(target.CenterPosition);
+				Game.Renderer.WorldLineRenderer.DrawLine(from, to, c, c);
+				wr.DrawTargetMarker(c, from);
+				wr.DrawTargetMarker(c, to);
 			}
-		}
-
-		void DrawTargetMarker(LineRenderer wlr, float2 p)
-		{
-			wlr.DrawLine(p + new float2(-1, -1), p + new float2(-1, 1), c, c);
-			wlr.DrawLine(p + new float2(-1, 1), p + new float2(1, 1), c, c);
-			wlr.DrawLine(p + new float2(1, 1), p + new float2(1, -1), c, c);
-			wlr.DrawLine(p + new float2(1, -1), p + new float2(-1, -1), c, c);
 		}
 	}
 
@@ -92,12 +78,7 @@ namespace OpenRA.Traits
 		{
 			var line = self.TraitOrDefault<DrawLineToTarget>();
 			if (line != null)
-			{
-				self.World.AddFrameEndTask(w =>
-				{
-					line.SetTargets(self, targets, color, false);
-				});
-			}
+				self.World.AddFrameEndTask(w => line.SetTargets(self, targets, color, false));
 		}
 
 		public static void SetTargetLine(this Actor self, Target target, Color color)
@@ -112,13 +93,30 @@ namespace OpenRA.Traits
 
 			self.World.AddFrameEndTask(w =>
 			{
-				if (self.Destroyed) return;
-				if (target.IsActor && display)
-					w.Add(new FlashTarget(target.Actor));
+				if (self.Destroyed)
+					return;
 
 				var line = self.TraitOrDefault<DrawLineToTarget>();
 				if (line != null)
 					line.SetTarget(self, target, color, display);
+			});
+		}
+
+		public static void SetTargetLine(this Actor self, FrozenActor target, Color color, bool display)
+		{
+			if (self.Owner != self.World.LocalPlayer)
+				return;
+
+			self.World.AddFrameEndTask(w =>
+			{
+				if (self.Destroyed)
+					return;
+
+				target.Flash();
+
+				var line = self.TraitOrDefault<DrawLineToTarget>();
+				if (line != null)
+					line.SetTarget(self, Target.FromPos(target.CenterPosition), color, display);
 			});
 		}
 	}

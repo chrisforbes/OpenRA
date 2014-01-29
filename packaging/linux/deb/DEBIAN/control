@@ -3,11 +3,11 @@ Version: {VERSION}
 Architecture: all
 Maintainer: Chris Forbes <chrisf@ijw.co.nz>
 Installed-Size: {SIZE}
-Depends: libopenal1, mono-runtime (>= 2.6.7), libmono-winforms2.0-cil, libfreetype6, libsdl1.2debian, libgl1-mesa-glx, libgl1-mesa-dri, libmono-i18n2.0-cil
+Depends: libopenal1, mono-runtime (>= 2.10), libmono-winforms2.0-cil, libfreetype6, libsdl1.2debian, libgl1-mesa-glx, libgl1-mesa-dri, libmono-i18n2.0-cil
 Section: games
 Priority: extra
 Homepage: http://www.open-ra.org/
-Description: A multiplayer re-envisioning of Westwood Studios' C&C and C&C: Red Alert
+Description: A multiplayer re-envisioning of early RTS games by Westwood Studios
  .
  OpenRA is a Libre/Free Real Time Strategy game engine supporting early
  Westwood games like Command & Conquer and Command & Conquer: Red Alert.

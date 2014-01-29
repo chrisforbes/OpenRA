@@ -1,51 +1,113 @@
-AUTHORS
+OpenRA wouldn't be where it is today without the
+hard work of many contributors.
 
 The OpenRA developers are:
-	* Alli Witheford	(alzeih)
-	* Caleb Anderson	(RobotCaleb)
-	* Chris Forbes		(chrisf)
-	* Curtis Shmyr		(hamb)
-	* Daniel Hernandez	(Mancano)
-	* Matthew Bowra-Dean	(beedee)
-	* Mike Bundy		(kehaar)
+    * Chris Forbes (chrisf)
+    * Curtis Shmyr (hamb)
+    * Matthias Mailänder (Mailaender)
+    * Paul Chote (pchote)
+    * ScottNZ
+
+Previous developers included:
+    * Alli Witheford (alzeih)
+    * Caleb Anderson (RobotCaleb)
+    * Daniel Hernandez (Mancano)
+    * Megan Bowra-Dean (beedee)
+    * Mike Bundy (kehaar)
+    * Robert Pepperell (ytinasni)
 
 Also thanks to:
-	* Akseli Virtanen       (RAGEQUIT)
-	* Andrew Riedi
-	* Barnaby Smith		(mvi)
-	* Bellator
-	* Christer Ulfsparre	(Holloweye)
-	* Cody Brittain		(Generalcamo)
-	* Daniel Derejvanik     (Harisson)
-	* Danny			(Dan9550)
-	* Erasmus Schroder	(rasco)
-	* Igor Popov		(ihptru)
-	* Iran
-	* James Dunne		(jsd)
-	* Jeff Harris		(jeff_1amstudios)
-	* Jes			(-Jes-)
-	* Joakim Lindberg	(booom3)
-	* JOo
-	* Kenny Hoxworth	(hoxworth)
-	* Krishnakanth Mallik
-	* Kyrre Soerensen	(zypres)
-	* Lawrence Wang
-	* Mark Olson		(markolson)
-	* Matthew Gatland	(mgatland)
-	* Matthias Mailänder	(Mailaender)
-	* Maarten Meuris	(Nyerguds)
-	* Max Ugrumov		(katzsmile)
-	* Max621
-	* Nukem
-	* Paolo Chiodi		(paolochiodi)
-	* Paul Dovydaitis	(pdovy)
-	* Psydev
-	* Raymond Martineau	(mart0258)
-	* Riderr3
-	* Tim Mylemans		(gecko)
-	* Tirili
-	* Vladimir Komarov	(VrKomarov)
+    * Akseli Virtanen (RAGEQUIT)
+    * Andrew Aldridge (i80and)
+    * Andrew Perkins
+    * Andrew Riedi
+    * Andreas Beck (baxtor)
+    * Barnaby Smith (mvi)
+    * Bellator
+    * Braxton Williams (Buddytex)
+    * Bugra Cuhadaroglu (BugraC)
+    * Christer Ulfsparre (Holloweye)
+    * Cody Brittain (Generalcamo)
+    * D2k Sardaukar
+    * Daniel Derejvanik (Harisson)
+    * Danny Keary (Dan9550)
+    * Erasmus Schroder (rasco)
+    * Fahrradkette
+    * Frank Razenberg (zzattack)
+    * Gareth Needham (Ripley`)
+    * Igor Popov (ihptru)
+    * Iran
+    * James Dunne (jsd)
+    * Jeff Harris (jeff_1amstudios)
+    * Jes
+    * Joakim Lindberg (booom3)
+    * Kenny Hoxworth (hoxworth)
+    * Krishnakanth Mallik
+    * Kyrre Soerensen (zypres)
+    * Lawrence Wang
+    * Lesueur Benjamin (Valkirie)
+    * Maarten Meuris (Nyerguds)
+    * Mark Olson (markolson)
+    * Matthew Gatland (mgatland)
+    * Max621
+    * Max Ugrumov (katzsmile)
+    * Nukem
+    * Okunev Yu Dmitry (xaionaro)
+    * Olaf van der Spek
+    * Paolo Chiodi (paolochiodi)
+    * Paul Dovydaitis (pdovy)
+    * Psydev
+    * Raymond Martineau (mart0258)
+    * Reaperrr
+    * Riderr3
+    * Sascha Biedermann (bidifx)
+    * Sebastien Kerguen (xanax)
+    * Taryn Hill (Phrohdoh)
+    * Tim Mylemans (gecko)
+    * Tirili
+    * Tristan Keating (Kilkakon)
+    * Tristan Mühlbacher (MicroBit)
+    * Vladimir Komarov (VrKomarov)
+    * Wuschel
 
-Past developers included:
-	* Paul Chote		(pchote)
-	* Robert Pepperell	(ytinasni)
+Using Simple DirectMedia Layer distributed under
+the terms of the zlib license.
+
+Using FreeType distributed under the terms of the
+FreeType License.
+
+Using OpenAL Soft distributed under the GNU LGPL.
+
+Using GeoLite data created by MaxMind and
+distributed under the CC BY-SA 3.0 license.
+
+Using KopiLua created by Mark Feldman and
+maintained by Vinicius Jarina and distributed
+under the MIT license.
+
+Using NLua created by Vinicius Jarina and
+distributed under the MIT license.
+
+Using SharpFont created by Robert Rouhani and
+distributed under the MIT license.
+
+Using the Tao framework and distributed under
+the MIT license.
+
+Using SDL2# created by Ethan Lee and released
+under the zlib license.
+
+Using FuzzyLogicLibrary (fuzzynet) by Dmitry
+Kaluzhny and released under the GNU GPL terms.
+
+Using Mono.Nat by Alan McGovern and Ben
+Motmans and distributed under the MIT license.
+
+Using ICSharpCode.SharpZipLib intially by Mike
+Krueger and distributed under the GNU GPL terms.
+
+
+Finally, special thanks goes to the original teams
+at Westwood Studios and EA for creating the classic
+games which OpenRA aims to reimagine.
+

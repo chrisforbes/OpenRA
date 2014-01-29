@@ -8,42 +8,157 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace OpenRA.Traits
 {
-	public struct Target		// a target: either an actor, or a fixed location.
+	public enum TargetType { Invalid, Actor, Terrain, FrozenActor }
+	public struct Target
 	{
-		public static Target[] NoTargets = {};
+		public static readonly Target[] None = {};
+		public static readonly Target Invalid = new Target { type = TargetType.Invalid };
 
+		TargetType type;
 		Actor actor;
-		Player owner;
-		PPos pos;
-		bool valid;
+		ITargetable targetable;
+		FrozenActor frozen;
+		WPos pos;
+		int generation;
 
-		public static Target FromActor(Actor a)
-		{
-			return new Target
-			{
-				actor = a,
-				valid = (a != null),
-				owner = (a != null) ? a.Owner : null
-			};
-		}
-		public static Target FromPos(PPos p) { return new Target { pos = p, valid = true }; }
-		public static Target FromCell(CPos c) { return new Target { pos = Util.CenterOfCell(c), valid = true }; }
+		public static Target FromPos(WPos p) { return new Target { pos = p, type = TargetType.Terrain }; }
+		public static Target FromCell(CPos c) { return new Target { pos = c.CenterPosition, type = TargetType.Terrain }; }
 		public static Target FromOrder(Order o)
 		{
 			return o.TargetActor != null
-				? Target.FromActor(o.TargetActor)
-				: Target.FromCell(o.TargetLocation);
+				? FromActor(o.TargetActor)
+				: FromCell(o.TargetLocation);
 		}
 
-		public static readonly Target None = new Target();
+		public static Target FromActor(Actor a)
+		{
+			if (a == null)
+				return Invalid;
 
-		public bool IsValid { get { return valid && (actor == null || (actor.IsInWorld && !actor.IsDead() && actor.Owner == owner)); } }
-		public PPos PxPosition { get { return IsActor ? actor.Trait<IHasLocation>().PxPosition : pos; } }
-		public PPos CenterLocation { get { return PxPosition; } }
+			return new Target
+			{
+				actor = a,
+				targetable = a.TraitOrDefault<ITargetable>(),
+				type = TargetType.Actor,
+				generation = a.Generation,
+			};
+		}
 
-		public Actor Actor { get { return IsActor ? actor : null; } }
-		public bool IsActor { get { return actor != null && !actor.Destroyed; } }
+		public static Target FromFrozenActor(FrozenActor a)  { return new Target { frozen = a, type = TargetType.FrozenActor }; }
+
+		public Actor Actor { get { return actor; } }
+		public FrozenActor FrozenActor { get { return frozen; } }
+
+		public TargetType Type
+		{
+			get
+			{
+				if (type == TargetType.Actor)
+				{
+					// Actor is no longer in the world
+					if (!actor.IsInWorld || actor.IsDead())
+						return TargetType.Invalid;
+
+					// Actor generation has changed (teleported or captured)
+					if (actor.Generation != generation)
+						return TargetType.Invalid;
+				}
+
+				return type;
+			}
+		}
+
+		public bool IsValidFor(Actor targeter)
+		{
+			if (targeter == null || Type == TargetType.Invalid)
+				return false;
+
+			if (targetable != null && !targetable.TargetableBy(actor, targeter))
+				return false;
+
+			return true;
+		}
+
+		// Representative position - see Positions for the full set of targetable positions.
+		public WPos CenterPosition
+		{
+			get
+			{
+				switch (Type)
+				{
+				case TargetType.Actor:
+					return actor.CenterPosition;
+				case TargetType.FrozenActor:
+					return frozen.CenterPosition;
+				case TargetType.Terrain:
+					return pos;
+				default:
+				case TargetType.Invalid:
+					throw new InvalidOperationException("Attempting to query the position of an invalid Target");
+				}
+			}
+		}
+
+		// Positions available to target for range checks
+		static readonly WPos[] NoPositions = {};
+		public IEnumerable<WPos> Positions
+		{
+			get
+			{
+				switch (Type)
+				{
+				case TargetType.Actor:
+					var targetable = actor.TraitOrDefault<ITargetable>();
+					if (targetable == null)
+						return new [] { actor.CenterPosition };
+
+					var positions = targetable.TargetablePositions(actor);
+					return positions.Any() ? positions : new [] { actor.CenterPosition };
+				case TargetType.FrozenActor:
+					return new [] { frozen.CenterPosition };
+				case TargetType.Terrain:
+					return new [] { pos };
+				default:
+				case TargetType.Invalid:
+					return NoPositions;
+				}
+			}
+		}
+
+		public bool IsInRange(WPos origin, WRange range)
+		{
+			if (Type == TargetType.Invalid)
+				return false;
+
+			// Target ranges are calculated in 2D, so ignore height differences
+			var rangeSquared = range.Range*range.Range;
+			return Positions.Any(t => (t - origin).HorizontalLengthSquared <= rangeSquared);
+		}
+
+		public override string ToString()
+		{
+			switch (Type)
+			{
+				case TargetType.Actor:
+					return actor.ToString();
+
+				case TargetType.FrozenActor:
+					return frozen.ToString();
+
+				case TargetType.Terrain:
+					return pos.ToString();
+
+				default:
+				case TargetType.Invalid:
+					return "Invalid";
+			}
+		}
+
 	}
 }

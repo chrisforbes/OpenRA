@@ -8,29 +8,26 @@
  */
 #endregion
 
-using System.Linq;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
 {
 	class RepairBuilding : Activity
 	{
-		Actor target;
+		Target target;
 
-		public RepairBuilding(Actor target) { this.target = target; }
+		public RepairBuilding(Actor target) { this.target = Target.FromActor(target); }
 
 		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead()) return NextActivity;
-			if( !target.OccupiesSpace.OccupiedCells().Any( x => x.First == self.Location ) )
+			if (IsCanceled || target.Type != TargetType.Actor)
 				return NextActivity;
 
-			var health = target.Trait<Health>();
+			var health = target.Actor.Trait<Health>();
 			if (health.DamageState == DamageState.Undamaged)
 				return NextActivity;
 
-			target.InflictDamage(self, -health.MaxHP, null);
+			target.Actor.InflictDamage(self, -health.MaxHP, null);
 			self.Destroy();
 
 			return this;

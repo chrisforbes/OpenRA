@@ -11,30 +11,32 @@
 using System.Drawing;
 using System.Linq;
 using OpenRA.FileFormats;
-using OpenRA.Mods.RA;
-using OpenRA.Mods.RA.Air;
 using OpenRA.Mods.RA.Move;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This unit has access to build queues.")]
 	public class ProductionInfo : ITraitInfo
 	{
+		[Desc("e.g. Infantry, Vehicles, Aircraft, Buildings")]
 		public readonly string[] Produces = { };
 
 		public virtual object Create(ActorInitializer init) { return new Production(this); }
 	}
 
+	[Desc("Where the unit should leave the building. Multiples are allowed if IDs are added: Exit@2, ...")]
 	public class ExitInfo : TraitInfo<Exit>
 	{
-		public readonly int2 SpawnOffset = int2.Zero;	// in px relative to CenterLocation
-		public readonly int2 ExitCell = int2.Zero;			// in cells relative to TopLeft
-		public readonly int Facing = -1;
+		[Desc("Offset at which that the exiting actor is spawned")]
+		public readonly WVec SpawnOffset = WVec.Zero;
 
-		public PVecInt SpawnOffsetVector { get { return (PVecInt)SpawnOffset; } }
-		public CVec ExitCellVector { get { return (CVec)ExitCell; } }
+		[Desc("Cell offset where the exiting actor enters the ActorMap")]
+		public readonly CVec ExitCell = CVec.Zero;
+		public readonly int Facing = -1;
 	}
-	public class Exit {}
+
+	public class Exit { }
 
 	public class Production
 	{
@@ -46,31 +48,33 @@ namespace OpenRA.Mods.RA
 
 		public void DoProduction(Actor self, ActorInfo producee, ExitInfo exitinfo)
 		{
-			var newUnit = self.World.CreateActor(false, producee.Name, new TypeDictionary
+			var exit = self.Location + exitinfo.ExitCell;
+			var spawn = self.CenterPosition + exitinfo.SpawnOffset;
+			var to = exit.CenterPosition;
+
+			var fi = producee.Traits.Get<IFacingInfo>();
+			var initialFacing = exitinfo.Facing < 0 ? Util.GetFacing(to - spawn, fi.GetInitialFacing()) : exitinfo.Facing;
+
+			var newUnit = self.World.CreateActor(producee.Name, new TypeDictionary
 			{
-				new OwnerInit( self.Owner ),
+				new OwnerInit(self.Owner),
+				new LocationInit(exit),
+				new FacingInit(initialFacing)
 			});
 
-			var exit = self.Location + exitinfo.ExitCellVector;
-			var spawn = self.Trait<IHasLocation>().PxPosition + exitinfo.SpawnOffsetVector;
+			// TODO: Move this into an *Init
+			// TODO: We should be adjusting the actual position for aircraft, not just visuals.
+			var teleportable = newUnit.Trait<IPositionable>();
+			teleportable.SetVisualPosition(newUnit, spawn);
 
-			var teleportable = newUnit.Trait<ITeleportable>();
-			var facing = newUnit.TraitOrDefault<IFacing>();
-
-			// Set the physical position of the unit as the exit cell
-			teleportable.SetPosition(newUnit,exit);
-			var to = Util.CenterOfCell(exit);
-			teleportable.AdjustPxPosition(newUnit, spawn);
-			if (facing != null)
-				facing.Facing = exitinfo.Facing < 0 ? Util.GetFacing(to - spawn, facing.Facing) : exitinfo.Facing;
-			self.World.Add(newUnit);
-
+			// TODO: Generalize this for non-mobile (e.g. aircraft) too
+			// Remember to update the Enter activity too
 			var mobile = newUnit.TraitOrDefault<Mobile>();
 			if (mobile != null)
 			{
 				// Animate the spawn -> exit transition
 				var speed = mobile.MovementSpeedForCell(newUnit, exit);
-				var length = speed > 0 ? (int)((to - spawn).Length * 3 / speed) : 0;
+				var length = speed > 0 ? (to - spawn).Length / speed : 0;
 				newUnit.QueueActivity(new Drag(spawn, to, length));
 			}
 
@@ -87,19 +91,11 @@ namespace OpenRA.Mods.RA
 			if (rp == null)
 				return exitLocation;
 
-			var mobile = newUnit.TraitOrDefault<Mobile>();
-			if (mobile != null)
+			var move = newUnit.TraitOrDefault<IMove>();
+			if (move != null)
 			{
 				newUnit.QueueActivity(new AttackMove.AttackMoveActivity(
-					newUnit, mobile.MoveTo(rp.rallyPoint, rp.nearEnough)));
-				return rp.rallyPoint;
-			}
-
-			// todo: don't talk about HeliFly here.
-			var helicopter = newUnit.TraitOrDefault<Helicopter>();
-			if (helicopter != null)
-			{
-				newUnit.QueueActivity(new HeliFly(Util.CenterOfCell(rp.rallyPoint)));
+					newUnit, move.MoveTo(rp.rallyPoint, rp.nearEnough)));
 				return rp.rallyPoint;
 			}
 
@@ -129,7 +125,7 @@ namespace OpenRA.Mods.RA
 			var mobileInfo = producee.Traits.GetOrDefault<MobileInfo>();
 
 			return mobileInfo == null ||
-				mobileInfo.CanEnterCell(self.World, self, self.Location + s.ExitCellVector, self, true, true);
+				mobileInfo.CanEnterCell(self.World, self, self.Location + s.ExitCell, self, true, true);
 		}
 	}
 }

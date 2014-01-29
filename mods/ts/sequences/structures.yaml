@@ -1,0 +1,433 @@
+gacnst:
+	idle: gtcnst
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: gtcnst
+		Start: 1
+		ShadowStart: 4
+	critical-idle: gtcnst
+		Start: 2
+		ShadowStart: 5
+	make: gtcnstmk
+		Start: 0
+		Length: 24
+		ShadowStart: 24
+	build-front: gtcnst_d # TODO: needs a render overlay trait
+		Start: 0
+		Length: 20
+	damaged-build-front: gtcnst_d # TODO: needs a render overlay trait
+		Start: 0
+		Length: 20
+	idle-top: gtcnst_c
+		Start: 0
+		Length: 15
+		Tick: 200
+	damaged-idle-top: gtcnst_c
+		Start: 15
+		Length: 15
+		Tick: 200
+	critical-idle-top: gtcnst_c
+		Start: 30
+	idle-side: gtcnst_a
+		Start: 0
+		Length: 10
+	damaged-idle-side: gtcnst_a
+		Start: 10
+		Length: 10
+	critical-idle-side: gtcnst_a
+		Start: 20
+		Length: 10
+	idle-front: gtcnst_b
+		Start: 0
+		Length: 10
+	damaged-idle-front: gtcnst_b
+		Start: 0
+		Length: 10
+	critical-idle-front: gtcnst_b
+		Start: 0
+		Length: 10
+	icon: facticon
+		Start: 0
+
+gapowr:
+	idle: gtpowr
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: gtpowr
+		Start: 1
+		ShadowStart: 4
+	critical-idle: gtpowr
+		Start: 2
+		ShadowStart: 5
+	idle-lights: gtpowr_a
+		Start: 0
+		Length: 12
+		Tick: 200
+	damaged-idle-lights: gtpowr_a
+		Start: 12
+		Length: 12
+		Tick: 200
+	critical-idle-lights: gtpowr_a
+		Start: 24
+		Length: 12
+		Tick: 200
+	idle-plug: gtpowr_b
+		Start: 0
+		Length: 12
+		Tick: 200
+	damaged-idle-plug: gtpowr_b
+		Start: 0
+		Length: 12
+		Tick: 200
+	critical-idle-plug: gtpowr_b
+		Start: 0
+		Length: 12
+		Tick: 200
+	make: gtpowrmk
+		Start: 0
+		Length: 20
+		ShadowStart: 20
+	icon: powricon
+		Start: 0
+
+gapile:
+	idle: gtpile
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: gtpile
+		Start: 1
+		ShadowStart: 4
+	critical-idle: gtpile
+		Start: 2
+		ShadowStart: 5
+	idle-lights: gtpile_a
+		Start: 0
+		Length: 7
+		Tick: 200
+	damaged-idle-lights: gtpile_a
+		Start:7
+		Length: 7
+		Tick: 200
+	idle-light: gtpile_b
+		Start: 0
+		Length: 7
+		Tick: 200
+	damaged-idle-light: gtpile_b
+		Start:7
+		Length: 7
+		Tick: 200
+	idle-flag: gtpile_c
+		Start:0
+		Length: 7
+	damaged-idle-flag: gtpile_c
+		Start:7
+		Length: 7
+	make: gtpilemk
+		Start: 0
+		Length: 20
+		ShadowStart: 20
+	icon: brrkicon
+		Start: 0
+
+gaweap:
+	idle: gtweap
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: gtweap
+		Start: 1
+		ShadowStart: 4
+	dead: gtweap
+		Start: 2
+		ShadowStart: 5
+	build-top: gtweap_d
+		Start: 0
+		Length: 9
+		ShadowStart: 9
+	damaged-build-top: gtweap_d
+		Start: 0
+		Length: 9
+		ShadowStart: 9
+	idle-top: gtweap_2
+		Start: 0
+	damaged-idle-top: gtweap_2
+		Start: 1
+	make: gtweapmk
+		Start: 0
+		Length: 20
+		Tick: 80
+		ShadowStart: 20
+	icon: weapicon
+		Start: 0
+# TODO: gtweap_1 & gtweapbb & gtweap_a & gtweap_b & gtweap_c are unused
+
+napowr:
+	idle: ntpowr
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: ntpowr
+		Start: 1
+		ShadowStart: 4
+	critical-idle: ntpowr
+		Start: 2
+		ShadowStart: 5
+	idle-lights: ntpowr_a
+		Start: 0
+		Length: 9
+		Tick: 200
+	damaged-idle-lights: ntpowr_a
+		Start: 9
+		Length: 9
+		Tick: 200
+	critical-idle-lights: ntpowr_a
+		Start: 9
+		Length: 9
+		Tick: 200
+	make: ntpowrmk
+		Start: 0
+		Length: 19
+		ShadowStart: 19
+	icon: npwricon
+		Start: 0
+
+nahand:
+	idle: nthand
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: nthand
+		Start: 1
+		ShadowStart: 4
+	critical-idle: nthand
+		Start: 2
+		ShadowStart: 5
+	idle-light: nthand_a
+		Start: 0
+		Length: 5
+		Tick: 100
+	damaged-idle-light: nthand_a
+		Start: 5
+		Length: 5
+		Tick: 100
+	idle-lights: nthand_b
+		Start: 0
+		Length: 8
+		Tick: 200
+	damaged-idle-lights: nthand_b
+		Start: 8
+		Length: 8
+		Tick: 200
+	make: nthandmk
+		Start: 0
+		Length: 15
+		ShadowStart: 15
+	icon: handicon
+		Start: 0
+
+naweap:
+	idle: ntweap
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: ntweap
+		Start: 1
+		ShadowStart: 4
+	dead: ntweap
+		Start: 2
+		ShadowStart: 5
+	build-top: ntweap_b
+		Start: 0
+		Length: 10
+		ShadowStart: 10
+	damaged-build-top: ntweap_b
+		Start: 10
+		Length: 10
+		ShadowStart: 20
+	idle-top: ntweap_2
+		Start: 0
+	damaged-idle-top: ntweap_2
+		Start: 1
+	make: ntweapmk
+		Start: 0
+		Length: 22
+		Tick: 80
+		ShadowStart: 22
+	icon: nwepicon
+		Start: 0
+# TODO: ntweap_1 & ntweapbb & ntweap_a & ntweap_b & ntweap_c are unused
+
+gasand: # TODO frame order (horizontal seems busted)
+	idle: gtsand
+		Start: 0
+		Length: 16
+		ShadowStart: 32
+	damaged-idle: gtsand
+		Start: 16
+		Length: 16
+		ShadowStart: 48
+	icon: sbagicon
+		Start: 0
+
+gatick:
+	idle:
+		Start: 0
+		Facings: 1
+		ShadowStart: 3
+	damaged-idle:
+		Start: 1
+		Facings: 1
+		ShadowStart: 4
+	make: gatickmk
+		Start: 0
+		Length: 24
+		ShadowStart: 24
+
+gaicbm:
+	idle:
+		Start: 0
+		Facings: 1
+		ShadowStart: 3
+	damaged-idle:
+		Start: 1
+		Facings: 1
+		ShadowStart: 4
+	make: gaicbmmk
+		Start: 0
+		Length: 30
+		ShadowStart: 30
+
+gadpsa:
+	idle:
+		Start: 0
+		Facings: 1
+		ShadowStart: 3
+	damaged-idle:
+		Start: 1
+		Facings: 1
+		ShadowStart: 4
+	make: gadpsamk
+		Start: 0
+		Length: 36
+		ShadowStart: 36
+
+gaarty:
+	idle:
+		Start: 0
+		Facings: 1
+		ShadowStart: 3
+	damaged-idle:
+		Start: 1
+		Facings: 1
+		ShadowStart: 4
+	make: gaartymk
+		Start: 0
+		Length: 16
+		ShadowStart: 16
+
+gaspot:
+	idle:
+		Start: 0
+		ShadowStart: 3
+	damaged-idle:
+		Start: 1
+		ShadowStart: 4
+	critical-idle:
+		Start: 2
+		ShadowStart: 5
+	idle-lights: gaspot_a
+		Start: 0
+		Length: 8
+		Tick: 200
+	damaged-idle-lights: gaspot_a
+		Start: 8
+		Length: 8
+		Tick: 200
+	critical-idle-lights: gaspot_a
+		Start: 16
+		Length: 8
+		Tick: 200
+	make: gaspotmk
+		Start: 0
+		Length: 14
+		ShadowStart: 14
+	icon: spoticon
+		Start: 0
+
+gahpad:
+	idle: gthpad
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: gthpad
+		Start: 1
+		ShadowStart: 4
+	critical-idle: gthpad
+		Start: 2
+		ShadowStart: 5
+	idle-platform: gthpadbb
+		Start: 0
+		ShadowStart: 3
+	damaged-idle-platform: gthpadbb
+		Start: 1
+		ShadowStart: 4
+	critical-idle-platform: gthpadbb
+		Start: 2
+		ShadowStart: 5
+	idle-lights: gthpad_a
+		Start: 0
+		Length: 8
+		Offset: 2,-12
+		Tick: 200
+	damaged-idle-lights: gthpad_a
+		Start: 8
+		Length: 8
+		Offset: 16,-16
+		Tick: 200
+	critical-idle-lights: gthpad_a
+		Start: 16
+		Length: 8
+		Offset: 24,-24
+		Tick: 200
+	make: gthpadmk
+		Start: 0
+		Length: 18
+		ShadowStart: 18
+	icon: heliicon
+		Start: 0
+
+nahpad:
+	idle: nthpad
+		Start: 0
+		ShadowStart: 3
+	damaged-idle: nthpad
+		Start: 1
+		ShadowStart: 4
+	critical-idle: nthpad
+		Start: 2
+		ShadowStart: 5
+	idle-platform: nthpadbb
+		Start: 0
+		ShadowStart: 3
+	damaged-idle-platform: nthpadbb
+		Start: 1
+		ShadowStart: 4
+	critical-idle-platform: nthpadbb
+		Start: 2
+		ShadowStart: 5
+	idle-lights: nthpad_a
+		Start: 0
+		Length: 46
+#		Offset: 2,-12
+		Tick: 120
+	damaged-idle-lights: nthpad_a
+		Start: 46
+		Length: 46
+#		Offset: 16,-16
+		Tick: 120
+	critical-idle-lights: nthpad_a
+		Start: 46
+		Length: 46
+#		Offset: 24,-24
+		Tick: 200
+	make: nthpadmk
+		Start: 0
+		Length: 20
+		ShadowStart: 20
+	icon: nhpdicon
+		Start: 0

@@ -8,9 +8,10 @@
  */
 #endregion
 
-using System;
+using System.Collections;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using OpenRA.FileFormats;
 using OpenRA.Traits;
 
@@ -18,11 +19,11 @@ namespace OpenRA.Editor
 {
 	static class RenderUtils
 	{
-		static Bitmap RenderShp(ShpReader shp, Palette p)
+		static Bitmap RenderShp(ISpriteSource shp, Palette p)
 		{
-			var frame = shp[0];
+			var frame = shp.Frames.First();
 
-			var bitmap = new Bitmap(shp.Width, shp.Height, PixelFormat.Format8bppIndexed);
+			var bitmap = new Bitmap(frame.Size.Width, frame.Size.Height, PixelFormat.Format8bppIndexed);
 
 			bitmap.Palette = p.AsSystemPalette();
 
@@ -34,9 +35,9 @@ namespace OpenRA.Editor
 				byte* q = (byte*)data.Scan0.ToPointer();
 				var stride2 = data.Stride;
 
-				for (var i = 0; i < shp.Width; i++)
-					for (var j = 0; j < shp.Height; j++)
-						q[j * stride2 + i] = frame.Image[i + shp.Width * j];
+				for (var i = 0; i < frame.Size.Width; i++)
+					for (var j = 0; j < frame.Size.Height; j++)
+						q[j * stride2 + i] = frame.Data[i + frame.Size.Width * j];
 			}
 
 			bitmap.UnlockBits(data);
@@ -45,7 +46,7 @@ namespace OpenRA.Editor
 
 		public static ActorTemplate RenderActor(ActorInfo info, TileSet tileset, Palette p)
 		{
-			var image = RenderSimple.GetImage(info);
+			var image = RenderSprites.GetImage(info);
 
 			using (var s = FileSystem.OpenWithExts(image, tileset.Extensions))
 			{
@@ -76,13 +77,14 @@ namespace OpenRA.Editor
 
 		public static ResourceTemplate RenderResourceType(ResourceTypeInfo info, string[] exts, Palette p)
 		{
-			var image = info.SpriteNames[0];
+			var image = info.EditorSprite;
 			using (var s = FileSystem.OpenWithExts(image, exts))
 			{
-				var shp = new ShpReader(s);
-				var frame = shp[shp.ImageCount - 1];
+				// TODO: Do this properly
+				var shp = new ShpReader(s) as ISpriteSource;
+				var frame = shp.Frames.Last();
 
-				var bitmap = new Bitmap(shp.Width, shp.Height, PixelFormat.Format8bppIndexed);
+				var bitmap = new Bitmap(frame.Size.Width, frame.Size.Height, PixelFormat.Format8bppIndexed);
 				bitmap.Palette = p.AsSystemPalette();
 				var data = bitmap.LockBits(bitmap.Bounds(),
 					ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
@@ -92,13 +94,13 @@ namespace OpenRA.Editor
 					byte* q = (byte*)data.Scan0.ToPointer();
 					var stride = data.Stride;
 
-					for (var i = 0; i < shp.Width; i++)
-						for (var j = 0; j < shp.Height; j++)
-							q[j * stride + i] = frame.Image[i + shp.Width * j];
+					for (var i = 0; i < frame.Size.Width; i++)
+						for (var j = 0; j < frame.Size.Height; j++)
+							q[j * stride + i] = frame.Data[i + frame.Size.Width * j];
 				}
 
 				bitmap.UnlockBits(data);
-				return new ResourceTemplate { Bitmap = bitmap, Info = info, Value = shp.ImageCount - 1 };
+				return new ResourceTemplate { Bitmap = bitmap, Info = info, Value = shp.Frames.Count() - 1 };
 			}
 		}
 	}

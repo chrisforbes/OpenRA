@@ -12,6 +12,10 @@ Folders:
 	./mods/ra/uibits
 	~^/Content/ra
 
+MapFolders:
+	./mods/ra/maps
+	~^/maps/ra
+
 Packages:
 	~main.mix
 	redalert.mix
@@ -30,8 +34,11 @@ Packages:
 	~movies2.mix
 
 Rules:
+	mods/ra/rules/system-actors.yaml
+	mods/ra/rules/system-ai.yaml
+	mods/ra/rules/system-player.yaml
+	mods/ra/rules/system-world.yaml
 	mods/ra/rules/defaults.yaml
-	mods/ra/rules/system.yaml
 	mods/ra/rules/vehicles.yaml
 	mods/ra/rules/structures.yaml
 	mods/ra/rules/infantry.yaml
@@ -41,7 +48,13 @@ Rules:
 	mods/ra/rules/ships.yaml
 
 Sequences:
-	mods/ra/sequences.yaml
+	mods/ra/sequences/ships.yaml
+	mods/ra/sequences/vehicles.yaml
+	mods/ra/sequences/structures.yaml
+	mods/ra/sequences/infantry.yaml
+	mods/ra/sequences/aircraft.yaml
+	mods/ra/sequences/misc.yaml
+	mods/ra/sequences/decorations.yaml
 
 Cursors:
 	mods/ra/cursors.yaml
@@ -51,21 +64,38 @@ Chrome:
 	
 Assemblies:
 	mods/ra/OpenRA.Mods.RA.dll
+	mods/cnc/OpenRA.Mods.Cnc.dll
+	mods/d2k/OpenRA.Mods.D2k.dll
 
 ChromeLayout:
 	mods/ra/chrome/gameinit.yaml
 	mods/ra/chrome/ingame.yaml
+	mods/ra/chrome/ingame-chat.yaml
+	mods/ra/chrome/ingame-diplomacy.yaml
+	mods/ra/chrome/ingame-fmvplayer.yaml
+	mods/ra/chrome/ingame-menu.yaml
+	mods/ra/chrome/ingame-objectives.yaml
+	mods/ra/chrome/ingame-observerstats.yaml
 	mods/ra/chrome/mainmenu.yaml
 	mods/ra/chrome/settings.yaml
+	mods/ra/chrome/credits.yaml
 	mods/ra/chrome/lobby.yaml
+	mods/ra/chrome/lobby-playerbin.yaml
+	mods/ra/chrome/lobby-dialogs.yaml
+	mods/ra/chrome/color-picker.yaml
 	mods/ra/chrome/map-chooser.yaml
 	mods/ra/chrome/create-server.yaml
 	mods/ra/chrome/serverbrowser.yaml
+	mods/ra/chrome/connection.yaml
+	mods/ra/chrome/directconnect.yaml
 	mods/ra/chrome/replaybrowser.yaml
 	mods/ra/chrome/dropdowns.yaml
 	mods/ra/chrome/modchooser.yaml
 	mods/ra/chrome/cheats.yaml
-	mods/ra/chrome/objectives.yaml
+	mods/ra/chrome/musicplayer.yaml
+	mods/ra/chrome/tooltips.yaml
+	mods/ra/chrome/assetbrowser.yaml
+	mods/ra/chrome/irc.yaml
 
 Weapons:
 	mods/ra/weapons.yaml
@@ -84,22 +114,33 @@ TileSets:
 
 Music:
 	mods/ra/music.yaml
-	mods/ra/music-cs.yaml
-	mods/ra/music-am.yaml
 
 Movies:
 	mods/ra/movies1.yaml
 	mods/ra/movies2.yaml
 
-LoadScreen: RALoadScreen
-	LoadScreenImage: mods/ra/uibits/loadscreen.png
+Translations:
+	mods/ra/languages/english.yaml
+
+LoadScreen: DefaultLoadScreen
+	Image: mods/ra/uibits/loadscreen.png
 	InstallerMenuWidget: INSTALL_PANEL
 	TestFile: redalert.mix
-	PackageURL: http://open-ra.org/get-dependency.php?file=ra-packages
+	PackageURL: http://open-ra.org/download/content/ra-packages
+	Text: Filling Crates..., Charging Capacitors..., Reticulating Splines..., Planting Trees..., Building Bridges..., Aging Empires..., Compiling EVA..., Constructing Pylons..., Activating Skynet..., Splitting Atoms...
 
 ServerTraits:
 	LobbyCommands
+	PlayerPinger
 	MasterServerPinger
+
+LobbyDefaults:
+	AllowCheats: false
+	Crates: true
+	StartingUnitsClass: none
+	FragileAlliances: false
+	Shroud: true
+	Fog: true
 
 ChromeMetrics:
 	mods/ra/metrics.yaml
@@ -112,7 +153,7 @@ Fonts:
 		Font:FreeSansBold.ttf
 		Size:14
 	Title:
-		Font:titles.ttf
+		Font:mods/ra/ZoodRangmah.ttf
 		Size:48
 	BigBold:
 		Font:FreeSansBold.ttf
@@ -123,3 +164,15 @@ Fonts:
 	TinyBold:
 		Font:FreeSansBold.ttf
 		Size:10
+
+LuaScripts:
+	mods/common/lua/utils.lua
+	mods/common/lua/openra.lua
+	mods/common/lua/map.lua
+	mods/common/lua/actor.lua
+	mods/common/lua/team.lua
+	mods/common/lua/media.lua
+	mods/common/lua/mission.lua
+	mods/common/lua/reinforcements.lua
+	mods/common/lua/supportpowers.lua
+	mods/common/lua/rules.lua

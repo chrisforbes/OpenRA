@@ -14,17 +14,27 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class RenderDetectionCircleInfo : TraitInfo<RenderDetectionCircle> { }
-	class RenderDetectionCircle : IPreRenderSelection
+	class RenderDetectionCircleInfo : ITraitInfo
 	{
-		public void RenderBeforeWorld(WorldRenderer wr, Actor self)
+		public object Create(ActorInitializer init) { return new RenderDetectionCircle(init.self); }
+	}
+
+	class RenderDetectionCircle : IPostRenderSelection
+	{
+		Actor self;
+
+		public RenderDetectionCircle(Actor self) { this.self = self; }
+
+		public void RenderAfterWorld(WorldRenderer wr)
 		{
 			if (self.Owner != self.World.LocalPlayer)
 				return;
 
-			wr.DrawRangeCircle(
+			wr.DrawRangeCircleWithContrast(
+				self.CenterPosition,
+				WRange.FromCells(self.Info.Traits.Get<DetectCloakedInfo>().Range),
 				Color.FromArgb(128, Color.LimeGreen),
-				self.CenterLocation.ToFloat2(), self.Info.Traits.Get<DetectCloakedInfo>().Range);
+				Color.FromArgb(96, Color.Black));
 		}
 	}
 }

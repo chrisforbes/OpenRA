@@ -13,7 +13,7 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class BurnsInfo : ITraitInfo, Requires<RenderSimpleInfo>
+	class BurnsInfo : ITraitInfo, Requires<RenderSpritesInfo>
 	{
 		public readonly string Anim = "1";
 		public readonly int Damage = 1;
@@ -30,11 +30,10 @@ namespace OpenRA.Mods.RA
 		public Burns(Actor self, BurnsInfo info)
 		{
 			Info = info;
-			var rs = self.Trait<RenderSimple>();
+
 			var anim = new Animation("fire", () => 0);
-				anim.PlayRepeating(Info.Anim);
-				rs.anims.Add("fire",
-					new AnimationWithOffset(anim, () => new float2(0, -3), null));
+			anim.PlayRepeating(Info.Anim);
+			self.Trait<RenderSprites>().anims.Add("fire", anim);
 		}
 
 		public void Tick(Actor self)

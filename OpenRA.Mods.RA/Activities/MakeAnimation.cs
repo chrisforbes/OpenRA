@@ -31,8 +31,11 @@ namespace OpenRA.Mods.RA.Activities
 		bool complete = false;
 		bool started = false;
 
-		public override Activity Tick( Actor self )
+		public override Activity Tick(Actor self)
 		{
+			if (self.IsDead())
+				return NextActivity;
+
 			if (started)
 			{
 				// Don't break the actor if someone has overriden the animation prematurely
@@ -52,7 +55,7 @@ namespace OpenRA.Mods.RA.Activities
 				var bi = self.Info.Traits.GetOrDefault<BuildingInfo>();
 				if (bi != null)
 					foreach (var s in bi.SellSounds)
-						Sound.PlayToPlayer(self.Owner, s, self.CenterLocation);
+						Sound.PlayToPlayer(self.Owner, s, self.CenterPosition);
 
 				rb.PlayCustomAnimBackwards(self, "make", () => { OnComplete(); complete = true;});
 			}
@@ -63,6 +66,6 @@ namespace OpenRA.Mods.RA.Activities
 		}
 
 		// Cannot be cancelled
-		public override void Cancel( Actor self ) { }
+		public override void Cancel(Actor self) { }
 	}
 }

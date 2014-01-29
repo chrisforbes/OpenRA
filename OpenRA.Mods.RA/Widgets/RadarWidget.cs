@@ -10,7 +10,6 @@
 
 using System;
 using System.Drawing;
-using System.Linq;
 using OpenRA.Graphics;
 using OpenRA.Widgets;
 
@@ -22,16 +21,19 @@ namespace OpenRA.Mods.RA.Widgets
 		public int AnimationLength = 5;
 		public string RadarOnlineSound = null;
 		public string RadarOfflineSound = null;
+		public Func<bool> IsEnabled = () => true;
+		public Action AfterOpen = () => {};
+		public Action AfterClose = () => {};
 
 		float radarMinimapHeight;
-		int AnimationFrame = 0;
-		bool hasRadar = false;
-		bool animating = false;
-		int updateTicks = 0;
+		int frame;
+		bool hasRadar;
+		bool cachedEnabled;
+		int updateTicks;
 
 		float previewScale = 0;
-		RectangleF mapRect = Rectangle.Empty;
-		int2 previewOrigin;
+		int2 previewOrigin = int2.Zero;
+		Rectangle mapRect = Rectangle.Empty;
 
 		Sprite terrainSprite;
 		Sprite customTerrainSprite;
@@ -39,23 +41,32 @@ namespace OpenRA.Mods.RA.Widgets
 		Sprite shroudSprite;
 
 		readonly World world;
+		readonly WorldRenderer worldRenderer;
 
 		[ObjectCreator.UseCtor]
-		public RadarWidget(World world) { this.world = world; }
+		public RadarWidget(World world, WorldRenderer worldRenderer)
+		{
+			this.world = world;
+			this.worldRenderer = worldRenderer;
+		}
 
 		public override void Initialize(WidgetArgs args)
 		{
 			base.Initialize(args);
 
-			var size = Math.Max(world.Map.Bounds.Width, world.Map.Bounds.Height);
-			previewScale = Math.Min(RenderBounds.Width * 1f / world.Map.Bounds.Width, RenderBounds.Height * 1f / world.Map.Bounds.Height);
-			previewOrigin = new int2(RenderOrigin.X, RenderOrigin.Y + (int)(previewScale * (size - world.Map.Bounds.Height)/2));
-			mapRect = new RectangleF(previewOrigin.X, previewOrigin.Y, (int)(world.Map.Bounds.Width * previewScale), (int)(world.Map.Bounds.Height * previewScale));
+			var width = world.Map.Bounds.Width;
+			var height = world.Map.Bounds.Height;
+			var size = Math.Max(width, height);
+			var rb = RenderBounds;
+
+			previewScale = Math.Min(rb.Width * 1f / width, rb.Height * 1f / height);
+			previewOrigin = new int2((int)(previewScale*(size - width)/2), (int)(previewScale*(size - height)/2));
+			mapRect = new Rectangle(previewOrigin.X, previewOrigin.Y, (int)(previewScale*width), (int)(previewScale*height));
 
 			// Only needs to be done once
 			var terrainBitmap = Minimap.TerrainBitmap(world.Map);
-			var r = new Rectangle( 0, 0, world.Map.Bounds.Width, world.Map.Bounds.Height );
-			var s = new Size( terrainBitmap.Width, terrainBitmap.Height );
+			var r = new Rectangle(0, 0, width, height);
+			var s = new Size(terrainBitmap.Width, terrainBitmap.Height);
 			terrainSprite = new Sprite(new Sheet(s), r, TextureChannel.Alpha);
 			terrainSprite.sheet.Texture.SetData(terrainBitmap);
 
@@ -70,16 +81,17 @@ namespace OpenRA.Mods.RA.Widgets
 			if (world == null || !hasRadar)
 				return null;
 
-			var loc = MinimapPixelToCell(pos);
+			var cell = MinimapPixelToCell(pos);
+			var location = worldRenderer.Viewport.WorldToViewPx(worldRenderer.ScreenPxPosition(cell.CenterPosition));
 
 			var mi = new MouseInput
 			{
-				Location = loc.ToInt2(),
+				Location = location,
 				Button = MouseButton.Right,
 				Modifiers = Game.GetModifierKeys()
 			};
 
-			var cursor = world.OrderGenerator.GetCursor( world, loc, mi );
+			var cursor = world.OrderGenerator.GetCursor(world, cell, mi);
 			if (cursor == null)
 				return "default";
 
@@ -88,24 +100,27 @@ namespace OpenRA.Mods.RA.Widgets
 
 		public override bool HandleMouseInput(MouseInput mi)
 		{
-			if (!hasRadar || animating) return false;
-
 			if (!mapRect.Contains(mi.Location))
 				return false;
 
-			var loc = MinimapPixelToCell(mi.Location);
+			if (!hasRadar)
+				return true;
+
+			var cell = MinimapPixelToCell(mi.Location);
+			var pos = cell.CenterPosition;
 			if ((mi.Event == MouseInputEvent.Down || mi.Event == MouseInputEvent.Move) && mi.Button == MouseButton.Left)
-				Game.viewport.Center(loc.ToFloat2());
+				worldRenderer.Viewport.Center(cell.CenterPosition);
 
 			if (mi.Event == MouseInputEvent.Down && mi.Button == MouseButton.Right)
 			{
 				// fake a mousedown/mouseup here
+				var location = worldRenderer.Viewport.WorldToViewPx(worldRenderer.ScreenPxPosition(pos));
 				var fakemi = new MouseInput
 				{
 					Event = MouseInputEvent.Down,
 					Button = MouseButton.Right,
 					Modifiers = mi.Modifiers,
-					Location = (loc.ToPPos().ToFloat2() - Game.viewport.Location).ToInt2()
+					Location = location
 				};
 
 				if (WorldInteractionController != null)
@@ -120,17 +135,14 @@ namespace OpenRA.Mods.RA.Widgets
 			return true;
 		}
 
-		public override Rectangle EventBounds
-		{
-			get { return new Rectangle((int)mapRect.X, (int)mapRect.Y, (int)mapRect.Width, (int)mapRect.Height);}
-		}
-
 		public override void Draw()
 		{
-			if (world == null) return;
+			if (world == null)
+				return;
 
 			var o = new float2(mapRect.Location.X, mapRect.Location.Y + world.Map.Bounds.Height * previewScale * (1 - radarMinimapHeight)/2);
 			var s = new float2(mapRect.Size.Width, mapRect.Size.Height*radarMinimapHeight);
+
 			var rsr = Game.Renderer.RgbaSpriteRenderer;
 			rsr.DrawSprite(terrainSprite, o, s);
 			rsr.DrawSprite(customTerrainSprite, o, s);
@@ -138,14 +150,12 @@ namespace OpenRA.Mods.RA.Widgets
 			rsr.DrawSprite(shroudSprite, o, s);
 
 			// Draw viewport rect
-			if (hasRadar && !animating)
+			if (hasRadar)
 			{
-				var wr = Game.viewport.WorldRect;
-				var wro = new CPos(wr.X, wr.Y);
-				var tl = CellToMinimapPixel(wro);
-				var br = CellToMinimapPixel(wro + new CVec(wr.Width, wr.Height));
+				var tl = CellToMinimapPixel(worldRenderer.Position(worldRenderer.Viewport.TopLeft).ToCPos());
+				var br = CellToMinimapPixel(worldRenderer.Position(worldRenderer.Viewport.BottomRight).ToCPos());
 
-				Game.Renderer.EnableScissor((int)mapRect.Left, (int)mapRect.Top, (int)mapRect.Width, (int)mapRect.Height);
+				Game.Renderer.EnableScissor(mapRect);
 				Game.Renderer.LineRenderer.DrawRect(tl, br, Color.White);
 				Game.Renderer.DisableScissor();
 			}
@@ -153,48 +163,48 @@ namespace OpenRA.Mods.RA.Widgets
 
 		public override void Tick()
 		{
-			var hasRadarNew = world.LocalPlayer == null || world.LocalPlayer.WinState != WinState.Undefined ||
-				world.ActorsWithTrait<ProvidesRadar>().Any(a => a.Actor.Owner == world.LocalPlayer && a.Trait.IsActive);
-
-			if (hasRadarNew != hasRadar)
+			// Update the radar animation even when its closed
+			// This avoids obviously stale data from being shown when first opened.
+			// TODO: This delayed updating is a giant hack
+			--updateTicks;
+			if (updateTicks <= 0)
 			{
-				animating = true;
-				Sound.Play(hasRadarNew ? RadarOnlineSound : RadarOfflineSound);
-			}
-			hasRadar = hasRadarNew;
-
-			// Build the radar image
-			if (hasRadar)
-			{
-				--updateTicks;
-				if (updateTicks <= 0)
-				{
-					updateTicks = 12;
-					customTerrainSprite.sheet.Texture.SetData(Minimap.CustomTerrainBitmap(world));
-				}
-
-				if (updateTicks == 8)
-					actorSprite.sheet.Texture.SetData(Minimap.ActorsBitmap(world));
-
-				if (updateTicks == 4)
-					shroudSprite.sheet.Texture.SetData(Minimap.ShroudBitmap(world));
+				updateTicks = 12;
+				customTerrainSprite.sheet.Texture.SetData(Minimap.CustomTerrainBitmap(world));
 			}
 
-			if (!animating)
+			if (updateTicks == 8)
+				actorSprite.sheet.Texture.SetData(Minimap.ActorsBitmap(world));
+
+			if (updateTicks == 4)
+				shroudSprite.sheet.Texture.SetData(Minimap.ShroudBitmap(world));
+
+			// Enable/Disable the radar
+			var enabled = IsEnabled();
+			if (enabled != cachedEnabled)
+				Sound.Play(enabled ? RadarOnlineSound : RadarOfflineSound);
+			cachedEnabled = enabled;
+
+			var targetFrame = enabled ? AnimationLength : 0;
+			hasRadar = enabled && frame == AnimationLength;
+			if (frame == targetFrame)
 				return;
 
-			// Increment frame
-			if (hasRadar)
-				AnimationFrame++;
-			else
-				AnimationFrame--;
+			frame += enabled ? 1 : -1;
+			radarMinimapHeight = float2.Lerp(0, 1, (float)frame / AnimationLength);
 
-			// Minimap height
-			radarMinimapHeight = float2.Lerp(0, 1, AnimationFrame*1.0f / AnimationLength);
+			// Update map rectangle for event handling
+			var ro = RenderOrigin;
+			mapRect = new Rectangle(previewOrigin.X + ro.X, previewOrigin.Y + ro.Y, mapRect.Width, mapRect.Height);
 
 			// Animation is complete
-			if (AnimationFrame == (hasRadar ? AnimationLength : 0))
-				animating = false;
+			if (frame == targetFrame)
+			{
+				if (enabled)
+					AfterOpen();
+				else
+					AfterClose();
+			}
 		}
 
 		int2 CellToMinimapPixel(CPos p)

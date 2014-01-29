@@ -9,10 +9,12 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using OpenRA.FileFormats;
+using OpenRA.Traits;
 
 namespace OpenRA
 {
@@ -22,19 +24,33 @@ namespace OpenRA
 
 	public static class Sync
 	{
-		static Cache<Type, Func<object, int>> hashFuncCache = new Cache<Type, Func<object, int>>( t => GenerateHashFunc( t ) );
+		static Cache<Type, Func<object, int>> hashFuncCache = new Cache<Type, Func<object, int>>(t => GenerateHashFunc(t));
 
-		public static int CalculateSyncHash( object obj )
+		public static int CalculateSyncHash(object obj)
 		{
-			return hashFuncCache[ obj.GetType() ]( obj );
+			return hashFuncCache[obj.GetType()](obj);
 		}
+
+		static Dictionary<Type, MethodInfo> hashFunctions = new Dictionary<Type, MethodInfo>()
+		{
+			{typeof(int2), ((Func<int2, int>)hash_int2).Method},
+			{typeof(CPos), ((Func<CPos, int>)hash_CPos).Method},
+			{typeof(CVec), ((Func<CVec, int>)hash_CVec).Method},
+			{typeof(WRange), ((Func<WRange, int>)hash<WRange>).Method},
+			{typeof(WPos), ((Func<WPos, int>)hash<WPos>).Method},
+			{typeof(WVec), ((Func<WVec, int>)hash<WVec>).Method},
+			{typeof(WAngle), ((Func<WAngle, int>)hash<WAngle>).Method},
+			{typeof(WRot), ((Func<WRot, int>)hash<WRot>).Method},
+			{typeof(TypeDictionary), ((Func<TypeDictionary, int>)hash_tdict).Method},
+			{typeof(Actor), ((Func<Actor, int>)hash_actor).Method},
+			{typeof(Player), ((Func<Player, int>)hash_player).Method},
+			{typeof(Target), ((Func<Target, int>)hash_target).Method},
+		};
 
 		static void EmitSyncOpcodes(Type type, ILGenerator il)
 		{
-			if (type == typeof(int))
-			{
-				il.Emit(OpCodes.Xor);
-			}
+			if (hashFunctions.ContainsKey(type))
+			    il.EmitCall(OpCodes.Call, hashFunctions[type], null);
 			else if (type == typeof(bool))
 			{
 				var l = il.DefineLabel();
@@ -43,65 +59,13 @@ namespace OpenRA
 				il.Emit(OpCodes.Pop);
 				il.Emit(OpCodes.Ldc_I4, 0x555);
 				il.MarkLabel(l);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(int2))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<int2, int>)hash_int2).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(CPos))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<CPos, int>)hash_CPos).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(CVec))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<CVec, int>)hash_CVec).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(PPos))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<PPos, int>)hash_PPos).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(PVecInt))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<PVecInt, int>)hash_PVecInt).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(PSubPos))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<PSubPos, int>)hash_PSubPos).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(PSubVec))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<PSubVec, int>)hash_PSubVec).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(TypeDictionary))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<TypeDictionary, int>)hash_tdict).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(Actor))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<Actor, int>)hash_actor).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else if (type == typeof(Player))
-			{
-				il.EmitCall(OpCodes.Call, ((Func<Player, int>)hash_player).Method, null);
-				il.Emit(OpCodes.Xor);
 			}
 			else if (type.HasAttribute<SyncAttribute>())
-			{
 				il.EmitCall(OpCodes.Call, ((Func<object, int>)CalculateSyncHash).Method, null);
-				il.Emit(OpCodes.Xor);
-			}
-			else
+			else if (type != typeof(int))
 				throw new NotImplementedException("SyncAttribute on member of unhashable type: {0}".F(type.FullName));
+
+			il.Emit(OpCodes.Xor);
 		}
 
 		public static Func<object, int> GenerateHashFunc(Type t)
@@ -135,73 +99,79 @@ namespace OpenRA
 			return (Func<object, int>)d.CreateDelegate(typeof(Func<object, int>));
 		}
 
-		public static int hash_int2( int2 i2 )
-		{
-			return ( ( i2.X * 5 ) ^ ( i2.Y * 3 ) ) / 4;
-		}
-
-		public static int hash_CPos( CPos i2 )
-		{
-			return ( ( i2.X * 5) ^ ( i2.Y * 3 ) ) / 4;
-		}
-		
-		public static int hash_CVec( CVec i2 )
-		{
-			return ( ( i2.X * 5) ^ ( i2.Y * 3 ) ) / 4;
-		}
-		
-		public static int hash_PPos( PPos i2 )
-		{
-			return ( ( i2.X * 5) ^ ( i2.Y * 3 ) ) / 4;
-		}
-		
-		public static int hash_PVecInt( PVecInt i2 )
-		{
-			return ( ( i2.X * 5) ^ ( i2.Y * 3 ) ) / 4;
-		}
-
-		public static int hash_PSubPos(PSubPos i2)
+		public static int hash_int2(int2 i2)
 		{
 			return ((i2.X * 5) ^ (i2.Y * 3)) / 4;
 		}
 
-		public static int hash_PSubVec(PSubVec i2)
+		public static int hash_CPos(CPos i2)
+		{
+			return ((i2.X * 5) ^ (i2.Y * 3)) / 4;
+		}
+		
+		public static int hash_CVec(CVec i2)
 		{
 			return ((i2.X * 5) ^ (i2.Y * 3)) / 4;
 		}
 
-		public static int hash_tdict( TypeDictionary d )
+		public static int hash_tdict(TypeDictionary d)
 		{
 			int ret = 0;
-			foreach( var o in d )
-				ret += CalculateSyncHash( o );
+			foreach (var o in d)
+				ret += CalculateSyncHash(o);
 			return ret;
 		}
 
-		public static int hash_actor( Actor a )
+		public static int hash_actor(Actor a)
 		{
-			if( a != null )
-				return (int)( a.ActorID << 16 );
+			if (a != null)
+				return (int)(a.ActorID << 16);
 			return 0;
 		}
 
-		public static int hash_player( Player p )
+		public static int hash_player(Player p)
 		{
-			if( p != null )
-				return (int)( p.PlayerActor.ActorID << 16 ) * 0x567;
+			if (p != null)
+				return (int)(p.PlayerActor.ActorID << 16) * 0x567;
 			return 0;
 		}
 
-		public static void CheckSyncUnchanged( World world, Action fn )
+		public static int hash_target(Target t)
 		{
-			CheckSyncUnchanged( world, () => { fn(); return true; } );
+			switch (t.Type)
+			{
+				case TargetType.Actor:
+					return (int)(t.Actor.ActorID << 16) * 0x567;
+
+				case TargetType.FrozenActor:
+					return (int)(t.FrozenActor.Actor.ActorID << 16) * 0x567;
+
+				case TargetType.Terrain:
+					return hash<WPos>(t.CenterPosition);
+
+				default:
+				case TargetType.Invalid:
+					return 0;
+			}
+		}
+
+		public static int hash<T>(T t)
+		{
+			return t.GetHashCode();
+		}
+
+		public static void CheckSyncUnchanged(World world, Action fn)
+		{
+			CheckSyncUnchanged(world, () => { fn(); return true; });
 		}
 
 		static bool inUnsyncedCode = false;
 
-		public static T CheckSyncUnchanged<T>( World world, Func<T> fn )
+		public static T CheckSyncUnchanged<T>(World world, Func<T> fn)
 		{
-			if( world == null ) return fn();
+			if (world == null)
+				return fn();
+
 			var shouldCheckSync = Game.Settings.Debug.SanityCheckUnsyncedCode;
 			int sync = shouldCheckSync ? world.SyncHash() : 0;
 			bool prevInUnsyncedCode = inUnsyncedCode;
@@ -214,15 +184,15 @@ namespace OpenRA
 			finally
 			{
 				inUnsyncedCode = prevInUnsyncedCode;
-				if( shouldCheckSync && sync != world.SyncHash() )
-					throw new InvalidOperationException( "CheckSyncUnchanged: sync-changing code may not run here" );
+				if (shouldCheckSync && sync != world.SyncHash())
+					throw new InvalidOperationException("CheckSyncUnchanged: sync-changing code may not run here");
 			}
 		}
 
-		public static void AssertUnsynced( string message )
+		public static void AssertUnsynced(string message)
 		{
-			if( !inUnsyncedCode )
-				throw new InvalidOperationException( message );
+			if (!inUnsyncedCode)
+				throw new InvalidOperationException(message);
 		}
 	}
 }

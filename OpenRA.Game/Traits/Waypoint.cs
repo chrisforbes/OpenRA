@@ -13,14 +13,14 @@ using OpenRA.FileFormats;
 
 namespace OpenRA.Traits
 {
-	class WaypointInfo : ITraitInfo
+	class WaypointInfo : ITraitInfo, IOccupySpaceInfo
 	{
 		public object Create( ActorInitializer init ) { return new Waypoint( init ); }
 	}
 
-	class Waypoint : IOccupySpace, ISync
+	class Waypoint : IOccupySpace, ISync, INotifyAddedToWorld, INotifyRemovedFromWorld
 	{
-		[Sync] CPos location;
+		[Sync] readonly CPos location;
 
 		public Waypoint(ActorInitializer init)
 		{
@@ -28,8 +28,21 @@ namespace OpenRA.Traits
 		}
 
 		public CPos TopLeft { get { return location; } }
-
 		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { yield break; }
-		public PPos PxPosition { get { return Util.CenterOfCell(location); } }
+		public WPos CenterPosition { get { return location.CenterPosition; } }
+
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
+		}
+
+		public void RemovedFromWorld(Actor self)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
+		}
 	}
 }

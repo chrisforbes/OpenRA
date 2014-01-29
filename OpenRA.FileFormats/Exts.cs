@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -39,41 +38,6 @@ namespace OpenRA
 		public static IEnumerable<string> GetNamespaces(this Assembly a)
 		{
 			return a.GetTypes().Select(t => t.Namespace).Distinct().Where(n => n != null);
-		}
-
-		public static string ReadAllText(this Stream s)
-		{
-			using (s)
-			using (var sr = new StreamReader(s))
-				return sr.ReadToEnd();
-		}
-
-		public static byte[] ReadAllBytes(this Stream s)
-		{
-			using (s)
-			{
-				var data = new byte[s.Length - s.Position];
-				s.Read(data, 0, data.Length);
-				return data;
-			}
-		}
-
-		public static void Write(this Stream s, byte[] data)
-		{
-			s.Write(data, 0, data.Length);
-		}
-
-		public static IEnumerable<string> ReadAllLines(this Stream s)
-		{
-			using (var sr = new StreamReader(s))
-				for (; ; )
-				{
-					var line = sr.ReadLine();
-					if (line == null)
-						yield break;
-					else
-						yield return line;
-				}
 		}
 
 		public static bool HasAttribute<T>(this MemberInfo mi)
@@ -118,12 +82,6 @@ namespace OpenRA
 			return (k & mod) == mod;
 		}
 
-		public static bool IsValidInput(this KeyInput key)
-		{
-			return char.IsLetter(key.UnicodeChar) || char.IsDigit(key.UnicodeChar) ||
-					char.IsSymbol(key.UnicodeChar) || char.IsSeparator(key.UnicodeChar) ||
-					char.IsPunctuation(key.UnicodeChar);
-		}
 
 		public static V GetOrAdd<K, V>(this Dictionary<K, V> d, K k)
 			where V : new()
@@ -145,6 +103,14 @@ namespace OpenRA
 			return xs[r.Next(xs.Length)];
 		}
 
+		public static T RandomOrDefault<T>(this IEnumerable<T> ts, Thirdparty.Random r)
+		{
+			if (!ts.Any())
+				return default(T);
+
+			return ts.Random(r);
+		}
+
 		public static float Product(this IEnumerable<float> xs)
 		{
 			return xs.Aggregate(1f, (a, x) => a * x);
@@ -156,9 +122,9 @@ namespace OpenRA
 			return xs.Except(ys).Concat(ys.Except(xs));
 		}
 
-		public static IEnumerable<T> Iterate<T>( this T t, Func<T,T> f )
+		public static IEnumerable<T> Iterate<T>(this T t, Func<T, T> f)
 		{
-			for(;;) { yield return t; t = f(t); }
+			for (;;) { yield return t; t = f(t); }
 		}
 
 		public static int NextPowerOf2(int v)
@@ -172,6 +138,11 @@ namespace OpenRA
 			return v;
 		}
 
+		public static bool IsPowerOf2(int v)
+		{
+			return (v & (v - 1)) == 0;
+		}
+
 		public static Size NextPowerOf2(this Size s) { return new Size(NextPowerOf2(s.Width), NextPowerOf2(s.Height)); }
 
 		public static string JoinWith<T>(this IEnumerable<T> ts, string j)
@@ -179,7 +150,7 @@ namespace OpenRA
 			return string.Join(j, ts.Select(t => t.ToString()).ToArray());
 		}
 
-		public static IEnumerable<T> Append<T>( this IEnumerable<T> ts, params T[] moreTs)
+		public static IEnumerable<T> Append<T>(this IEnumerable<T> ts, params T[] moreTs)
 		{
 			return ts.Concat(moreTs);
 		}
@@ -223,12 +194,11 @@ namespace OpenRA
 				d.Add(key, element);
 			}
 
-			// If any duplicates were found, log it and throw a descriptive error
+			// If any duplicates were found, throw a descriptive error
 			if (dupKeys.Count > 0)
 			{
-				string badKeysFormatted = String.Join(", ", dupKeys.Select(p => "{0}: [{1}]".F(logKey(p.Key), String.Join(",", p.Value.ToArray()))).ToArray());
-				string msg = "{0}, duplicate values found for the following keys: {1}".F(debugName, badKeysFormatted);
-				Log.Write("debug", msg);
+				var badKeysFormatted = string.Join(", ", dupKeys.Select(p => "{0}: [{1}]".F(logKey(p.Key), string.Join(",", p.Value.ToArray()))).ToArray());
+				var msg = "{0}, duplicate values found for the following keys: {1}".F(debugName, badKeysFormatted);
 				throw new ArgumentException(msg);
 			}
 
@@ -254,12 +224,53 @@ namespace OpenRA
 			return result;
 		}
 
+		public static T[,] ResizeArray<T>(T[,] ts, T t, int width, int height)
+		{
+			var result = new T[width, height];
+			for (var i = 0; i < width; i++)
+				for (var j = 0; j < height; j++)
+					result[i, j] = i <= ts.GetUpperBound(0) && j <= ts.GetUpperBound(1)
+						? ts[i, j] : t;
+			return result;
+		}
+
 		public static Rectangle Bounds(this Bitmap b) { return new Rectangle(0, 0, b.Width, b.Height); }
+
+		public static int ToBits(this IEnumerable<bool> bits)
+		{
+			var i = 0;
+			var result = 0;
+			foreach (var b in bits)
+				if (b)
+					result |= 1 << i++;
+				else
+					i++;
+			if (i > 33)
+				throw new InvalidOperationException("ToBits only accepts up to 32 values.");
+			return result;
+		}
 	}
 
 	public static class Enum<T>
 	{
 		public static T Parse(string s) { return (T)Enum.Parse(typeof(T), s); }
 		public static T[] GetValues() { return (T[])Enum.GetValues(typeof(T)); }
+
+		public static bool TryParse(string s, bool ignoreCase, out T value)
+		{
+			// The string may be a comma delimited list of values
+			var names = ignoreCase ? Enum.GetNames(typeof(T)).Select(x => x.ToLowerInvariant()) : Enum.GetNames(typeof(T));
+			var values = ignoreCase ? s.Split(',').Select(x => x.Trim().ToLowerInvariant()) : s.Split(',').Select(x => x.Trim());
+
+			if (values.Any(x => !names.Contains(x)))
+			{
+				value = default(T);
+				return false;
+			}
+
+			value = (T)Enum.Parse(typeof(T), s, ignoreCase);
+
+			return true;
+		}
 	}
 }

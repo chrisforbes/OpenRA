@@ -10,6 +10,7 @@
 
 using System.Collections.Generic;
 using OpenRA.Effects;
+using OpenRA.FileFormats;
 using OpenRA.Graphics;
 using OpenRA.Traits;
 
@@ -32,9 +33,13 @@ namespace OpenRA.Mods.RA.Effects
 		GpsDotInfo info;
 		Animation anim;
 
-		GpsWatcher watcher;
-		HiddenUnderFog huf;
-		Spy spy;
+		Lazy<HiddenUnderFog> huf;
+		Lazy<FrozenUnderFog> fuf;
+		Lazy<Spy> spy;
+		Lazy<Cloak> cloak;
+		Cache<Player, GpsWatcher> watcher;
+		Cache<Player, FrozenActorLayer> frozen;
+
 		bool show = false;
 
 		public GpsDot(Actor self, GpsDotInfo info)
@@ -45,46 +50,57 @@ namespace OpenRA.Mods.RA.Effects
 			anim.PlayRepeating(info.String);
 
 			self.World.AddFrameEndTask(w => w.Add(this));
-			if (self.World.LocalPlayer != null)
-				watcher = self.World.LocalPlayer.PlayerActor.Trait<GpsWatcher>();
+
+			huf = Lazy.New(() => self.TraitOrDefault<HiddenUnderFog>());
+			fuf = Lazy.New(() => self.TraitOrDefault<FrozenUnderFog>());
+			spy = Lazy.New(() => self.TraitOrDefault<Spy>());
+			cloak = Lazy.New(() => self.TraitOrDefault<Cloak>());
+
+			watcher = new Cache<Player, GpsWatcher>(p => p.PlayerActor.Trait<GpsWatcher>());
+			frozen = new Cache<Player, FrozenActorLayer>(p => p.PlayerActor.Trait<FrozenActorLayer>());
 		}
 
-		bool firstTick = true;
+		bool ShouldShowIndicator()
+		{
+			if (cloak.Value != null && cloak.Value.Cloaked)
+				return false;
+
+			if (spy.Value != null && spy.Value.Disguised)
+				return false;
+
+			if (huf.Value != null && !huf.Value.IsVisible(self, self.World.RenderPlayer))
+				return true;
+
+			if (fuf.Value == null)
+				return false;
+
+			var f = frozen[self.World.RenderPlayer].FromID(self.ActorID);
+			if (f == null)
+				return false;
+
+			return f.Visible && !f.HasRenderables;
+		}
+
 		public void Tick(World world)
 		{
 			if (self.Destroyed)
 				world.AddFrameEndTask(w => w.Remove(this));
 
-			if (world.LocalPlayer == null || !self.IsInWorld || self.Destroyed)
+			show = false;
+			if (!self.IsInWorld || self.IsDead() || self.World.RenderPlayer == null)
 				return;
 
-			// Can be granted at runtime via a crate, so can't cache
-			var cloak = self.TraitOrDefault<Cloak>();
-
-			if (firstTick)
-			{
-				huf = self.TraitOrDefault<HiddenUnderFog>();
-				spy = self.TraitOrDefault<Spy>();
-				firstTick = false;
-			}
-
-			var hasGps = (watcher != null && (watcher.Granted || watcher.GrantedAllies));
-			var hasDot = (huf != null && !huf.IsVisible(self.World.RenderedShroud, self)); // WRONG (why?)
-			var dotHidden = (cloak != null && cloak.Cloaked) || (spy != null && spy.Disguised);
-
-			show = hasGps && hasDot && !dotHidden;
+			var gps = watcher[self.World.RenderPlayer];
+			show = (gps.Granted || gps.GrantedAllies) && ShouldShowIndicator();
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
 			if (!show || self.Destroyed)
-				yield break;
+				return SpriteRenderable.None;
 
-			var p = self.CenterLocation;
-			var palette = wr.Palette(info.IndicatorPalettePrefix+self.Owner.InternalName);
-			yield return new Renderable(anim.Image, p.ToFloat2() - 0.5f * anim.Image.size, palette, p.Y)
-				.WithScale(1.5f);
-
+			var palette = wr.Palette(info.IndicatorPalettePrefix + self.Owner.InternalName);
+			return anim.Render(self.CenterPosition, palette);
 		}
 	}
 }

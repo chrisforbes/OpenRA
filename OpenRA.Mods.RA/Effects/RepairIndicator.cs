@@ -42,14 +42,13 @@ namespace OpenRA.Mods.RA.Effects
 			anim.Tick();
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			if (!building.Destroyed)
-			{
-				yield return new Renderable(anim.Image,
-					building.CenterLocation.ToFloat2() - .5f * anim.Image.size,
-					wr.Palette(palettePrefix+player.InternalName), (int)building.CenterLocation.Y);
-			}
+			if (building.Destroyed || wr.world.FogObscures(building))
+				return SpriteRenderable.None;
+
+			return anim.Render(building.CenterPosition,
+					wr.Palette(palettePrefix+player.InternalName));
 		}
 	}
 }

@@ -29,14 +29,14 @@ namespace OpenRA.Widgets
 			Game.Renderer.RgbaSpriteRenderer.DrawSprite(s,pos);
 		}
 
-		public static void DrawSHP(Sprite s, float2 pos, WorldRenderer wr)
+		public static void DrawSHPCentered(Sprite s, float2 pos, WorldRenderer wr)
 		{
-			Game.Renderer.SpriteRenderer.DrawSprite(s,pos, wr, "chrome");
+			Game.Renderer.SpriteRenderer.DrawSprite(s, pos - 0.5f * s.size, wr.Palette("chrome"));
 		}
 
-		public static void DrawSHP(Sprite s, float2 pos, WorldRenderer wr, float2 size)
+		public static void DrawSHPCentered(Sprite s, float2 pos, WorldRenderer wr, float scale)
 		{
-			Game.Renderer.SpriteRenderer.DrawSprite(s, pos, wr, "chrome", size);
+			Game.Renderer.SpriteRenderer.DrawSprite(s, pos - 0.5f * scale * s.size, wr.Palette("chrome"), scale * s.size);
 		}
 
 		public static void DrawPanel(string collection, Rectangle Bounds)
@@ -141,21 +141,31 @@ namespace OpenRA.Widgets
 				DrawRGBA(ss[7], new float2(bounds.Right - ss[7].size.X, bounds.Bottom - ss[7].size.Y));
 		}
 
-
 		public static string FormatTime(int ticks)
 		{
+			return FormatTime(ticks, true);
+		}
+
+		public static string FormatTime(int ticks, bool leadingMinuteZero)
+		{
 			var seconds = (int)Math.Ceiling(ticks / 25f);
-			return FormatTimeSeconds( seconds );
+			return FormatTimeSeconds(seconds, leadingMinuteZero);
 		}
 
 		public static string FormatTimeSeconds(int seconds)
+		{
+			return FormatTimeSeconds(seconds, true);
+		}
+
+		public static string FormatTimeSeconds(int seconds, bool leadingMinuteZero)
 		{
 			var minutes = seconds / 60;
 
 			if (minutes >= 60)
 				return "{0:D}:{1:D2}:{2:D2}".F(minutes / 60, minutes % 60, seconds % 60);
-			else
+			if (leadingMinuteZero)
 				return "{0:D2}:{1:D2}".F(minutes, seconds % 60);
+			return "{0:D}:{1:D2}".F(minutes, seconds % 60);
 		}
 
 		public static string WrapText(string text, int width, SpriteFont font)
@@ -215,23 +225,35 @@ namespace OpenRA.Widgets
 
 		public static Action Once( Action a ) { return () => { if (a != null) { a(); a = null; } }; }
 
-		public static string ActiveModVersion()
-		{
-			var mod = Game.modData.Manifest.Mods[0];
-			return Mod.AllMods[mod].Version;
-		}
-
-		public static string ActiveModTitle()
-		{
-			var mod = Game.modData.Manifest.Mods[0];
-			return Mod.AllMods[mod].Title;
-		}
-
 		public static string ChooseInitialMap(string map)
 		{
 			var availableMaps = Game.modData.AvailableMaps;
 			if (string.IsNullOrEmpty(map) || !availableMaps.ContainsKey(map))
-				return availableMaps.First(m => m.Value.Selectable).Key;
+			{
+				Func<Map, bool> isIdealMap = m =>
+				{
+					if (!m.Selectable)
+						return false;
+
+					// Other map types may have confusing settings or gameplay
+					if (m.Type != "Conquest")
+						return false;
+
+					// Maps with bots disabled confuse new players
+					if (m.Players.Any(s => !s.Value.AllowBots))
+						return false;
+
+					// Large maps expose unfortunate performance problems
+					if (m.MapSize.X > 128 || m.MapSize.Y > 128)
+						return false;
+
+					return true;
+				};
+
+				var selected = availableMaps.Values.Where(m => isIdealMap(m)).RandomOrDefault(Game.CosmeticRandom) ??
+				               availableMaps.Values.First(m => m.Selectable);
+				return selected.Uid;
+			}
 
 			return map;
 		}

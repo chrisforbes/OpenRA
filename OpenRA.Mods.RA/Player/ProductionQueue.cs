@@ -13,21 +13,40 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Attach this to an actor (usually a building) to let it produce units or construct buildings.", 
+		"If one builds another actor of this type, he will get a separate queue to create two actors", 
+		"at the same time. Will only work together with the Production: trait.")]
 	public class ProductionQueueInfo : ITraitInfo
 	{
+		[Desc("What kind of production will be added (e.g. Building, Infantry, Vehicle, ...)")]
 		public readonly string Type = null;
+		[Desc("Group queues from separate buildings together into the same tab.")]
 		public readonly string Group = null;
 
-		public float BuildSpeedModifier = 0.4f;
+		[Desc("This value is used to translate the unit cost into build time.")]
+		public float BuildSpeed = 0.4f;
+		[Desc("The build time is multiplied with this value on low power.")]
 		public readonly int LowPowerSlowdown = 3;
 
+		[Desc("Notification played when production is complete.", 
+			"The filename of the audio is defined per faction in notifications.yaml.")]
 		public readonly string ReadyAudio = "UnitReady";
+		[Desc("Notification played when you can't train another unit",
+			"when the build limit exceeded or the exit is jammed.",
+			"The filename of the audio is defined per faction in notifications.yaml.")]
 		public readonly string BlockedAudio = "NoBuild";
+		[Desc("Notification played when user clicks on the build palette icon.",
+			"The filename of the audio is defined per faction in notifications.yaml.")]
 		public readonly string QueuedAudio = "Training";
+		[Desc("Notification played when player right-clicks on the build palette icon.",
+			"The filename of the audio is defined per faction in notifications.yaml.")]
 		public readonly string OnHoldAudio = "OnHold";
+		[Desc("Notification played when player right-clicks on a build palette icon that is already on hold.",
+			"The filename of the audio is defined per faction in notifications.yaml.")]
 		public readonly string CancelledAudio = "Cancelled";
 
 		public virtual object Create(ActorInitializer init) { return new ProductionQueue(init.self, init.self.Owner.PlayerActor, this); }
@@ -206,11 +225,8 @@ namespace OpenRA.Mods.RA
 					{
 						var inQueue = Queue.Count(pi => pi.Item == order.TargetString);
 						var owned = self.Owner.World.ActorsWithTrait<Buildable>().Count(a => a.Actor.Info.Name == order.TargetString && a.Actor.Owner == self.Owner);
-						if (inQueue + owned >= bi.BuildLimit)
-						{
-							Sound.PlayNotification(self.Owner, "Speech", Info.BlockedAudio, self.Owner.Country.Race);
-							return;
-						}
+						if (inQueue + owned >= bi.BuildLimit)						
+							return;						
 					}
 
 					for (var n = 0; n < order.TargetLocation.X; n++)	// repeat count
@@ -262,7 +278,7 @@ namespace OpenRA.Mods.RA
 			if (self.World.LobbyInfo.GlobalSettings.AllowCheats && self.Owner.PlayerActor.Trait<DeveloperMode>().FastBuild)
 				return 0;
 
-			var time = unit.GetBuildTime() * Info.BuildSpeedModifier;
+			var time = unit.GetBuildTime() * Info.BuildSpeed;
 
 			return (int) time;
 		}

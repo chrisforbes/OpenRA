@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,22 +9,27 @@
 #endregion
 
 using System.Drawing;
-using System.Linq;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Air
 {
 	public class PlaneInfo : AircraftInfo
 	{
-		public override object Create( ActorInitializer init ) { return new Plane( init, this ); }
+		public readonly WAngle MaximumPitch = WAngle.FromDegrees(10);
+
+		public override object Create(ActorInitializer init) { return new Plane(init, this); }
 	}
 
-	public class Plane : Aircraft, IResolveOrder, ITick, ISync
+	public class Plane : Aircraft, IResolveOrder, IMove, ITick, ISync
 	{
-		[Sync] public PVecInt RTBPathHash;
+		public readonly PlaneInfo Info;
+		[Sync] public WPos RTBPathHash;
 
-		public Plane( ActorInitializer init, PlaneInfo info )
-			: base( init, info ) { }
+		public Plane(ActorInitializer init, PlaneInfo info)
+			: base(init, info)
+		{
+			Info = info;
+		}
 
 		bool firstTick = true;
 		public void Tick(Actor self)
@@ -32,7 +37,8 @@ namespace OpenRA.Mods.RA.Air
 			if (firstTick)
 			{
 				firstTick = false;
-				ReserveSpawnBuilding();
+				if (!self.HasTrait<FallsToEarth>()) // TODO: Aircraft husks don't properly unreserve.
+					ReserveSpawnBuilding();
 			}
 		}
 
@@ -48,7 +54,6 @@ namespace OpenRA.Mods.RA.Air
 				self.QueueActivity(Fly.ToCell(target));
 				self.QueueActivity(new FlyCircle());
 			}
-
 			else if (order.OrderString == "Enter")
 			{
 				if (Reservable.IsReserved(order.TargetActor)) return;
@@ -83,5 +88,10 @@ namespace OpenRA.Mods.RA.Air
 				UnReserve();
 			}
 		}
+
+		public Activity MoveTo(CPos cell, int nearEnough) { return Fly.ToCell(cell); }
+		public Activity MoveTo(CPos cell, Actor ignoredActor) { return Fly.ToCell(cell); }
+		public Activity MoveWithinRange(Target target, WRange range) { return Fly.ToPos(target.CenterPosition); }
+		public CPos NearestMoveableCell(CPos cell) { return cell; }
 	}
 }

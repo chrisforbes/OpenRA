@@ -16,37 +16,39 @@ namespace OpenRA.Mods.RA.Activities
 {
 	class Demolish : Activity
 	{
-		Actor target;
+		Target target;
 		int delay;
 
-		public Demolish( Actor target, int delay )
+		public Demolish(Actor target, int delay)
 		{
-			this.target = target;
+			this.target = Target.FromActor(target);
 			this.delay = delay;
 		}
 
 		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead()) return NextActivity;
-
-			if( !target.OccupiesSpace.OccupiedCells().Any( x => x.First == self.Location ) )
+			if (IsCanceled || !target.IsValidFor(self))
 				return NextActivity;
 
 			self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
 			{
 				// Can't demolish an already dead actor
-				if (target.IsDead())
+				if (target.Type != TargetType.Actor)
 					return;
 
 				// Invulnerable actors can't be demolished
-				var modifier = (float)target.TraitsImplementing<IDamageModifier>()
+				var modifier = (float)target.Actor.TraitsImplementing<IDamageModifier>()
 					.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
 					.Select(t => t.GetDamageModifier(self, null)).Product();
 
-				if (target.IsInWorld && modifier > 0)
-					target.Kill(self);
+				var demolishable = target.Actor.TraitOrDefault<IDemolishable>();
+					if (demolishable == null || !demolishable.IsValidTarget(target.Actor, self))
+					return;
+
+				if (modifier > 0)
+					demolishable.Demolish(target.Actor, self);
 			})));
+
 			return NextActivity;
 		}
 	}

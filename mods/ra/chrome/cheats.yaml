@@ -3,8 +3,8 @@ Background@CHEATS_PANEL:
 	X:(WINDOW_RIGHT - WIDTH)/2
 	Y:(WINDOW_BOTTOM - HEIGHT)/2
 	Width:350
-	Height:450
-	Visible:true
+	Height:475
+	Visible:false
 	Children:
 		Label@LABEL_TITLE:
 			X:(PARENT_RIGHT - WIDTH)/2
@@ -43,7 +43,7 @@ Background@CHEATS_PANEL:
 			Y:140
 			Width:150
 			Height:20
-			Text: Give $ 20.000 Cash
+			Text: Give $20000 Cash
 			Height:25
 		Checkbox@INSTANT_BUILD:
 			X:30
@@ -81,9 +81,21 @@ Background@CHEATS_PANEL:
 			Width:PARENT_RIGHT - 30
 			Height:20
 			Text:Show A* Cost
+		Checkbox@SHOW_COMBATOVERLAY:
+			X:30
+			Y:350
+			Height:20
+			Width:200
+			Text:Show Combat Geometry
+		Checkbox@SHOW_GEOMETRY:
+			X:30
+			Y:380
+			Height:20
+			Width:200
+			Text:Show Render Geometry
 		Button@CLOSE:
 			X:30
-			Y:360
+			Y:420
 			Width:PARENT_RIGHT - 60
 			Height:25
 			Text:Close

@@ -1,0 +1,267 @@
+mcv:
+	idle:
+		Start: 0
+		Facings: 32
+	icon: mcvicon
+		Start: 0
+
+mcvhusk:
+	idle:
+		Start: 0
+		Facings: 32
+
+truk:
+	idle:
+		Start: 0
+		Facings: 32
+	icon: trukicon
+		Start: 0
+
+harv:
+	idle:
+		Start: 0
+		Facings: 32
+	harvest:
+		Start: 32
+		Length: 8
+		Facings: 8
+	dock:
+		Start: 96
+		Length: 8
+	dock-loop:
+		Start: 104
+		Length: 7
+	icon: harvicon
+		Start: 0
+
+harvhalf:
+	idle:
+		Start: 0
+		Facings: 32
+	harvest:
+		Start: 32
+		Length: 8
+		Facings: 8
+	dock: harv
+		Start: 96
+		Length: 8
+	dock-loop: harv
+		Start: 104
+		Length: 7
+
+harvempty:
+	idle:
+		Start: 0
+		Facings: 32
+	harvest:
+		Start: 32
+		Length: 8
+		Facings: 8
+	dock: harv
+		Start: 96
+		Length: 8
+	dock-loop: harv
+		Start: 104
+		Length: 7
+
+hhusk:
+	idle:
+		Start: 0
+		Facings: 32
+
+hhusk2:
+	idle:
+		Start: 0
+		Facings: 32
+
+1tnk:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 2
+	icon: 1tnkicon
+		Start: 0
+
+2tnk:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 5
+	icon: 2tnkicon
+		Start: 0
+
+3tnk:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 5
+	icon: 3tnkicon
+		Start: 0
+
+4tnk:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 5
+	icon: 4tnkicon
+		Start: 0
+
+v2rl:
+	idle:
+		Start: 0
+		Facings: 32
+	empty-idle:
+		Start: 32
+		Facings: 32
+	aim:
+		Start: 64
+		Facings: 8
+	empty-aim:
+		Start: 72
+		Facings: 8
+	icon: v2rlicon
+		Start: 0
+
+arty:
+	idle:
+		Start: 0
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 5
+	icon: artyicon
+		Start: 0
+
+jeep:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: minigun
+		Start: 0
+		Length: 6
+		Facings: 8
+	unload:
+		Start: 0
+		Facings: 32
+	icon: jeepicon
+		Start: 0
+
+apc:
+	idle:
+		Start: 0
+		Facings: 32
+	muzzle: minigun
+		Start: 0
+		Length: 6
+		Facings: 8
+	close:
+		Start: 32
+		Length: 3
+	unload:
+		Start: 32
+	icon: apcicon
+		Start: 0
+
+mnly:
+	idle:
+		Start: 0
+		Facings: 32
+	icon: mnlyicon
+		Start: 0
+
+mrj:
+	idle:
+		Start: 0
+		Facings: 32
+	spinner:
+		Start: 32
+		Length: 32
+	icon: mrjicon
+		Start: 0
+
+mgg:
+	idle:
+		Start: 0
+		Facings: 32
+	spinner:
+		Start: 32
+		Length: 8
+	spinner-idle:
+		Start: 32
+		Length: 1
+	icon: mggicon
+		Start: 0
+
+ttnk:
+	idle:
+		Start: 0
+		Facings: 32
+	spinner:
+		Start: 32
+		Length: 32
+	icon: ttnkicon
+		Start: 0
+
+ftrk:
+	idle:
+		Start: 0
+		Facings: 32
+	turret:
+		Start: 32
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 2
+	icon: ftrkicon
+		Start: 0
+
+dtrk:
+	idle:
+		Start: 0
+		Facings: 32
+	icon: dtrkicon
+		Start: 0
+
+ctnk:
+	idle:
+		Start: 0
+		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: 5
+	icon: ctnkicon
+		Start: 0
+
+qtnk:
+	idle:
+		Start: 0
+		Facings: 32
+	piston:
+		Start: 32
+		Facings: 8
+		Length: 8
+	icon: qtnkicon
+		Start: 0

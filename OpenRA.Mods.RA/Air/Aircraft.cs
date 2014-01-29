@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -19,57 +19,10 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Air
 {
-	public class DebugAircraftFacingInfo : ITraitInfo, Requires<AircraftInfo>
+	public class AircraftInfo : ITraitInfo, IFacingInfo, IOccupySpaceInfo, UsesInit<LocationInit>, UsesInit<FacingInit>
 	{
-		public object Create(ActorInitializer init) { return new DebugAircraftFacing(init.self); }
-	}
+		public readonly WRange CruiseAltitude = new WRange(1280);
 
-	public class DebugAircraftFacing : ISync
-	{
-		readonly Aircraft a;
-		public DebugAircraftFacing(Actor self){ a = self.Trait<Aircraft>(); }
-		[Sync] public int foo { get { return a.Facing; } }
-	}
-
-	public class DebugAircraftSubPxXInfo : ITraitInfo, Requires<AircraftInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugAircraftSubPxX(init.self); }
-	}
-
-	public class DebugAircraftSubPxX : ISync
-	{
-		readonly Aircraft a;
-		public DebugAircraftSubPxX(Actor self){ a = self.Trait<Aircraft>(); }
-		[Sync] public int foo { get { return a.SubPxPosition.Y; } }
-	}
-
-	public class DebugAircraftSubPxYInfo : ITraitInfo, Requires<AircraftInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugAircraftSubPxY(init.self); }
-	}
-
-	public class DebugAircraftSubPxY : ISync
-	{
-		readonly Aircraft a;
-		public DebugAircraftSubPxY(Actor self){ a = self.Trait<Aircraft>(); }
-		[Sync] public int foo { get { return a.SubPxPosition.Y; } }
-	}
-
-	public class DebugAircraftAltitudeInfo : ITraitInfo, Requires<AircraftInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugAircraftAltitude(init.self); }
-	}
-
-	public class DebugAircraftAltitude : ISync
-	{
-		readonly Aircraft a;
-		public DebugAircraftAltitude(Actor self){ a = self.Trait<Aircraft>(); }
-		[Sync] public int foo { get { return a.Altitude; } }
-	}
-
-	public class AircraftInfo : ITraitInfo, IFacingInfo, UsesInit<AltitudeInit>, UsesInit<LocationInit>, UsesInit<FacingInit>
-	{
-		public readonly int CruiseAltitude = 30;
 		[ActorReference]
 		public readonly string[] RepairBuildings = { "fix" };
 		[ActorReference]
@@ -79,19 +32,64 @@ namespace OpenRA.Mods.RA.Air
 		public readonly int Speed = 1;
 		public readonly string[] LandableTerrainTypes = { };
 
-		public virtual object Create( ActorInitializer init ) { return new Aircraft( init , this ); }
+		public virtual object Create(ActorInitializer init) { return new Aircraft(init, this); }
+		public int GetInitialFacing() { return InitialFacing; }
 	}
 
-	public class Aircraft : IMove, IFacing, IOccupySpace, ISync, INotifyKilled, IIssueOrder, IOrderVoice
+	public class Aircraft : IFacing, IPositionable, ISync, INotifyKilled, IIssueOrder, IOrderVoice, INotifyAddedToWorld, INotifyRemovedFromWorld
 	{
-		public IDisposable reservation;
+		static readonly Pair<CPos, SubCell>[] NoCells = new Pair<CPos, SubCell>[] { };
+
+		readonly AircraftInfo info;
+		readonly Actor self;
+
+		[Sync] public int Facing { get; set; }
+		[Sync] public WPos CenterPosition { get; private set; }
+		public CPos TopLeft { get { return CenterPosition.ToCPos(); } }
+		public IDisposable Reservation;
+		public int ROT { get { return info.ROT; } }
+
+		public Aircraft(ActorInitializer init, AircraftInfo info)
+		{
+			this.info = info;
+			this.self = init.self;
+
+			if (init.Contains<LocationInit>())
+				SetPosition(self, init.Get<LocationInit, CPos>());
+
+			if (init.Contains<CenterPositionInit>())
+				SetPosition(self, init.Get<CenterPositionInit, WPos>());
+
+			this.Facing = init.Contains<FacingInit>() ? init.Get<FacingInit, int>() : info.InitialFacing;
+		}
+
+		public Actor GetActorBelow()
+		{
+			if (self.CenterPosition.Z != 0)
+				return null;	// not on the ground.
+
+			return self.World.ActorMap.GetUnitsAt(self.Location)
+				.FirstOrDefault(a => a.HasTrait<Reservable>());
+		}
+
+		protected void ReserveSpawnBuilding()
+		{
+			/* HACK: not spawning in the air, so try to assoc. with our afld. */
+			var afld = GetActorBelow();
+			if (afld == null)
+				return;
+
+			var res = afld.Trait<Reservable>();
+			if (res != null)
+				Reservation = res.Reserve(afld, self, this);
+		}
 
 		public void UnReserve()
 		{
-			if (reservation != null)
+			if (Reservation != null)
 			{
-				reservation.Dispose();
-				reservation = null;
+				Reservation.Dispose();
+				Reservation = null;
 			}
 		}
 
@@ -100,93 +98,65 @@ namespace OpenRA.Mods.RA.Air
 			UnReserve();
 		}
 
-
-		protected readonly Actor self;
-		[Sync] public int Facing { get; set; }
-		[Sync] public int Altitude { get; set; }
-		[Sync] public PSubPos SubPxPosition;
-		public PPos PxPosition { get { return SubPxPosition.ToPPos(); } }
-		public CPos TopLeft { get { return PxPosition.ToCPos(); } }
-
-		readonly AircraftInfo Info;
-
-		public Aircraft( ActorInitializer init , AircraftInfo info)
+		public void SetPosition(Actor self, WPos pos)
 		{
-			this.self = init.self;
-			if( init.Contains<LocationInit>() )
-				this.SubPxPosition = Util.CenterOfCell( init.Get<LocationInit, CPos>() ).ToPSubPos();
+			CenterPosition = pos;
 
-			this.Facing = init.Contains<FacingInit>() ? init.Get<FacingInit,int>() : info.InitialFacing;
-			this.Altitude = init.Contains<AltitudeInit>() ? init.Get<AltitudeInit,int>() : 0;
-			Info = info;
+			if (self.IsInWorld)
+			{
+				self.World.ScreenMap.Update(self);
+				self.World.ActorMap.UpdatePosition(self, this);
+			}
 		}
 
-		public Actor GetActorBelow()
-		{
-			if (self.Trait<IMove>().Altitude != 0)
-				return null;	// not on the ground.
+		// Changes position, but not altitude
+		public void SetPosition(Actor self, CPos cell) { SetPosition(self, cell.CenterPosition + new WVec(0, 0, CenterPosition.Z)); }
+		public void SetVisualPosition(Actor self, WPos pos) { SetPosition(self, pos); }
 
-			return self.World.FindUnits(self.CenterLocation, self.CenterLocation)
-				.FirstOrDefault( a => a.HasTrait<Reservable>() );
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
 		}
 
-		protected void ReserveSpawnBuilding()
+		public void RemovedFromWorld(Actor self)
 		{
-			/* not spawning in the air, so try to assoc. with our afld. this is a hack. */
-
-			var afld = GetActorBelow();
-
-			if (afld == null)
-				return;
-
-			var res = afld.Trait<Reservable>();
-			if (res != null)
-				reservation = res.Reserve(afld, self, this);
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
 		}
-
-		public int ROT { get { return Info.ROT; } }
-
-		public int InitialFacing { get { return Info.InitialFacing; } }
-
-		public void SetPosition(Actor self, CPos cell)
-		{
-			SetPxPosition( self, Util.CenterOfCell( cell ) );
-		}
-
-		public void SetPxPosition( Actor self, PPos px )
-		{
-			SubPxPosition = px.ToPSubPos();
-		}
-
-		public void AdjustPxPosition(Actor self, PPos px) { SetPxPosition(self, px); }
 
 		public bool AircraftCanEnter(Actor a)
 		{
-			if( self.AppearsHostileTo(a) ) return false;
-			return Info.RearmBuildings.Contains( a.Info.Name )
-				|| Info.RepairBuildings.Contains( a.Info.Name );
+			if (self.AppearsHostileTo(a))
+				return false;
+
+			return info.RearmBuildings.Contains(a.Info.Name)
+				|| info.RepairBuildings.Contains(a.Info.Name);
 		}
 
 		public bool CanEnterCell(CPos location) { return true; }
+		public bool CanEnterCell(CPos cell, Actor ignoreActor, bool checkTransientActors) { return true; }
 
 		public int MovementSpeed
 		{
 			get
 			{
-				decimal ret = Info.Speed;
-				foreach( var t in self.TraitsImplementing<ISpeedModifier>() )
+				decimal ret = info.Speed;
+				foreach (var t in self.TraitsImplementing<ISpeedModifier>())
 					ret *= t.GetSpeedModifier();
 				return (int)ret;
 			}
 		}
 
-		Pair<CPos, SubCell>[] noCells = new Pair<CPos, SubCell>[] { };
-		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { return noCells; }
+		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { return NoCells; }
 
-		public void TickMove( int speed, int facing )
+		public WVec FlyStep(int facing)
 		{
-			var rawspeed = speed * 7 / (32 * PSubPos.PerPx);
-			SubPxPosition += rawspeed * -Util.SubPxVector[facing];
+			var speed = MovementSpeed;
+			var dir = new WVec(0, -1024, 0).Rotate(WRot.FromFacing(facing));
+			return speed * dir / 1024;
 		}
 
 		public bool CanLand(CPos cell)
@@ -198,15 +168,15 @@ namespace OpenRA.Mods.RA.Air
 				return false;
 
 			var type = self.World.GetTerrainType(cell);
-			return Info.LandableTerrainTypes.Contains(type);
+			return info.LandableTerrainTypes.Contains(type);
 		}
 
 		public IEnumerable<Activity> GetResupplyActivities(Actor a)
 		{
 			var name = a.Info.Name;
-			if (Info.RearmBuildings.Contains(name))
+			if (info.RearmBuildings.Contains(name))
 				yield return new Rearm(self);
-			if (Info.RepairBuildings.Contains(name))
+			if (info.RepairBuildings.Contains(name))
 				yield return new Repair(a);
 		}
 
@@ -214,7 +184,7 @@ namespace OpenRA.Mods.RA.Air
 		{
 			get
 			{
-				yield return new EnterOrderTargeter<Building>("Enter", 5, false, true,
+				yield return new EnterAlliedActorTargeter<Building>("Enter", 5,
 					target => AircraftCanEnter(target), target => !Reservable.IsReserved(target));
 
 				yield return new AircraftMoveOrderTargeter();
@@ -227,14 +197,14 @@ namespace OpenRA.Mods.RA.Air
 				return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
 
 			if (order.OrderID == "Move")
-				return new Order(order.OrderID, self, queued) { TargetLocation = target.CenterLocation.ToCPos() };
+				return new Order(order.OrderID, self, queued) { TargetLocation = target.CenterPosition.ToCPos() };
 
 			return null;
 		}
 
 		public string VoicePhraseForOrder(Actor self, Order order)
 		{
-			switch( order.OrderString )
+			switch (order.OrderString)
 			{
 			case "Move":
 			case "Enter":
@@ -265,17 +235,16 @@ namespace OpenRA.Mods.RA.Air
 		public string OrderID { get { return "Move"; } }
 		public int OrderPriority { get { return 4; } }
 
-		public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+		public bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor)
 		{
-			return false;
-		}
+			if (target.Type != TargetType.Terrain)
+				return false;
 
-		public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
-		{
-			IsQueued = forceQueued;
-			cursor = self.World.Map.IsInMap(location) ? "move" : "move-blocked";
+			IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
+			cursor = self.World.Map.IsInMap(target.CenterPosition.ToCPos()) ? "move" : "move-blocked";
 			return true;
 		}
+
 		public bool IsQueued { get; protected set; }
 	}
 }

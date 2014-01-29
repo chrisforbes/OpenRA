@@ -18,9 +18,9 @@ namespace OpenRA.Mods.RA
 		public override object Create(ActorInitializer init) { return new AttackOmni(init.self); }
 	}
 
-	class AttackOmni : AttackBase, INotifyBuildComplete
+	class AttackOmni : AttackBase, INotifyBuildComplete, ISync
 	{
-		bool buildComplete = false;
+		[Sync] bool buildComplete = false;
 		public void BuildingComplete(Actor self) { buildComplete = true; }
 
 		public AttackOmni(Actor self) : base(self) { }
@@ -43,7 +43,7 @@ namespace OpenRA.Mods.RA
 
 			public override Activity Tick( Actor self )
 			{
-				if( IsCanceled || !target.IsValid )
+				if (IsCanceled || !target.IsValidFor(self))
 					return NextActivity;
 
 				self.Trait<AttackOmni>().DoAttack(self, target);

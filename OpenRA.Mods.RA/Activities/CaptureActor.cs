@@ -1,6 +1,6 @@
-#region Copyright & License Information
+﻿#region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,47 +8,58 @@
  */
 #endregion
 
-using System.Linq;
-using OpenRA.Mods.RA.Move;
+using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
 {
 	class CaptureActor : Activity
 	{
-		Actor target;
+		Target target;
 
-		public CaptureActor(Actor target) { this.target = target; }
+		public CaptureActor(Target target) { this.target = target; }
 
 		public override Activity Tick(Actor self)
 		{
+			if (IsCanceled || !target.IsValidFor(self))
+				return NextActivity;
+
+			if (target.Type != TargetType.Actor)
+				return NextActivity;
+
+			var actor = target.Actor;
+			var b = actor.TraitOrDefault<Building>();
+			if (b != null && b.Locked)
+				return NextActivity;
+
 			var capturesInfo = self.Info.Traits.Get<CapturesInfo>();
-			var health = target.Trait<Health>();
-			int damage = (int)(0.25 * health.MaxHP);
+			var capturableInfo = actor.Info.Traits.Get<CapturableInfo>();
 
-			if (IsCanceled)
-				return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead())
-				return NextActivity;
-			if (target.Owner == self.Owner)
-				return NextActivity;
+			var health = actor.Trait<Health>();
 
-			// Need to be next to building, TODO: stop capture when going away
-			var mobile = self.Trait<Mobile>();
-			var nearest = target.OccupiesSpace.NearestCellTo(mobile.toCell);
-			if ((nearest - mobile.toCell).LengthSquared > 2)
-				return Util.SequenceActivities(new MoveAdjacentTo(Target.FromActor(target)), this);
-
-			if (!capturesInfo.Sabotage || (capturesInfo.Sabotage && health.DamageState == DamageState.Heavy))
+			self.World.AddFrameEndTask(w =>
 			{
-				if (!target.Trait<Capturable>().BeginCapture(target, self))
-					return NextActivity;
-			}
-			else
-			   	target.InflictDamage(self, damage, null);
+				var lowEnoughHealth = health.HP <= capturableInfo.CaptureThreshold * health.MaxHP;
+				if (!capturesInfo.Sabotage || lowEnoughHealth || actor.Owner.NonCombatant)
+				{
+					var oldOwner = actor.Owner;
 
-			if (capturesInfo != null && capturesInfo.WastedAfterwards)
-				self.World.AddFrameEndTask(w => self.Destroy());
+					actor.ChangeOwner(self.Owner);
+
+					foreach (var t in actor.TraitsImplementing<INotifyCapture>())
+						t.OnCapture(actor, self, oldOwner, self.Owner);
+
+					if (b != null && b.Locked)
+						b.Unlock();
+				}
+				else
+				{
+					var damage = (int)(health.MaxHP * capturesInfo.SabotageHPRemoval);
+					actor.InflictDamage(self, damage, null);
+				}
+
+				self.Destroy();
+			});
 
 			return this;
 		}

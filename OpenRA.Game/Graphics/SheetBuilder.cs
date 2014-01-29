@@ -8,68 +8,86 @@
  */
 #endregion
 
+using System;
 using System.Drawing;
+using OpenRA.FileFormats;
+using OpenRA.FileFormats.Graphics;
 
 namespace OpenRA.Graphics
 {
+	public class SheetOverflowException : Exception
+	{
+		public SheetOverflowException(string message)
+			: base(message) {}
+	}
+
+	public enum SheetType
+	{
+		Indexed = 1,
+		DualIndexed = 2,
+		BGRA = 4,
+	}
+
 	public class SheetBuilder
 	{
-		internal SheetBuilder(TextureChannel ch)
+		Sheet current;
+		TextureChannel channel;
+		SheetType type;
+		int rowHeight = 0;
+		Point p;
+		Func<Sheet> allocateSheet;
+
+		public static Sheet AllocateSheet()
 		{
-			current = null;
-			rowHeight = 0;
-			channel = null;
-			initialChannel = ch;
+			return new Sheet(new Size(Renderer.SheetSize, Renderer.SheetSize));
 		}
 
-		public Sprite Add(byte[] src, Size size)
+		internal SheetBuilder(SheetType t)
+			: this(t, AllocateSheet) {}
+
+		internal SheetBuilder(SheetType t, Func<Sheet> allocateSheet)
 		{
-			Sprite rect = Allocate(size);
+			channel = TextureChannel.Red;
+			type = t;
+			current = allocateSheet();
+			this.allocateSheet = allocateSheet;
+		}
+
+		public Sprite Add(ISpriteFrame frame) { return Add(frame.Data, frame.Size, frame.Offset); }
+		public Sprite Add(byte[] src, Size size) { return Add(src, size, float2.Zero); }
+		public Sprite Add(byte[] src, Size size, float2 spriteOffset)
+		{
+			// Don't bother allocating empty sprites
+			if (size.Width == 0 || size.Height == 0)
+				return new Sprite(current, Rectangle.Empty, spriteOffset, channel, BlendMode.Alpha);
+
+			var rect = Allocate(size, spriteOffset);
 			Util.FastCopyIntoChannel(rect, src);
+			current.CommitData();
 			return rect;
 		}
 
 		public Sprite Add(Size size, byte paletteIndex)
 		{
-			byte[] data = new byte[size.Width * size.Height];
-			for (int i = 0; i < data.Length; i++)
+			var data = new byte[size.Width * size.Height];
+			for (var i = 0; i < data.Length; i++)
 				data[i] = paletteIndex;
 
 			return Add(data, size);
 		}
 
-		Sheet NewSheet() { return new Sheet(new Size( Renderer.SheetSize, Renderer.SheetSize ) ); }
-
-		Sheet current = null;
-		int rowHeight = 0;
-		Point p;
-		TextureChannel? channel = null;
-		TextureChannel initialChannel;
-
-		TextureChannel? NextChannel(TextureChannel? t)
+		TextureChannel? NextChannel(TextureChannel t)
 		{
-			if (t == null)
-				return initialChannel;
+			var nextChannel = (int)t + (int)type;
+			if (nextChannel > (int)TextureChannel.Alpha)
+				return null;
 
-			switch (t.Value)
-			{
-				case TextureChannel.Red: return TextureChannel.Green;
-				case TextureChannel.Green: return TextureChannel.Blue;
-				case TextureChannel.Blue: return TextureChannel.Alpha;
-				case TextureChannel.Alpha: return null;
-
-				default: return null;
-			}
+			return (TextureChannel)nextChannel;
 		}
 
-		public Sprite Allocate(Size imageSize)
+		public Sprite Allocate(Size imageSize) { return Allocate(imageSize, float2.Zero); }
+		public Sprite Allocate(Size imageSize, float2 spriteOffset)
 		{
-			if (current == null)
-			{
-				current = NewSheet();
-				channel = NextChannel(null);
-			}
-
 			if (imageSize.Width + p.X > current.Size.Width)
 			{
 				p = new Point(0, p.Y + rowHeight);
@@ -81,22 +99,25 @@ namespace OpenRA.Graphics
 
 			if (p.Y + imageSize.Height > current.Size.Height)
 			{
-
-				if (null == (channel = NextChannel(channel)))
+				var next = NextChannel(channel);
+				if (next == null)
 				{
-					current = NewSheet();
-					channel = NextChannel(channel);
+					current = allocateSheet();
+					channel = TextureChannel.Red;
 				}
+				else
+					channel = next.Value;
 
 				rowHeight = imageSize.Height;
 				p = new Point(0,0);
 			}
 
-			Sprite rect = new Sprite(current, new Rectangle(p, imageSize), channel.Value);
-			current.MakeDirty();
+			var rect = new Sprite(current, new Rectangle(p, imageSize), spriteOffset, channel, BlendMode.Alpha);
 			p.X += imageSize.Width;
 
 			return rect;
 		}
+
+		public Sheet Current { get { return current; } }
 	}
 }

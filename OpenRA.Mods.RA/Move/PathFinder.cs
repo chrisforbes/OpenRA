@@ -25,6 +25,8 @@ namespace OpenRA.Mods.RA.Move
 
 	public class PathFinder
 	{
+		readonly static List<CPos> emptyPath = new List<CPos>(0);
+
 		readonly World world;
 		public PathFinder(World world) { this.world = world; }
 
@@ -55,6 +57,15 @@ namespace OpenRA.Mods.RA.Move
 
 				var mi = self.Info.Traits.Get<MobileInfo>();
 
+				// If a water-land transition is required, bail early
+				var domainIndex = self.World.WorldActor.TraitOrDefault<DomainIndex>();
+				if (domainIndex != null)
+				{
+					var passable = mi.GetMovementClass(world.TileSet);
+					if (!domainIndex.IsPassable(from, target, (uint)passable))
+						return emptyPath;
+				}
+
 				var pb = FindBidiPath(
 					PathSearch.FromPoint(world, mi, self, target, from, true),
 					PathSearch.FromPoint(world, mi, self, from, target, true).InReverse()
@@ -68,17 +79,37 @@ namespace OpenRA.Mods.RA.Move
 			}
 		}
 
-		public List<CPos> FindUnitPathToRange(CPos src, CPos target, int range, Actor self)
+		public List<CPos> FindUnitPathToRange(CPos src, SubCell srcSub, WPos target, WRange range, Actor self)
 		{
 			using (new PerfSample("Pathfinder"))
 			{
 				var mi = self.Info.Traits.Get<MobileInfo>();
-				var tilesInRange = world.FindTilesInCircle(target, range)
-					.Where(t => mi.CanEnterCell(self.World, self, t, null, true, true));
+				var targetCell = target.ToCPos();
+				var rangeSquared = range.Range*range.Range;
+
+				// Correct for SubCell offset
+				target -= MobileInfo.SubCellOffsets[srcSub];
+
+				// Select only the tiles that are within range from the requested SubCell
+				// This assumes that the SubCell does not change during the path traversal
+				var tilesInRange = world.FindTilesInCircle(targetCell, range.Range / 1024 + 1)
+					.Where(t => (t.CenterPosition - target).LengthSquared <= rangeSquared
+					       && mi.CanEnterCell(self.World, self, t, null, true, true));
+
+				// See if there is any cell within range that does not involve a cross-domain request
+				// Really, we only need to check the circle perimeter, but it's not clear that would be a performance win
+				var domainIndex = self.World.WorldActor.TraitOrDefault<DomainIndex>();
+				if (domainIndex != null)
+				{
+					var passable = mi.GetMovementClass(world.TileSet);
+					tilesInRange = new List<CPos>(tilesInRange.Where(t => domainIndex.IsPassable(src, t, (uint)passable)));
+					if (!tilesInRange.Any())
+						return emptyPath;
+				}
 
 				var path = FindBidiPath(
 					PathSearch.FromPoints(world, mi, self, tilesInRange, src, true),
-					PathSearch.FromPoint(world, mi, self, src, target, true).InReverse()
+					PathSearch.FromPoint(world, mi, self, src, targetCell, true).InReverse()
 				);
 
 				return path;
@@ -103,7 +134,7 @@ namespace OpenRA.Mods.RA.Move
 						}
 					}
 
-					var dbg = world.WorldActor.TraitOrDefault<DebugOverlay>();
+					var dbg = world.WorldActor.TraitOrDefault<PathfinderDebugOverlay>();
 					if (dbg != null)
 					{
 						dbg.AddLayer(search.considered.Select(p => new Pair<CPos, int>(p, search.cellInfo[p.X, p.Y].MinCost)), search.maxCost, search.owner);
@@ -114,7 +145,7 @@ namespace OpenRA.Mods.RA.Move
 				}
 
 				// no path exists
-				return new List<CPos>(0);
+				return emptyPath;
 			}
 		}
 
@@ -168,7 +199,7 @@ namespace OpenRA.Mods.RA.Move
 						}
 					}
 
-					var dbg = world.WorldActor.TraitOrDefault<DebugOverlay>();
+					var dbg = world.WorldActor.TraitOrDefault<PathfinderDebugOverlay>();
 					if (dbg != null)
 					{
 						dbg.AddLayer(fromSrc.considered.Select(p => new Pair<CPos, int>(p, fromSrc.cellInfo[p.X, p.Y].MinCost)), fromSrc.maxCost, fromSrc.owner);
@@ -179,7 +210,7 @@ namespace OpenRA.Mods.RA.Move
 						return path;
 				}
 
-				return new List<CPos>(0);
+				return emptyPath;
 			}
 		}
 

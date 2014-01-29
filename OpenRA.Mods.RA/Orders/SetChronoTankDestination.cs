@@ -1,4 +1,4 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
  * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
@@ -38,19 +38,18 @@ namespace OpenRA.Mods.RA.Orders
 		}
 
 		public void Tick( World world ) { }
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
 		public void RenderAfterWorld( WorldRenderer wr, World world )
 		{
 			wr.DrawSelectionBox(self, Color.White);
 		}
-
-		public void RenderBeforeWorld( WorldRenderer wr, World world ) { }
 
 		public string GetCursor(World world, CPos xy, MouseInput mi)
 		{
 			if (!world.LocalPlayer.Shroud.IsExplored(xy))
 				return "move-blocked";
 
-			var movement = self.TraitOrDefault<IMove>();
+			var movement = self.TraitOrDefault<IPositionable>();
 			return (movement.CanEnterCell(xy)) ? "chrono-target" : "move-blocked";
 		}
 	}

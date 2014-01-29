@@ -19,66 +19,67 @@ namespace OpenRA.Mods.RA.Effects
 	public class Parachute : IEffect
 	{
 		readonly Animation paraAnim;
-		readonly PPos location;
-
+		readonly WVec parachuteOffset;
 		readonly Actor cargo;
+		WPos pos;
+		WVec fallRate = new WVec(0, 0, 13);
 
-		int2 offset;
-		float altitude;
-		const float fallRate = .3f;
-
-		public Parachute(Actor cargo, PPos location, int altitude)
+		public Parachute(Actor cargo, WPos dropPosition)
 		{
-			this.location = location;
-			this.altitude = altitude;
 			this.cargo = cargo;
 
 			var pai = cargo.Info.Traits.GetOrDefault<ParachuteAttachmentInfo>();
 			paraAnim = new Animation(pai != null ? pai.ParachuteSprite : "parach");
 			paraAnim.PlayThen("open", () => paraAnim.PlayRepeating("idle"));
 
-			if (pai != null) offset = pai.Offset;
+			if (pai != null)
+				parachuteOffset = pai.Offset;
 
-			cargo.Trait<ITeleportable>().SetPxPosition(cargo, location);
+			// Adjust x,y to match the target subcell
+			cargo.Trait<IPositionable>().SetPosition(cargo, dropPosition.ToCPos());
+			var cp = cargo.CenterPosition;
+			pos = new WPos(cp.X, cp.Y, dropPosition.Z);
 		}
 
 		public void Tick(World world)
 		{
 			paraAnim.Tick();
 
-			altitude -= fallRate;
+			pos -= fallRate;
 
-			if (altitude <= 0)
+			if (pos.Z <= 0)
+			{
 				world.AddFrameEndTask(w =>
-					{
-						w.Remove(this);
-						var loc = location.ToCPos();
-						cargo.CancelActivity();
-						cargo.Trait<ITeleportable>().SetPosition(cargo, loc);
-						w.Add(cargo);
+				{
+					w.Remove(this);
+					cargo.CancelActivity();
+					w.Add(cargo);
 
-						foreach( var npl in cargo.TraitsImplementing<INotifyParachuteLanded>() )
-							npl.OnLanded();
-					});
+					foreach (var npl in cargo.TraitsImplementing<INotifyParachuteLanded>())
+						npl.OnLanded();
+				});
+			}
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			var rc = cargo.Render(wr).Select(a => a.WithPos(a.Pos - new float2(0, altitude))
-			                                    .WithZOffset(a.ZOffset + (int)altitude));
+			var rc = cargo.Render(wr);
 
 			// Don't render anything if the cargo is invisible (e.g. under fog)
 			if (!rc.Any())
 				yield break;
 
+			var shadow = wr.Palette("shadow");
 			foreach (var c in rc)
 			{
-				yield return c.WithPos(location.ToFloat2() - .5f * c.Sprite.size).WithPalette(wr.Palette("shadow")).WithZOffset(0);
-				yield return c.WithZOffset(2);
+				if (!c.IsDecoration)
+					yield return c.WithPalette(shadow).WithZOffset(c.ZOffset - 1).AsDecoration();
+
+				yield return c.OffsetBy(pos - c.Pos);
 			}
 
-			var pos = location.ToFloat2() - new float2(0, altitude);
-			yield return new Renderable(paraAnim.Image, pos - .5f * paraAnim.Image.size + offset, rc.First().Palette, 3);
+			foreach (var r in paraAnim.Render(pos, parachuteOffset, 1, rc.First().Palette, 1f))
+				yield return r;
 		}
 	}
 }

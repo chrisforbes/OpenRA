@@ -10,7 +10,6 @@
 
 using System;
 using System.Drawing;
-using System.IO;
 
 namespace OpenRA.FileFormats.Graphics
 {
@@ -32,11 +31,14 @@ namespace OpenRA.FileFormats.Graphics
 		IGraphicsDevice Create( Size size, WindowMode windowMode );
 	}
 
+	public enum BlendMode { None, Alpha, Additive, Subtractive, Multiply }
+
 	public interface IGraphicsDevice
 	{
 		IVertexBuffer<Vertex> CreateVertexBuffer( int length );
 		ITexture CreateTexture( Bitmap bitmap );
 		ITexture CreateTexture();
+		IFrameBuffer CreateFrameBuffer(Size s);
 		IShader CreateShader( string name );
 
 		Size WindowSize { get; }
@@ -50,6 +52,13 @@ namespace OpenRA.FileFormats.Graphics
 		void SetLineWidth( float width );
 		void EnableScissor( int left, int top, int width, int height );
 		void DisableScissor();
+
+		void EnableDepthBuffer();
+		void DisableDepthBuffer();
+
+		void SetBlendMode(BlendMode mode);
+
+		void Quit();
 	}
 
 	public interface IVertexBuffer<T>
@@ -60,8 +69,11 @@ namespace OpenRA.FileFormats.Graphics
 
 	public interface IShader
 	{
+		void SetVec(string name, float x);
 		void SetVec(string name, float x, float y);
+		void SetVec(string name, float[] vec, int length);
 		void SetTexture(string param, ITexture texture);
+		void SetMatrix(string param, float[] mtx);
 		void Render(Action a);
 	}
 
@@ -70,6 +82,15 @@ namespace OpenRA.FileFormats.Graphics
 		void SetData(Bitmap bitmap);
 		void SetData(uint[,] colors);
 		void SetData(byte[] colors, int width, int height);
+		byte[] GetData();
+		Size Size { get; }
+	}
+
+	public interface IFrameBuffer
+	{
+		void Bind();
+		void Unbind();
+		ITexture Texture { get; }
 	}
 
 	public enum PrimitiveType

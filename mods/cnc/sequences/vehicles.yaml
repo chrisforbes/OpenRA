@@ -2,6 +2,8 @@ mcv:
 	idle:
 		Start: 0
 		Facings: 32
+	icon: mcvicnh
+		Start: 0
 
 harv:
 	idle:
@@ -18,6 +20,8 @@ harv:
 	dock-loop: harvdump
 		Start: 7
 		Length: 1
+	icon: harvicnh
+		Start: 0
 
 bggy:
 	idle:
@@ -30,55 +34,8 @@ bggy:
 		Start: 0
 		Length: 6
 		Facings: 8
-
-c17:
-	idle:
+	icon: bggyicnh
 		Start: 0
-		Facings: 32
-
-tran:
-	idle:
-		Start: 0
-		Facings: 32
-	rotor: lrotor
-		Start: 0
-		Length: 4
-	rotor2: rrotor
-		Start: 0
-		Length: 4
-	slow-rotor: lrotor
-		Start: 4
-		Length: 8
-	slow-rotor2: rrotor
-		Start: 4
-		Length: 8
-	open:
-		Start: 32
-		Length: 4
-	unload:
-		Start: 35
-
-heli:
-	idle:
-		Start: 0
-		Facings: 32
-	rotor: lrotor
-		Start: 0
-		Length: 4
-	slow-rotor: lrotor
-		Start: 4
-		Length: 8
-	muzzle: minigun
-		Start: 0
-		Length: 6
-		Facings: 8
-orca:
-	idle:
-		Start: 0
-		Facings: 32
-	damaged-idle:
-		Start: 32
-		Facings: 32
 
 mtnk:
 	idle:
@@ -87,6 +44,11 @@ mtnk:
 	turret:
 		Start: 32
 		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: *
+	icon: mtnkicnh
+		Start: 0
 
 ltnk:
 	idle:
@@ -95,6 +57,11 @@ ltnk:
 	turret:
 		Start: 32
 		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: *
+	icon: ltnkicnh
+		Start: 0
 
 htnk:
 	idle:
@@ -103,6 +70,11 @@ htnk:
 	turret:
 		Start: 32
 		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: *
+	icon: htnkicnh
+		Start: 0
 
 jeep:
 	idle:
@@ -115,20 +87,54 @@ jeep:
 		Start: 0
 		Length: 6
 		Facings: 8
+	icon: jeepicnh
+		Start: 0
 
 bike:
 	idle:
 		Start: 0
 		Facings: 32
+	icon: bikeicnh
+		Start: 0
 
 ftnk:
 	idle:
 		Start: 0
 		Facings: 32
-	muzzle: flame
+	muzzle0: flame-n
 		Start: 0
-		Length: 13
-		Facings: 8
+		Length: *
+		Offset: 3,8
+	muzzle1: flame-nw
+		Start: 0
+		Length: *
+		Offset: 4,6
+	muzzle2: flame-w
+		Start: 0
+		Length: *
+		Offset: 7,2
+	muzzle3: flame-sw
+		Start: 0
+		Length: *
+		Offset: 3,-2
+	muzzle4: flame-s
+		Start: 0
+		Length: *
+		Offset: 1,-2
+	muzzle5: flame-se
+		Start: 0
+		Length: *
+		Offset: -3,-1
+	muzzle6: flame-e
+		Start: 0
+		Length: *
+		Offset: -6,2
+	muzzle7: flame-ne
+		Start: 0
+		Length: *
+		Offset: -5,6
+	icon: ftnkicnh
+		Start: 0
 
 mhq:
 	idle:
@@ -137,6 +143,8 @@ mhq:
 	spinner:
 		Start: 32
 		Length: 32
+	icon: mhqicnh
+		Start: 0
 
 msam:
 	idle:
@@ -151,6 +159,8 @@ msam:
 	turret-3:
 		Start: 64
 		Facings: 32
+	icon: msamicnh
+		Start: 0
 
 mlrs:
 	idle:
@@ -165,16 +175,25 @@ mlrs:
 	turret-3:
 		Start: 96
 		Facings: 32
+	icon: mlrsicnh
+		Start: 0
 
 stnk:
 	idle:
 		Start: 0
 		Facings: 32
+	icon: stnkicnh
+		Start: 0
 
 arty:
 	idle:
 		Start: 0
 		Facings: 32
+	muzzle: gunfire2
+		Start: 0
+		Length: *
+	icon: artyicnh
+		Start: 0
 
 apc:
 	idle:
@@ -185,16 +204,13 @@ apc:
 		Facings: 32
 	muzzle: apcmuz
 		Start: 0
-		Length: 6
+		Length: 3
+		Stride: 6
 		Facings: 8
 	close:
 		Start: 32
 		Length: 3
 	unload:
 		Start: 32
-
-a10:
-	idle:
+	icon: apcicnh
 		Start: 0
-		Facings: 32
-

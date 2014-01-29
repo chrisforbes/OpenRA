@@ -31,14 +31,14 @@ namespace OpenRA.Mods.RA.Activities
 				var buildings = self.Info.Traits.Get<MinelayerInfo>().RearmBuildings;
 				var rearmTarget = self.World.Actors.Where(a => self.Owner.Stances[a.Owner] == Stance.Ally
 					&& buildings.Contains(a.Info.Name))
-					.ClosestTo( self.CenterLocation );
+					.ClosestTo(self);
 
 				if (rearmTarget == null)
 					return new Wait(20);
 
 				return Util.SequenceActivities(
-					new MoveAdjacentTo(Target.FromActor(rearmTarget)),
-					mobile.MoveTo(rearmTarget.CenterLocation.ToCPos(), rearmTarget),
+					new MoveAdjacentTo(self, Target.FromActor(rearmTarget)),
+					mobile.MoveTo(rearmTarget.CenterPosition.ToCPos(), rearmTarget),
 					new Rearm(self),
 					new Repair(rearmTarget),
 					this );
@@ -60,7 +60,7 @@ namespace OpenRA.Mods.RA.Activities
 						return Util.SequenceActivities( mobile.MoveTo(p, 0), this );
 				}
 
-			// todo: return somewhere likely to be safe (near fix) so we're not sitting out in the minefield.
+			// TODO: return somewhere likely to be safe (near fix) so we're not sitting out in the minefield.
 
 			return new Wait(20);	// nothing to do here
 		}
@@ -74,7 +74,8 @@ namespace OpenRA.Mods.RA.Activities
 		void LayMine(Actor self)
 		{
 			var limitedAmmo = self.TraitOrDefault<LimitedAmmo>();
-			if (limitedAmmo != null) limitedAmmo.Attacking(self, Target.FromCell(self.Location));
+			if (limitedAmmo != null)
+				limitedAmmo.TakeAmmo();
 
 			self.World.AddFrameEndTask(
 				w => w.CreateActor(self.Info.Traits.Get<MinelayerInfo>().Mine, new TypeDictionary

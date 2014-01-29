@@ -8,7 +8,6 @@
  */
 #endregion
 
-using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
 using OpenRA.Mods.RA.Move;
 
@@ -18,8 +17,7 @@ namespace OpenRA.Mods.RA.Activities
 	public class Attack : Activity
 	{
 		protected Target Target;
-		ITargetable targetable;
-		int Range;
+		WRange Range;
 		bool AllowMovement;
 
 		int nextPathTime;
@@ -27,41 +25,38 @@ namespace OpenRA.Mods.RA.Activities
 		const int delayBetweenPathingAttempts = 20;
 		const int delaySpread = 5;
 
-		public Attack(Target target, int range, bool allowMovement)
+		public Attack(Target target, WRange range)
+			: this(target, range, true) {}
+
+		public Attack(Target target, WRange range, bool allowMovement)
 		{
 			Target = target;
-			if (target.IsActor)
-				targetable = target.Actor.TraitOrDefault<ITargetable>();
-
 			Range = range;
 			AllowMovement = allowMovement;
 		}
 
-		public Attack(Target target, int range) : this(target, range, true) {}
-
-		public override Activity Tick( Actor self )
+		public override Activity Tick(Actor self)
 		{
 			var attack = self.Trait<AttackBase>();
-
-			var ret = InnerTick( self, attack );
-			attack.IsAttacking = ( ret == this );
+			var ret = InnerTick(self, attack);
+			attack.IsAttacking = (ret == this);
 			return ret;
 		}
 
-		protected virtual Activity InnerTick( Actor self, AttackBase attack )
+		protected virtual Activity InnerTick(Actor self, AttackBase attack)
 		{
-			if (IsCanceled) return NextActivity;
-
-			if (!Target.IsValid)
-				return NextActivity;
-				
-			if (!self.Owner.HasFogVisibility() && Target.Actor != null && Target.Actor.HasTrait<Mobile>() && !self.Owner.Shroud.IsTargetable(Target.Actor))
+			if (IsCanceled)
 				return NextActivity;
 
-			if (targetable != null && !targetable.TargetableBy(Target.Actor, self))
+			var type = Target.Type;
+			if (!Target.IsValidFor(self) || type == TargetType.FrozenActor)
 				return NextActivity;
 
-			if (!Combat.IsInRange(self.CenterLocation, Range, Target))
+			// TODO: This is horrible, and probably wrong. Work out what it is trying to solve, then redo it properly.
+			if (type == TargetType.Actor && !self.Owner.HasFogVisibility() && Target.Actor.HasTrait<Mobile>() && !self.Owner.Shroud.IsTargetable(Target.Actor))
+				return NextActivity;
+
+			if (!Target.IsInRange(self.CenterPosition, Range))
 			{
 				if (--nextPathTime > 0)
 					return this;
@@ -72,10 +67,10 @@ namespace OpenRA.Mods.RA.Activities
 				return (AllowMovement) ? Util.SequenceActivities(self.Trait<Mobile>().MoveWithinRange(Target, Range), this) : NextActivity;
 			}
 
-			var desiredFacing = Util.GetFacing(Target.CenterLocation - self.CenterLocation, 0);
+			var desiredFacing = Util.GetFacing(Target.CenterPosition - self.CenterPosition, 0);
 			var facing = self.Trait<IFacing>();
 			if (facing.Facing != desiredFacing)
-				return Util.SequenceActivities( new Turn( desiredFacing ), this );
+				return Util.SequenceActivities(new Turn(desiredFacing), this);
 
 			attack.DoAttack(self, Target);
 			return this;

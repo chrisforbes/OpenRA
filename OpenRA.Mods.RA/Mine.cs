@@ -10,24 +10,22 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Move;
 using OpenRA.Traits;
 using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
-	class MineInfo : ITraitInfo
+	class MineInfo : ITraitInfo, IOccupySpaceInfo
 	{
 		public readonly string[] CrushClasses = { };
-		[WeaponReference] public readonly string Weapon = "ATMine";
 		public readonly bool AvoidFriendly = true;
 		public readonly string[] DetonateClasses = { };
 
 		public object Create(ActorInitializer init) { return new Mine(init, this); }
 	}
 
-	class Mine : ICrushable, IOccupySpace, ISync
+	class Mine : ICrushable, IOccupySpace, ISync, INotifyAddedToWorld, INotifyRemovedFromWorld
 	{
 		readonly Actor self;
 		readonly MineInfo info;
@@ -44,15 +42,14 @@ namespace OpenRA.Mods.RA
 
 		public void OnCrush(Actor crusher)
 		{
-			if (crusher.HasTrait<MineImmune>() || self.Owner.Stances[crusher.Owner] == Stance.Ally)
+			if (crusher.HasTrait<MineImmune>() || (self.Owner.Stances[crusher.Owner] == Stance.Ally && info.AvoidFriendly))
 				return;
 
 			var mobile = crusher.TraitOrDefault<Mobile>();
 			if (mobile != null && !info.DetonateClasses.Intersect(mobile.Info.Crushes).Any())
 				return;
 
-			Combat.DoExplosion(self, info.Weapon, crusher.CenterLocation, 0);
-			self.QueueActivity(new RemoveSelf());
+			self.Kill(crusher);
 		}
 
 		public bool CrushableBy(string[] crushClasses, Player owner)
@@ -63,7 +60,21 @@ namespace OpenRA.Mods.RA
 		public CPos TopLeft { get { return location; } }
 
 		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { yield return Pair.New(TopLeft, SubCell.FullCell); }
-		public PPos PxPosition { get { return Util.CenterOfCell( location ); } }
+		public WPos CenterPosition { get { return location.CenterPosition; } }
+
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
+		}
+
+		public void RemovedFromWorld(Actor self)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
+		}
 	}
 
 	/* tag trait for stuff that shouldnt trigger mines */

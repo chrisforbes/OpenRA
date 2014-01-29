@@ -11,23 +11,27 @@
 using System.Collections.Generic;
 using System.Drawing;
 using OpenRA.Effects;
+using OpenRA.FileFormats;
 using OpenRA.GameRules;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
+	[Desc("Not a sprite, but an engine effect.")]
 	class LaserZapInfo : IProjectileInfo
 	{
-		public readonly int BeamRadius = 1;
+		public readonly int BeamWidth = 2;
 		public readonly int BeamDuration = 10;
 		public readonly bool UsePlayerColor = false;
+		[Desc("Laser color in (A,)R,G,B.")]
 		public readonly Color Color = Color.Red;
-		public readonly string Explosion = "laserfire";
+		[Desc("Impact animation. Requires a regular animation with idle: sequence instead of explosion special case.")]
+		public readonly string HitAnim = null;
+		public readonly string HitAnimPalette = "effect";
 
 		public IEffect Create(ProjectileArgs args)
 		{
-			var c = UsePlayerColor ? args.firedBy.Owner.ColorRamp.GetColor(0) : Color;
+			var c = UsePlayerColor ? args.SourceActor.Owner.Color.RGB : Color;
 			return new LaserZap(args, this, c);
 		}
 	}
@@ -39,57 +43,54 @@ namespace OpenRA.Mods.RA.Effects
 		int ticks = 0;
 		Color color;
 		bool doneDamage;
-		Animation explosion;
+		bool animationComplete;
+		Animation hitanim;
+		WPos target;
 
 		public LaserZap(ProjectileArgs args, LaserZapInfo info, Color color)
 		{
 			this.args = args;
 			this.info = info;
 			this.color = color;
+			this.target = args.PassiveTarget;
 
-			if (info.Explosion != null)
-				this.explosion = new Animation(info.Explosion);
+			if (info.HitAnim != null)
+				this.hitanim = new Animation(info.HitAnim);
 		}
 
 		public void Tick(World world)
 		{
 			// Beam tracks target
-			if (args.target.IsValid)
-				args.dest = args.target.CenterLocation;
+			if (args.GuidedTarget.IsValidFor(args.SourceActor))
+				target = args.GuidedTarget.CenterPosition;
 
 			if (!doneDamage)
 			{
-				if (explosion != null)
-					explosion.PlayThen("idle",
-						() => world.AddFrameEndTask(w => w.Remove(this)));
-				Combat.DoImpacts(args);
+				if (hitanim != null)
+					hitanim.PlayThen("idle", () => animationComplete = true);
+
+				Combat.DoImpacts(target, args.SourceActor, args.Weapon, args.FirepowerModifier);
 				doneDamage = true;
 			}
-			++ticks;
 
-			if (explosion != null)
-				explosion.Tick();
-			else
-				if (ticks >= info.BeamDuration)
-					world.AddFrameEndTask(w => w.Remove(this));
+			if (hitanim != null)
+				hitanim.Tick();
+
+			if (++ticks >= info.BeamDuration && animationComplete)
+				world.AddFrameEndTask(w => w.Remove(this));
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			if (explosion != null)
-				yield return new Renderable(explosion.Image, args.dest.ToFloat2() - .5f * explosion.Image.size,
-				                            wr.Palette("effect"), (int)args.dest.Y);
+			if (ticks < info.BeamDuration)
+			{
+				var rc = Color.FromArgb((info.BeamDuration - ticks) * 255 / info.BeamDuration, color);
+				yield return new BeamRenderable(args.Source, 0, target - args.Source, info.BeamWidth, rc);
+			}
 
-			if (ticks >= info.BeamDuration)
-				yield break;
-
-			var rc = Color.FromArgb((info.BeamDuration - ticks)*255/info.BeamDuration, color);
-
-			var wlr = Game.Renderer.WorldLineRenderer;
-			wlr.LineWidth = info.BeamRadius * 2;
-			wlr.DrawLine(args.src.ToFloat2(), args.dest.ToFloat2(), rc, rc);
-			wlr.Flush();
-			wlr.LineWidth = 1f;
+			if (hitanim != null)
+				foreach (var r in hitanim.Render(target, wr.Palette(info.HitAnimPalette)))
+					yield return r;
 		}
 	}
 }

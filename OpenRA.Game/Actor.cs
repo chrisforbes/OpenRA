@@ -24,44 +24,43 @@ namespace OpenRA
 
 		public readonly World World;
 		public readonly uint ActorID;
+		public Lazy<Rectangle> Bounds;
 
 		Lazy<IOccupySpace> occupySpace;
-		IHasLocation HasLocation;
-		Lazy<IMove> Move;
-		public Cached<Rectangle> Bounds;
-		public Cached<Rectangle> ExtendedBounds;
+		Lazy<IFacing> facing;
+		Lazy<Health> health;
 
 		public IOccupySpace OccupiesSpace { get { return occupySpace.Value; } }
 
 		public CPos Location { get { return occupySpace.Value.TopLeft; } }
+		public WPos CenterPosition { get { return occupySpace.Value.CenterPosition; } }
 
-		public PPos CenterLocation
+		public WRot Orientation
 		{
 			get
 			{
-				if (HasLocation == null)
-					HasLocation = Trait<IHasLocation>();
-				return HasLocation.PxPosition;
+				// TODO: Support non-zero pitch/roll in IFacing (IOrientation?)
+				var facingValue = facing.Value != null ? facing.Value.Facing : 0;
+				return new WRot(WAngle.Zero, WAngle.Zero, WAngle.FromFacing(facingValue));
 			}
 		}
-		
-		public Shroud.ActorVisibility Sight;
 
 		[Sync] public Player Owner;
 
 		Activity currentActivity;
 		public Group Group;
+		public int Generation;
 
-		internal Actor(World world, string name, TypeDictionary initDict )
+		internal Actor(World world, string name, TypeDictionary initDict)
 		{
-			var init = new ActorInitializer( this, initDict );
+			var init = new ActorInitializer(this, initDict);
 
 			World = world;
 			ActorID = world.NextAID();
-			if( initDict.Contains<OwnerInit>() )
-				Owner = init.Get<OwnerInit,Player>();
+			if (initDict.Contains<OwnerInit>())
+				Owner = init.Get<OwnerInit, Player>();
 
-			occupySpace = Lazy.New( () => TraitOrDefault<IOccupySpace>() );
+			occupySpace = Lazy.New(() => TraitOrDefault<IOccupySpace>());
 
 			if (name != null)
 			{
@@ -73,44 +72,29 @@ namespace OpenRA
 					AddTrait(trait.Create(init));
 			}
 
-			Move = Lazy.New(() => TraitOrDefault<IMove>());
+			facing = Lazy.New(() => TraitOrDefault<IFacing>());
+			health = Lazy.New(() => TraitOrDefault<Health>());
 
-			Size = Lazy.New(() =>
+			applyIRender = (x, wr) => x.Render(this, wr);
+			applyRenderModifier = (m, p, wr) => p.ModifyRender(this, wr, m);
+
+			Bounds = Lazy.New(() =>
 			{
 				var si = Info.Traits.GetOrDefault<SelectableInfo>();
-				if (si != null && si.Bounds != null)
-					return new int2(si.Bounds[0], si.Bounds[1]);
+				var size = (si != null && si.Bounds != null) ? new int2(si.Bounds[0], si.Bounds[1]) :
+				    TraitsImplementing<IAutoSelectionSize>().Select(x => x.SelectionSize(this)).FirstOrDefault();
 
-				return TraitsImplementing<IAutoSelectionSize>().Select(x => x.SelectionSize(this)).FirstOrDefault();
+				var offset = -size / 2;
+				if (si != null && si.Bounds != null && si.Bounds.Length > 2)
+					offset += new int2(si.Bounds[2], si.Bounds[3]);
+
+				return new Rectangle(offset.X, offset.Y, size.X, size.Y);
 			});
-
-			if (this.HasTrait<RevealsShroud>())
-			{
-				Sight = new Shroud.ActorVisibility
-				{
-					range = this.Trait<RevealsShroud>().RevealRange,
-					vis = Shroud.GetVisOrigins(this).ToArray()
-				};
-			}
-
-			ApplyIRender = (x, wr) => x.Render(this, wr);
-			ApplyRenderModifier = (m, p, wr) => p.ModifyRender(this, wr, m);
-
-			Bounds = Cached.New(() => CalculateBounds(false));
-			ExtendedBounds = Cached.New(() => CalculateBounds(true));
 		}
 
 		public void Tick()
 		{
-			Bounds.Invalidate();
-			ExtendedBounds.Invalidate();
-
-			currentActivity = Traits.Util.RunActivity( this, currentActivity );
-		}
-		
-		public void UpdateSight()
-		{
-			Sight.vis = Shroud.GetVisOrigins(this).ToArray();
+			currentActivity = Traits.Util.RunActivity(this, currentActivity);
 		}
 
 		public bool IsIdle
@@ -118,66 +102,37 @@ namespace OpenRA
 			get { return currentActivity == null; }
 		}
 
-		OpenRA.FileFormats.Lazy<int2> Size;
-
 		// note: these delegates are cached to avoid massive allocation.
-		Func<IRender, WorldRenderer, IEnumerable<Renderable>> ApplyIRender;
-		Func<IEnumerable<Renderable>, IRenderModifier, WorldRenderer, IEnumerable<Renderable>> ApplyRenderModifier;
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		Func<IRender, WorldRenderer, IEnumerable<IRenderable>> applyIRender;
+		Func<IEnumerable<IRenderable>, IRenderModifier, WorldRenderer, IEnumerable<IRenderable>> applyRenderModifier;
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
 			var mods = TraitsImplementing<IRenderModifier>();
-			var sprites = TraitsImplementing<IRender>().SelectMany(x => ApplyIRender(x, wr));
-			return mods.Aggregate(sprites, (m,p) => ApplyRenderModifier(m,p,wr));
-		}
-
-		// When useAltitude = true, the bounding box is extended
-		// vertically to altitude = 0 to support FindUnitsInCircle queries
-		// When false, the bounding box is given for the actor
-		// at its current altitude
-		Rectangle CalculateBounds(bool useAltitude)
-		{
-			var size = (PVecInt)(Size.Value);
-			var loc = CenterLocation - size / 2;
-
-			var si = Info.Traits.GetOrDefault<SelectableInfo>();
-			if (si != null && si.Bounds != null && si.Bounds.Length > 2)
-			{
-				loc += new PVecInt(si.Bounds[2], si.Bounds[3]);
-			}
-
-			var move = Move.Value;
-			if (move != null)
-			{
-				loc -= new PVecInt(0, move.Altitude);
-
-				if (useAltitude)
-					size = new PVecInt(size.X, size.Y + move.Altitude);
-			}
-
-			return new Rectangle(loc.X, loc.Y, size.X, size.Y);
+			var sprites = TraitsImplementing<IRender>().SelectMany(x => applyIRender(x, wr));
+			return mods.Aggregate(sprites, (m, p) => applyRenderModifier(m, p, wr));
 		}
 
 		public bool IsInWorld { get; internal set; }
 
-		public void QueueActivity( bool queued, Activity nextActivity )
+		public void QueueActivity(bool queued, Activity nextActivity)
 		{
-			if( !queued )
+			if (!queued)
 				CancelActivity();
-			QueueActivity( nextActivity );
+			QueueActivity(nextActivity);
 		}
 
-		public void QueueActivity( Activity nextActivity )
+		public void QueueActivity(Activity nextActivity)
 		{
-			if( currentActivity == null )
+			if (currentActivity == null)
 				currentActivity = nextActivity;
 			else
-				currentActivity.Queue( nextActivity );
+				currentActivity.Queue(nextActivity);
 		}
 
 		public void CancelActivity()
 		{
-			if( currentActivity != null )
-				currentActivity.Cancel( this );
+			if (currentActivity != null)
+				currentActivity.Cancel(this);
 		}
 
 		public Activity GetCurrentActivity()
@@ -190,57 +145,57 @@ namespace OpenRA
 			return (int)ActorID;
 		}
 
-		public override bool Equals( object obj )
+		public override bool Equals(object obj)
 		{
 			var o = obj as Actor;
-			return ( o != null && o.ActorID == ActorID );
+			return o != null && o.ActorID == ActorID;
 		}
 
 		public override string ToString()
 		{
-			return "{0} {1}{2}".F( Info.Name, ActorID, IsInWorld ? "" : " (not in world)" );
+			return "{0} {1}{2}".F(Info.Name, ActorID, IsInWorld ? "" : " (not in world)");
 		}
 
 		public T Trait<T>()
 		{
-			return World.traitDict.Get<T>( this );
+			return World.traitDict.Get<T>(this);
 		}
 
 		public T TraitOrDefault<T>()
 		{
-			return World.traitDict.GetOrDefault<T>( this );
+			return World.traitDict.GetOrDefault<T>(this);
 		}
 
 		public IEnumerable<T> TraitsImplementing<T>()
 		{
-			return World.traitDict.WithInterface<T>( this );
+			return World.traitDict.WithInterface<T>(this);
 		}
 
 		public bool HasTrait<T>()
 		{
-			return World.traitDict.Contains<T>( this );
+			return World.traitDict.Contains<T>(this);
 		}
 
-		public void AddTrait( object trait )
+		public void AddTrait(object trait)
 		{
-			World.traitDict.AddTrait( this, trait );
+			World.traitDict.AddTrait(this, trait);
 		}
 
 		public bool Destroyed { get; private set; }
 
 		public void Destroy()
 		{
-			World.AddFrameEndTask( w =>
+			World.AddFrameEndTask(w =>
 			{
 				if (Destroyed) return;
 
-				World.Remove( this );
-				World.traitDict.RemoveActor( this );
+				World.Remove(this);
+				World.traitDict.RemoveActor(this);
 				Destroyed = true;
-			} );
+			});
 		}
 
-		// todo: move elsewhere.
+		// TODO: move elsewhere.
 		public void ChangeOwner(Player newOwner)
 		{
 			World.AddFrameEndTask(w =>
@@ -250,11 +205,28 @@ namespace OpenRA
 				// momentarily remove from world so the ownership queries don't get confused
 				w.Remove(this);
 				Owner = newOwner;
+				Generation++;
 				w.Add(this);
 
 				foreach (var t in this.TraitsImplementing<INotifyOwnerChanged>())
 					t.OnOwnerChanged(this, oldOwner, newOwner);
 			});
+		}
+
+		public bool IsDead()
+		{
+			if (Destroyed)
+				return true;
+
+			return (health.Value == null) ? false : health.Value.IsDead;
+		}
+
+		public void Kill(Actor attacker)
+		{
+			if (health.Value == null)
+				return;
+
+			health.Value.InflictDamage(this, attacker, health.Value.MaxHP, null, true);
 		}
 	}
 }

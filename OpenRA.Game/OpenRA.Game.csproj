@@ -60,15 +60,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-    </Reference>
+    <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Tao.FreeType, Version=2.3.5.0, Culture=neutral, PublicKeyToken=e499629dc69cd531">
+    <Reference Include="SharpFont">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\thirdparty\Tao\Tao.FreeType.dll</HintPath>
+      <HintPath>..\thirdparty\SharpFont.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Nat, Version=1.1.0.0, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+      <Package>mono.nat</Package>
+      <HintPath>..\thirdparty\Mono.Nat.dll</HintPath>
     </Reference>
     <Reference Include="Tao.OpenAl, Version=1.1.0.1, Culture=neutral, PublicKeyToken=a7579dda88828311">
       <SpecificVersion>False</SpecificVersion>
@@ -78,14 +83,8 @@
   <ItemGroup>
     <Compile Include="Actor.cs" />
     <Compile Include="ActorInitializer.cs" />
-    <Compile Include="ActorMap.cs" />
     <Compile Include="ActorReference.cs" />
     <Compile Include="Graphics\QuadRenderer.cs" />
-    <Compile Include="PSubVec.cs" />
-    <Compile Include="PSubPos.cs" />
-    <Compile Include="PVecInt.cs" />
-    <Compile Include="PVecFloat.cs" />
-    <Compile Include="PPos.cs" />
     <Compile Include="Download.cs" />
     <Compile Include="Effects\DelayedAction.cs" />
     <Compile Include="Effects\FlashTarget.cs" />
@@ -111,7 +110,6 @@
     <Compile Include="Graphics\SequenceProvider.cs" />
     <Compile Include="Graphics\Sheet.cs" />
     <Compile Include="Graphics\SheetBuilder.cs" />
-    <Compile Include="Graphics\ShroudRenderer.cs" />
     <Compile Include="Graphics\Sprite.cs" />
     <Compile Include="Graphics\SpriteFont.cs" />
     <Compile Include="Graphics\SpriteLoader.cs" />
@@ -122,8 +120,6 @@
     <Compile Include="Graphics\WorldRenderer.cs" />
     <Compile Include="Group.cs" />
     <Compile Include="InputHandler.cs" />
-    <Compile Include="CVec.cs" />
-    <Compile Include="CPos.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="ModData.cs" />
     <Compile Include="Network\Connection.cs" />
@@ -144,7 +140,6 @@
     <Compile Include="Orders\IOrderGenerator.cs" />
     <Compile Include="Orders\UnitOrderGenerator.cs" />
     <Compile Include="Player.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Selection.cs" />
     <Compile Include="Server\Connection.cs" />
     <Compile Include="Server\Exts.cs" />
@@ -152,9 +147,9 @@
     <Compile Include="Server\Server.cs" />
     <Compile Include="Server\ServerOrder.cs" />
     <Compile Include="Server\TraitInterfaces.cs" />
-    <Compile Include="Server\UPnP.cs" />
     <Compile Include="Sound.cs" />
     <Compile Include="Support\Arguments.cs" />
+    <Compile Include="Support\FatalErrorDialog.cs" />
     <Compile Include="Support\PerfHistory.cs" />
     <Compile Include="Support\Program.cs" />
     <Compile Include="Sync.cs" />
@@ -167,6 +162,7 @@
     <Compile Include="Traits\EditorTilesetFilter.cs" />
     <Compile Include="Traits\Health.cs" />
     <Compile Include="Traits\LintAttributes.cs" />
+    <Compile Include="Traits\RejectsOrders.cs" />
     <Compile Include="Traits\Player\DeveloperMode.cs" />
     <Compile Include="Traits\Player\PlayerResources.cs" />
     <Compile Include="Traits\Render\RenderSimple.cs" />
@@ -179,17 +175,13 @@
     <Compile Include="Traits\ValidateOrder.cs" />
     <Compile Include="Traits\Waypoint.cs" />
     <Compile Include="Traits\World\Country.cs" />
-    <Compile Include="Traits\World\Fog.cs" />
-    <Compile Include="Traits\World\PlayerColorPalette.cs" />
     <Compile Include="Traits\World\ResourceLayer.cs" />
     <Compile Include="Traits\World\ResourceType.cs" />
     <Compile Include="Traits\World\ScreenShaker.cs" />
     <Compile Include="Traits\World\Shroud.cs" />
-    <Compile Include="Traits\World\SpatialBins.cs" />
     <Compile Include="Widgets\BackgroundWidget.cs" />
     <Compile Include="Widgets\ButtonWidget.cs" />
     <Compile Include="Widgets\ChatDisplayWidget.cs" />
-    <Compile Include="Widgets\ChatEntryWidget.cs" />
     <Compile Include="Widgets\CheckboxWidget.cs" />
     <Compile Include="Widgets\ChromeMetrics.cs" />
     <Compile Include="Widgets\ColorBlockWidget.cs" />
@@ -209,7 +201,6 @@
     <Compile Include="Widgets\SliderWidget.cs" />
     <Compile Include="Widgets\TextFieldWidget.cs" />
     <Compile Include="Widgets\TimerWidget.cs" />
-    <Compile Include="Widgets\ViewportScrollControllerWidget.cs" />
     <Compile Include="Widgets\VqaPlayerWidget.cs" />
     <Compile Include="Widgets\Widget.cs" />
     <Compile Include="Widgets\WidgetLoader.cs" />
@@ -218,6 +209,31 @@
     <Compile Include="World.cs" />
     <Compile Include="WorldUtils.cs" />
     <Compile Include="Network\ReplayRecorderConnection.cs" />
+    <Compile Include="Widgets\TooltipContainerWidget.cs" />
+    <Compile Include="Traits\DebugPauseState.cs" />
+    <Compile Include="Network\UPnP.cs" />
+    <Compile Include="Widgets\ClientTooltipRegionWidget.cs" />
+    <Compile Include="Graphics\Renderable.cs" />
+    <Compile Include="Traits\Render\RenderSprites.cs" />
+    <Compile Include="Graphics\Voxel.cs" />
+    <Compile Include="Graphics\VoxelRenderer.cs" />
+    <Compile Include="Graphics\VoxelLoader.cs" />
+    <Compile Include="Graphics\VoxelProvider.cs" />
+    <Compile Include="Traits\BodyOrientation.cs" />
+    <Compile Include="Graphics\VoxelAnimation.cs" />
+    <Compile Include="Graphics\VoxelRenderable.cs" />
+    <Compile Include="Graphics\TextRenderable.cs" />
+    <Compile Include="Graphics\BeamRenderable.cs" />
+    <Compile Include="Graphics\ContrailRenderable.cs" />
+    <Compile Include="Widgets\ViewportControllerWidget.cs" />
+    <Compile Include="Traits\Player\FrozenActorLayer.cs" />
+    <Compile Include="Graphics\Theater.cs" />
+    <Compile Include="Traits\Player\PlayerColorPalette.cs" />
+    <Compile Include="Traits\Player\PlayerHighlightPalette.cs" />
+    <Compile Include="Traits\World\ScreenMap.cs" />
+    <Compile Include="Traits\World\ActorMap.cs" />
+    <Compile Include="Widgets\HotkeyEntryWidget.cs" />
+    <Compile Include="Effects\MoveFlash.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">

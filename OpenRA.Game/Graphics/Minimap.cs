@@ -13,7 +13,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using OpenRA.FileFormats;
 using OpenRA.Traits;
 
 namespace OpenRA.Graphics
@@ -79,11 +78,11 @@ namespace OpenRA.Graphics
 					{
 						var mapX = x + map.Bounds.Left;
 						var mapY = y + map.Bounds.Top;
-						if (map.MapResources.Value[mapX, mapY].type == 0)
+						if (map.MapResources.Value[mapX, mapY].Type == 0)
 							continue;
 
 						var res = Rules.Info["world"].Traits.WithInterface<ResourceTypeInfo>()
-								.Where(t => t.ResourceType == map.MapResources.Value[mapX, mapY].type)
+								.Where(t => t.ResourceType == map.MapResources.Value[mapX, mapY].Type)
 								.Select(t => t.TerrainType).FirstOrDefault();
 						if (res == null)
 							continue;
@@ -114,7 +113,7 @@ namespace OpenRA.Graphics
 					{
 						var mapX = x + map.Bounds.Left;
 						var mapY = y + map.Bounds.Top;
-						var custom = map.CustomTerrain[mapX,mapY];
+						var custom = map.CustomTerrain[mapX, mapY];
 						if (custom == null)
 							continue;
 						*(c + (y * bitmapData.Stride >> 2) + x) = world.TileSet.Terrain[custom].Color.ToArgb();
@@ -139,7 +138,7 @@ namespace OpenRA.Graphics
 
 				foreach (var t in world.ActorsWithTrait<IRadarSignature>())
 				{
-					if (!world.RenderedShroud.IsVisible(t.Actor))
+					if (world.FogObscures(t.Actor))
 						continue;
 
 					var color = t.Trait.RadarSignatureColor(t.Actor);
@@ -158,7 +157,7 @@ namespace OpenRA.Graphics
 			var map = world.Map;
 			var size = Exts.NextPowerOf2(Math.Max(map.Bounds.Width, map.Bounds.Height));
 			var bitmap = new Bitmap(size, size);
-			if (world.RenderedShroud.Disabled)
+			if (world.RenderPlayer == null)
 				return bitmap;
 
 			var bitmapData = bitmap.LockBits(bitmap.Bounds(),
@@ -174,11 +173,10 @@ namespace OpenRA.Graphics
 				for (var x = 0; x < map.Bounds.Width; x++)
 					for (var y = 0; y < map.Bounds.Height; y++)
 					{
-						var mapX = x + map.Bounds.Left;
-						var mapY = y + map.Bounds.Top;
-						if (!world.RenderedShroud.IsExplored(mapX, mapY))
+						var p = new CPos(x + map.Bounds.Left, y + map.Bounds.Top);
+						if (world.ShroudObscures(p))
 							*(c + (y * bitmapData.Stride >> 2) + x) = shroud;
-						else if (!world.RenderedShroud.IsVisible(mapX,mapY))
+						else if (world.FogObscures(p))
 							*(c + (y * bitmapData.Stride >> 2) + x) = fog;
 					}
 			}
@@ -187,9 +185,9 @@ namespace OpenRA.Graphics
 			return bitmap;
 		}
 
-		public static Bitmap RenderMapPreview(Map map)
+		public static Bitmap RenderMapPreview(Map map, bool actualSize)
 		{
-			Bitmap terrain = TerrainBitmap(map);
+			Bitmap terrain = TerrainBitmap(map, actualSize);
 			return AddStaticResources(map, terrain);
 		}
 	}

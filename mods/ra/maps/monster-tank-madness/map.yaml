@@ -1,6 +1,6 @@
 Selectable: True
 
-MapFormat: 5
+MapFormat: 6
 
 RequiresMod: ra
 
@@ -20,28 +20,38 @@ UseAsShellmap: False
 
 Type: Campaign
 
+Options:
+	Crates: False
+	Fog: True
+	Shroud: True
+	AllyBuildRadius: False
+	FragileAlliances: False
+	StartingCash: 5000
+	ConfigurableStartingUnits: False
+
 Players:
 	PlayerReference@Greece:
 		Name: Greece
 		Playable: True
 		AllowBots: False
+		Required: True
 		LockRace: True
 		Race: allies
 		LockColor: True
-		ColorRamp: 161,134,200,30
+		ColorRamp: 161,134,200
 		LockSpawn: True
 		LockTeam: True
 		Enemies: BadGuy,USSR,Ukraine,Turkey
 	PlayerReference@BadGuy:
 		Name: BadGuy
 		Race: soviet
-		ColorRamp: 3,255,127,28
+		ColorRamp: 3,255,127
 		Allies: USSR
 		Enemies: Greece,Ukraine,Turkey
 	PlayerReference@USSR:
 		Name: USSR
 		Race: soviet
-		ColorRamp: 3,255,127,28
+		ColorRamp: 3,255,127
 		Allies: BadGuy,Ukraine
 		Enemies: Greece,Turkey
 	PlayerReference@Neutral:
@@ -53,13 +63,13 @@ Players:
 	PlayerReference@Ukraine:
 		Name: Ukraine
 		Race: soviet
-		ColorRamp: 32,255,202,28
+		ColorRamp: 32,255,202
 		Allies: BadGuy,USSR
 		Enemies: Greece,Turkey
 	PlayerReference@Turkey:
 		Name: Turkey
 		Race: allies
-		ColorRamp: 14,123,167,28
+		ColorRamp: 14,123,167
 		Enemies: Greece,BadGuy,USSR,Ukraine,Neutral
 	PlayerReference@Creeps:
 		Name: Creeps
@@ -2522,6 +2532,12 @@ Actors:
 	waypoint99: waypoint
 		Location: 68,63
 		Owner: Neutral
+	Actor1000: camera.large
+		Location: 1,1
+		Owner: USSR
+	Actor1001: camera.large
+		Location: 1,1
+		Owner: Turkey
 
 Smudges:
 
@@ -2529,7 +2545,7 @@ Rules:
 	Player:
 		-ConquestVictoryConditions:
 	World:
-		-CrateDrop:
+		-CrateSpawner:
 		-SpawnMPUnits:
 		-MPStartLocations:
 		MonsterTankMadnessScript:
@@ -2562,21 +2578,26 @@ Rules:
 		Armor:
 			Type: Concrete
 		Mobile:
-			Speed: 3
+			Speed: 42
 			Crushes: wall, atmine, crate, infantry
 		RevealsShroud:
 			Range: 6
 		Turreted:
 			ROT: 1
+		Armament@PRIMARY:
+			Weapon: SuperTankPrimary
+			LocalOffset: 213,-171,0, 213,171,0
+			Recoil: 171
+			RecoilRecovery: 30
+		Armament@SECONDARY:
+			Weapon: MammothTusk
+			LocalOffset: -85,-299,0, -85,299,0
+			LocalYaw: -100,100
+			Recoil: 43
 		AttackTurreted:
-			PrimaryWeapon: SuperTankPrimary
-			SecondaryWeapon: MammothTusk
-			PrimaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-			SecondaryLocalOffset: -7,2,0,0,25, 7,2,0,0,-25
-			PrimaryRecoil: 4
-			PrimaryRecoilRecovery: 0.7
-		RenderUnitTurreted:
+		RenderUnit:
 			Image: 4TNK
+		WithTurret:
 		AutoTarget:
 		Explodes:
 			Weapon: MiniNuke
@@ -2598,12 +2619,11 @@ Rules:
 			Image: 4TNK
 		ThrowsParticle@turret:
 			Anim: turret
-			Spread: 3,3
-			Speed: 6
-			AnimKey: turret
 		Health:
 			HP: 2000
 	SILO:
+		Infiltratable:
+			Type: Cash
 		InfiltrateForCash:
 	DOME.NoInfiltrate:
 		Inherits: DOME
@@ -2709,8 +2729,17 @@ Rules:
 	GAP:
 		Buildable:
 			Owner: None
+	MRJ:
+		Buildable:
+			Owner: None
+	CAMERA.Large:
+		Inherits: CAMERA
+		RevealsShroud:
+			Range: 1000
 
 Sequences:
+
+VoxelSequences:
 
 Weapons:
 	FireballLauncher:
@@ -2721,14 +2750,14 @@ Weapons:
 			High: True
 	SuperTankPrimary:
 		ROF: 70
-		Range: 4.75
+		Range: 4c768
 		Report: TURRET1
 		Burst: 2
 		Projectile: Bullet
-			Speed: 40
+			Speed: 682
 			Image: 120MM
 		Warhead:
-			Spread: 3
+			Spread: 128
 			Versus:
 				None: 20%
 				Wood: 75%
@@ -2744,3 +2773,5 @@ Weapons:
 Voices:
 
 Notifications:
+
+Translations:
