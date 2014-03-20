@@ -64,7 +64,7 @@ namespace OpenRA.Traits
 			Hash = Sync.hash_player(self.Owner) + self.World.WorldTick * 3;
 		}
 
-		static IEnumerable<CPos> FindVisibleTiles(World world, CPos position, WRange radius)
+		static IEnumerable<CPos> FindVisibleTiles(World world, CPos position, WDist radius)
 		{
 			var r = (radius.Range + 1023) / 1024;
 			var min = (position - new CVec(r, r)).Clamp(world.Map.Bounds);
@@ -81,7 +81,7 @@ namespace OpenRA.Traits
 		void AddVisibility(Actor a)
 		{
 			var rs = a.TraitOrDefault<RevealsShroud>();
-			if (rs == null || !a.Owner.IsAlliedWith(self.Owner) || rs.Range == WRange.Zero)
+			if (rs == null || !a.Owner.IsAlliedWith(self.Owner) || rs.Range == WDist.Zero)
 				return;
 
 			var origins = GetVisOrigins(a);
@@ -137,7 +137,7 @@ namespace OpenRA.Traits
 		void AddShroudGeneration(Actor a)
 		{
 			var cs = a.TraitOrDefault<CreatesShroud>();
-			if (cs == null || a.Owner.IsAlliedWith(self.Owner) || cs.Range == WRange.Zero)
+			if (cs == null || a.Owner.IsAlliedWith(self.Owner) || cs.Range == WDist.Zero)
 				return;
 
 			var shrouded = GetVisOrigins(a).SelectMany(o => FindVisibleTiles(a.World, o, cs.Range))
@@ -196,7 +196,7 @@ namespace OpenRA.Traits
 			return new[] { a.CenterPosition.ToCPos() };
 		}
 
-		public void Explore(World world, CPos center, WRange range)
+		public void Explore(World world, CPos center, WDist range)
 		{
 			foreach (var q in FindVisibleTiles(world, center, range))
 				explored[q.X, q.Y] = true;

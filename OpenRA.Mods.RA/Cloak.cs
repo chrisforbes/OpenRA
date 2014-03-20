@@ -114,7 +114,7 @@ namespace OpenRA.Mods.RA
 
 				return a.Actor.Owner.IsAlliedWith(viewer)
 					&& Info.CloakTypes.Intersect(dc.CloakTypes).Any()
-					&& (self.CenterPosition - a.Actor.CenterPosition).Length <= WRange.FromCells(dc.Range).Range;
+					&& (self.CenterPosition - a.Actor.CenterPosition).Length <= WDist.FromCells(dc.Range).Range;
 			});
 		}
 

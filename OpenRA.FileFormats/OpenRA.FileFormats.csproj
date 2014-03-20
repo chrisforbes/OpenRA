@@ -131,7 +131,7 @@
     <Compile Include="WVec.cs" />
     <Compile Include="WAngle.cs" />
     <Compile Include="WRot.cs" />
-    <Compile Include="WRange.cs" />
+    <Compile Include="WDist.cs" />
     <Compile Include="HSLColor.cs" />
     <Compile Include="Graphics\ShpTSReader.cs" />
     <Compile Include="FileFormats\XccLocalDatabase.cs" />
