@@ -16,7 +16,6 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ApplicationIcon>OpenRA.ico</ApplicationIcon>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -33,59 +32,58 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
     <OutputPath>..\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Optimize>false</Optimize>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-    </Reference>
+    <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Tao.FreeType, Version=2.3.5.0, Culture=neutral, PublicKeyToken=e499629dc69cd531">
+    <Reference Include="SharpFont">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\thirdparty\Tao\Tao.FreeType.dll</HintPath>
+      <HintPath>..\thirdparty\SharpFont.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Tao.OpenAl, Version=1.1.0.1, Culture=neutral, PublicKeyToken=a7579dda88828311">
+    <Reference Include="Mono.Nat, Version=1.1.0.0, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\thirdparty\Tao\Tao.OpenAl.dll</HintPath>
+      <Private>False</Private>
+      <Package>mono.nat</Package>
+      <HintPath>..\thirdparty\Mono.Nat.dll</HintPath>
+    </Reference>
+    <Reference Include="Eluant">
+      <HintPath>..\thirdparty\Eluant.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\thirdparty\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MaxMind.GeoIP2">
+      <HintPath>..\thirdparty\MaxMind.GeoIP2.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MaxMind.Db">
+      <HintPath>..\thirdparty\MaxMind.Db.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="SDL2-CS">
+      <HintPath>..\thirdparty\SDL2-CS.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor.cs" />
-    <Compile Include="ActorInitializer.cs" />
-    <Compile Include="ActorMap.cs" />
-    <Compile Include="ActorReference.cs" />
+    <Compile Include="GameRules\Warhead.cs" />
     <Compile Include="Graphics\QuadRenderer.cs" />
-    <Compile Include="PSubVec.cs" />
-    <Compile Include="PSubPos.cs" />
-    <Compile Include="PVecInt.cs" />
-    <Compile Include="PVecFloat.cs" />
-    <Compile Include="PPos.cs" />
     <Compile Include="Download.cs" />
     <Compile Include="Effects\DelayedAction.cs" />
     <Compile Include="Effects\FlashTarget.cs" />
@@ -93,8 +91,6 @@
     <Compile Include="Game.cs" />
     <Compile Include="GameRules\ActorInfo.cs" />
     <Compile Include="GameRules\MusicInfo.cs" />
-    <Compile Include="GameRules\Rules.cs" />
-    <Compile Include="GameRules\Settings.cs" />
     <Compile Include="GameRules\SoundInfo.cs" />
     <Compile Include="GameRules\WeaponInfo.cs" />
     <Compile Include="Graphics\Animation.cs" />
@@ -111,7 +107,6 @@
     <Compile Include="Graphics\SequenceProvider.cs" />
     <Compile Include="Graphics\Sheet.cs" />
     <Compile Include="Graphics\SheetBuilder.cs" />
-    <Compile Include="Graphics\ShroudRenderer.cs" />
     <Compile Include="Graphics\Sprite.cs" />
     <Compile Include="Graphics\SpriteFont.cs" />
     <Compile Include="Graphics\SpriteLoader.cs" />
@@ -121,10 +116,7 @@
     <Compile Include="Graphics\Viewport.cs" />
     <Compile Include="Graphics\WorldRenderer.cs" />
     <Compile Include="Group.cs" />
-    <Compile Include="InputHandler.cs" />
-    <Compile Include="CVec.cs" />
-    <Compile Include="CPos.cs" />
-    <Compile Include="Map.cs" />
+    <Compile Include="IUtilityCommand.cs" />
     <Compile Include="ModData.cs" />
     <Compile Include="Network\Connection.cs" />
     <Compile Include="Network\FrameData.cs" />
@@ -133,9 +125,7 @@
     <Compile Include="Network\Order.cs" />
     <Compile Include="Network\OrderIO.cs" />
     <Compile Include="Network\OrderManager.cs" />
-    <Compile Include="Network\Replay.cs" />
     <Compile Include="Network\ReplayConnection.cs" />
-    <Compile Include="Network\ServerList.cs" />
     <Compile Include="Network\Session.cs" />
     <Compile Include="Network\SyncReport.cs" />
     <Compile Include="Network\UnitOrders.cs" />
@@ -144,7 +134,6 @@
     <Compile Include="Orders\IOrderGenerator.cs" />
     <Compile Include="Orders\UnitOrderGenerator.cs" />
     <Compile Include="Player.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Selection.cs" />
     <Compile Include="Server\Connection.cs" />
     <Compile Include="Server\Exts.cs" />
@@ -152,8 +141,6 @@
     <Compile Include="Server\Server.cs" />
     <Compile Include="Server\ServerOrder.cs" />
     <Compile Include="Server\TraitInterfaces.cs" />
-    <Compile Include="Server\UPnP.cs" />
-    <Compile Include="Sound.cs" />
     <Compile Include="Support\Arguments.cs" />
     <Compile Include="Support\PerfHistory.cs" />
     <Compile Include="Support\Program.cs" />
@@ -167,9 +154,9 @@
     <Compile Include="Traits\EditorTilesetFilter.cs" />
     <Compile Include="Traits\Health.cs" />
     <Compile Include="Traits\LintAttributes.cs" />
+    <Compile Include="Traits\RejectsOrders.cs" />
     <Compile Include="Traits\Player\DeveloperMode.cs" />
     <Compile Include="Traits\Player\PlayerResources.cs" />
-    <Compile Include="Traits\Render\RenderSimple.cs" />
     <Compile Include="Traits\RevealsShroud.cs" />
     <Compile Include="Traits\Selectable.cs" />
     <Compile Include="Traits\SelectionDecorations.cs" />
@@ -177,19 +164,13 @@
     <Compile Include="Traits\TraitsInterfaces.cs" />
     <Compile Include="Traits\Util.cs" />
     <Compile Include="Traits\ValidateOrder.cs" />
-    <Compile Include="Traits\Waypoint.cs" />
     <Compile Include="Traits\World\Country.cs" />
-    <Compile Include="Traits\World\Fog.cs" />
-    <Compile Include="Traits\World\PlayerColorPalette.cs" />
-    <Compile Include="Traits\World\ResourceLayer.cs" />
     <Compile Include="Traits\World\ResourceType.cs" />
     <Compile Include="Traits\World\ScreenShaker.cs" />
     <Compile Include="Traits\World\Shroud.cs" />
-    <Compile Include="Traits\World\SpatialBins.cs" />
     <Compile Include="Widgets\BackgroundWidget.cs" />
     <Compile Include="Widgets\ButtonWidget.cs" />
     <Compile Include="Widgets\ChatDisplayWidget.cs" />
-    <Compile Include="Widgets\ChatEntryWidget.cs" />
     <Compile Include="Widgets\CheckboxWidget.cs" />
     <Compile Include="Widgets\ChromeMetrics.cs" />
     <Compile Include="Widgets\ColorBlockWidget.cs" />
@@ -205,11 +186,8 @@
     <Compile Include="Widgets\ProgressBarWidget.cs" />
     <Compile Include="Widgets\ScrollItemWidget.cs" />
     <Compile Include="Widgets\ScrollPanelWidget.cs" />
-    <Compile Include="Widgets\ShpImageWidget.cs" />
     <Compile Include="Widgets\SliderWidget.cs" />
     <Compile Include="Widgets\TextFieldWidget.cs" />
-    <Compile Include="Widgets\TimerWidget.cs" />
-    <Compile Include="Widgets\ViewportScrollControllerWidget.cs" />
     <Compile Include="Widgets\VqaPlayerWidget.cs" />
     <Compile Include="Widgets\Widget.cs" />
     <Compile Include="Widgets\WidgetLoader.cs" />
@@ -218,12 +196,134 @@
     <Compile Include="World.cs" />
     <Compile Include="WorldUtils.cs" />
     <Compile Include="Network\ReplayRecorderConnection.cs" />
+    <Compile Include="Widgets\TooltipContainerWidget.cs" />
+    <Compile Include="Traits\DebugPauseState.cs" />
+    <Compile Include="Network\UPnP.cs" />
+    <Compile Include="Widgets\ClientTooltipRegionWidget.cs" />
+    <Compile Include="Graphics\Renderable.cs" />
+    <Compile Include="Graphics\Voxel.cs" />
+    <Compile Include="Graphics\VoxelRenderer.cs" />
+    <Compile Include="Graphics\VoxelLoader.cs" />
+    <Compile Include="Graphics\VoxelProvider.cs" />
+    <Compile Include="Traits\BodyOrientation.cs" />
+    <Compile Include="Graphics\VoxelAnimation.cs" />
+    <Compile Include="Widgets\ViewportControllerWidget.cs" />
+    <Compile Include="Traits\Player\FrozenActorLayer.cs" />
+    <Compile Include="Graphics\Theater.cs" />
+    <Compile Include="Traits\Player\PlayerColorPalette.cs" />
+    <Compile Include="Traits\Player\PlayerHighlightPalette.cs" />
+    <Compile Include="Traits\World\ScreenMap.cs" />
+    <Compile Include="Traits\World\ActorMap.cs" />
+    <Compile Include="Widgets\HotkeyEntryWidget.cs" />
+    <Compile Include="Widgets\SpriteWidget.cs" />
+    <Compile Include="Widgets\SpriteSequenceWidget.cs" />
+    <Compile Include="Widgets\RGBASpriteWidget.cs" />
+    <Compile Include="Scripting\ScriptContext.cs" />
+    <Compile Include="Scripting\ScriptActorInterface.cs" />
+    <Compile Include="Scripting\ScriptObjectWrapper.cs" />
+    <Compile Include="Scripting\ScriptTypes.cs" />
+    <Compile Include="Scripting\ScriptMemberWrapper.cs" />
+    <Compile Include="Scripting\ScriptMemberExts.cs" />
+    <Compile Include="Scripting\ScriptPlayerInterface.cs" />
+    <Compile Include="Traits\Player\FixedColorPalette.cs" />
+    <Compile Include="Primitives\ReadOnlyDictionary.cs" />
+    <Compile Include="Primitives\ReadOnlyList.cs" />
+    <Compile Include="ModMetadata.cs" />
+    <Compile Include="GameRules\Ruleset.cs" />
+    <Compile Include="GameRules\RulesetCache.cs" />
+    <Compile Include="Support\MersenneTwister.cs" />
+    <Compile Include="GameInformation.cs" />
+    <Compile Include="Widgets\RootWidget.cs" />
+    <Compile Include="Map\CellLayer.cs" />
+    <Compile Include="Map\CellRegion.cs" />
+    <Compile Include="Input\IInputHandler.cs" />
+    <Compile Include="Input\InputHandler.cs" />
+    <Compile Include="Input\Keycode.cs" />
+    <Compile Include="Input\Hotkey.cs" />
+    <Compile Include="Graphics\IGraphicsDevice.cs" />
+    <Compile Include="Sound\Sound.cs" />
+    <Compile Include="Sound\SoundDevice.cs" />
+    <Compile Include="Sound\OpenAlSound.cs" />
+    <Compile Include="Sound\NullSound.cs" />
+    <Compile Include="Effects\SpriteEffect.cs" />
+    <Compile Include="Graphics\SelectionBoxRenderable.cs" />
+    <Compile Include="Graphics\SelectionBarsRenderable.cs" />
+    <Compile Include="Graphics\TargetLineRenderable.cs" />
+    <Compile Include="Graphics\UISpriteRenderable.cs" />
+    <Compile Include="GameRules\DamageWarhead.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">
-      <Project>{BDAEAB25-991E-46A7-AF1E-4F0E03358DAA}</Project>
-      <Name>OpenRA.FileFormats</Name>
-    </ProjectReference>
+    <Compile Include="FileSystem\D2kSoundResources.cs" />
+    <Compile Include="FileSystem\Folder.cs" />
+    <Compile Include="FileSystem\InstallShieldPackage.cs" />
+    <Compile Include="FileSystem\MixFile.cs" />
+    <Compile Include="FileSystem\Pak.cs" />
+    <Compile Include="FileSystem\ZipFile.cs" />
+    <Compile Include="FileSystem\BigFile.cs" />
+    <Compile Include="Map\PlayerReference.cs" />
+    <Compile Include="Map\SmudgeReference.cs" />
+    <Compile Include="Map\TileReference.cs" />
+    <Compile Include="Map\TileSet.cs" />
+    <Compile Include="FieldLoader.cs" />
+    <Compile Include="FieldSaver.cs" />
+    <Compile Include="InstallUtils.cs" />
+    <Compile Include="Manifest.cs" />
+    <Compile Include="Graphics\Vertex.cs" />
+    <Compile Include="FileFormats\ImaAdpcmLoader.cs" />
+    <Compile Include="FileFormats\AudLoader.cs" />
+    <Compile Include="FileFormats\Blast.cs" />
+    <Compile Include="FileFormats\Blowfish.cs" />
+    <Compile Include="FileFormats\BlowfishKeyProvider.cs" />
+    <Compile Include="FileFormats\CRC32.cs" />
+    <Compile Include="FileFormats\Format2.cs" />
+    <Compile Include="FileFormats\Format40.cs" />
+    <Compile Include="FileFormats\Format80.cs" />
+    <Compile Include="FileFormats\IniFile.cs" />
+    <Compile Include="FileFormats\WavLoader.cs" />
+    <Compile Include="FileFormats\XccGlobalDatabase.cs" />
+    <Compile Include="FileFormats\XccLocalDatabase.cs" />
+    <Compile Include="FileFormats\HvaReader.cs" />
+    <Compile Include="FileFormats\PngLoader.cs" />
+    <Compile Include="FileFormats\VqaReader.cs" />
+    <Compile Include="FileFormats\VxlReader.cs" />
+    <Compile Include="Primitives\ActionQueue.cs" />
+    <Compile Include="Primitives\Bits.cs" />
+    <Compile Include="Primitives\Cache.cs" />
+    <Compile Include="Primitives\DisposableAction.cs" />
+    <Compile Include="Primitives\float2.cs" />
+    <Compile Include="Primitives\int2.cs" />
+    <Compile Include="Primitives\IObservableCollection.cs" />
+    <Compile Include="Primitives\ObservableCollection.cs" />
+    <Compile Include="Primitives\ObservableDictionary.cs" />
+    <Compile Include="Primitives\Pair.cs" />
+    <Compile Include="Primitives\PriorityQueue.cs" />
+    <Compile Include="Support\Log.cs" />
+    <Compile Include="Support\PerfTimer.cs" />
+    <Compile Include="Exts.cs" />
+    <Compile Include="MiniYaml.cs" />
+    <Compile Include="Platform.cs" />
+    <Compile Include="StreamExts.cs" />
+    <Compile Include="Map\Map.cs" />
+    <Compile Include="Map\MapCache.cs" />
+    <Compile Include="Map\MapPreview.cs" />
+    <Compile Include="Graphics\HSLColor.cs" />
+    <Compile Include="FileSystem\PackageEntry.cs" />
+    <Compile Include="CPos.cs" />
+    <Compile Include="CVec.cs" />
+    <Compile Include="WAngle.cs" />
+    <Compile Include="WPos.cs" />
+    <Compile Include="WRange.cs" />
+    <Compile Include="WRot.cs" />
+    <Compile Include="WVec.cs" />
+    <Compile Include="Primitives\TypeDictionary.cs" />
+    <Compile Include="Map\ActorInitializer.cs" />
+    <Compile Include="Map\ActorReference.cs" />
+    <Compile Include="Support\Evaluator.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Graphics\PlayerColorRemap.cs" />
+    <Compile Include="Graphics\Palette.cs" />
+    <Compile Include="FileSystem\GlobalFileSystem.cs" />
+    <Compile Include="FileFormats\ReplayMetadata.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -263,4 +363,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup />
 </Project>

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,11 +10,13 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using OpenRA.Mods.Common;
 using OpenRA.Mods.RA.Buildings;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Attach this to the player actor to collect observer stats.")]
 	public class PlayerStatisticsInfo : ITraitInfo
 	{
 		public object Create(ActorInitializer init) { return new PlayerStatistics(init.self); }
@@ -58,7 +60,9 @@ namespace OpenRA.Mods.RA
 			var total = (double)world.Map.Bounds.Width * world.Map.Bounds.Height;
 			MapControl = world.Actors
 				.Where(a => !a.IsDead() && a.IsInWorld && a.Owner == player && a.HasTrait<RevealsShroud>())
-				.SelectMany(a => world.FindTilesInCircle(a.Location, a.Trait<RevealsShroud>().RevealRange.Clamp(0, 50)))
+				.SelectMany(a => world.Map.FindTilesInCircle(
+					a.Location,
+					a.Trait<RevealsShroud>().Range.Clamp(WRange.Zero, WRange.FromCells(Map.MaxTilesInCircleRange)).Range / 1024))
 				.Distinct()
 				.Count() / total;
 		}
@@ -73,9 +77,9 @@ namespace OpenRA.Mods.RA
 
 		public void Tick(Actor self)
 		{
-			if (self.World.FrameNumber % 1500 == 1)
+			if (self.World.WorldTick % 1500 == 1)
 				UpdateEarnedThisMinute();
-			if (self.World.FrameNumber % 250 == 0)
+			if (self.World.WorldTick % 250 == 0)
 				UpdateMapControl();
 		}
 
@@ -86,25 +90,36 @@ namespace OpenRA.Mods.RA
 				case "Chat":
 				case "TeamChat":
 				case "HandshakeResponse":
-				case "PauseRequest":
 				case "PauseGame":
 				case "StartGame":
 				case "Disconnected":
 				case "ServerError":
-				case "SyncInfo":
+				case "AuthenticationError":
+				case "SyncLobbyInfo":
+				case "SyncClientInfo":
+				case "SyncLobbySlots":
+				case "SyncLobbyGlobalSettings":
+				case "SyncClientPing":
+				case "Ping":
+				case "Pong":
 					return;
 			}
-			if (order.OrderString.StartsWith("Dev")) return;
+			if (order.OrderString.StartsWith("Dev"))
+				return;
 			OrderCount++;
 		}
 	}
 
+	[Desc("Attach this to a unit to update observer stats.")]
 	public class UpdatesPlayerStatisticsInfo : TraitInfo<UpdatesPlayerStatistics> { }
 
 	public class UpdatesPlayerStatistics : INotifyKilled
 	{
 		public void Killed(Actor self, AttackInfo e)
 		{
+			if (self.Owner.WinState != WinState.Undefined)
+				return;
+
 			var attackerStats = e.Attacker.Owner.PlayerActor.Trait<PlayerStatistics>();
 			var defenderStats = self.Owner.PlayerActor.Trait<PlayerStatistics>();
 			if (self.HasTrait<Building>())
@@ -112,7 +127,7 @@ namespace OpenRA.Mods.RA
 				attackerStats.BuildingsKilled++;
 				defenderStats.BuildingsDead++;
 			}
-			else if (self.HasTrait<IMove>())
+			else if (self.HasTrait<IPositionable>())
 			{
 				attackerStats.UnitsKilled++;
 				defenderStats.UnitsDead++;

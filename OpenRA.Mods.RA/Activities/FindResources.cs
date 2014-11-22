@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,13 +8,13 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using OpenRA.Mods.Common;
 using OpenRA.Mods.RA.Move;
-using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
-using System;
 
 namespace OpenRA.Mods.RA.Activities
 {
@@ -48,32 +48,24 @@ namespace OpenRA.Mods.RA.Activities
 
 			// Determine where to search from and how far to search:
 			var searchFromLoc = harv.LastOrderLocation ?? (harv.LastLinkedProc ?? harv.LinkedProc ?? self).Location;
-			int searchRadius = harv.LastOrderLocation.HasValue ? harvInfo.SearchFromOrderRadius : harvInfo.SearchFromProcRadius;
-			int searchRadiusSquared = searchRadius * searchRadius;
+			var searchRadius = harv.LastOrderLocation.HasValue ? harvInfo.SearchFromOrderRadius : harvInfo.SearchFromProcRadius;
+			var searchRadiusSquared = searchRadius * searchRadius;
 
 			// Find harvestable resources nearby:
+			// Avoid enemy territory:
+			// TODO: calculate weapons ranges of units and factor those in instead of hard-coding 8.
 			var path = self.World.WorldActor.Trait<PathFinder>().FindPath(
 				PathSearch.Search(self.World, mobileInfo, self, true)
-					.WithCustomCost(loc =>
-					{
-						// Avoid enemy territory:
-						int safetycost = (
-							// TODO: calculate weapons ranges of units and factor those in instead of hard-coding 8.
-							from u in self.World.FindUnitsInCircle(loc.ToPPos(), Game.CellSize * 8)
-							where !u.Destroyed
-							where self.Owner.Stances[u.Owner] == Stance.Enemy
-							select Math.Max(0, 64 - (loc - u.Location).LengthSquared)
-						).Sum();
-
-						return safetycost;
-					})
+						.WithCustomCost(loc => self.World.FindActorsInCircle(self.World.Map.CenterOfCell(loc), WRange.FromCells(8))
+						.Where(u => !u.Destroyed && self.Owner.Stances[u.Owner] == Stance.Enemy)
+						.Sum(u => Math.Max(0, 64 - (loc - u.Location).LengthSquared)))
 					.WithHeuristic(loc =>
 					{
 						// Avoid this cell:
 						if (avoidCell.HasValue && loc == avoidCell.Value) return 1;
 
 						// Don't harvest out of range:
-						int distSquared = (loc - searchFromLoc).LengthSquared;
+						var distSquared = (loc - searchFromLoc).LengthSquared;
 						if (distSquared > searchRadiusSquared)
 							return int.MaxValue;
 
@@ -82,7 +74,7 @@ namespace OpenRA.Mods.RA.Activities
 
 						if (resType == null) return 1;
 						// Can the harvester collect this kind of resource?
-						if (!harvInfo.Resources.Contains(resType.info.Name)) return 1;
+						if (!harvInfo.Resources.Contains(resType.Info.Name)) return 1;
 
 						if (territory != null)
 						{
@@ -104,7 +96,7 @@ namespace OpenRA.Mods.RA.Activities
 				{
 					// Get out of the way if we are:
 					harv.UnblockRefinery(self);
-					int randFrames = 125 + self.World.SharedRandom.Next(-35, 35);
+					var randFrames = 125 + self.World.SharedRandom.Next(-35, 35);
 					if (NextActivity != null)
 						return Util.SequenceActivities(NextActivity, new Wait(randFrames), new FindResources());
 					else
@@ -123,57 +115,63 @@ namespace OpenRA.Mods.RA.Activities
 			if (harv.LastOrderLocation == null)
 				harv.LastOrderLocation = path[0];
 
-			self.SetTargetLine(Target.FromCell(path[0]), Color.Red, false);
+			self.SetTargetLine(Target.FromCell(self.World, path[0]), Color.Red, false);
 			return Util.SequenceActivities(mobile.MoveTo(path[0], 1), new HarvestResource(), new FindResources());
 		}
 
 		public override IEnumerable<Target> GetTargets(Actor self)
 		{
-			yield return Target.FromCell(self.Location);
+			yield return Target.FromCell(self.World, self.Location);
 		}
 	}
 
 	public class HarvestResource : Activity
 	{
-		bool isHarvesting = false;
-
 		public override Activity Tick(Actor self)
 		{
-			if (isHarvesting) return this;
-
 			var territory = self.World.WorldActor.TraitOrDefault<ResourceClaimLayer>();
 			if (IsCanceled)
 			{
-				if (territory != null) territory.UnclaimByActor(self);
+				if (territory != null)
+					territory.UnclaimByActor(self);
 				return NextActivity;
 			}
 
 			var harv = self.Trait<Harvester>();
+			var harvInfo = self.Info.Traits.Get<HarvesterInfo>();
 			harv.LastHarvestedCell = self.Location;
 
 			if (harv.IsFull)
 			{
-				if (territory != null) territory.UnclaimByActor(self);
+				if (territory != null)
+					territory.UnclaimByActor(self);
 				return NextActivity;
+			}
+
+			// Turn to one of the harvestable facings
+			if (harvInfo.HarvestFacings != 0)
+			{
+				var facing = self.Trait<IFacing>().Facing;
+				var desired = Util.QuantizeFacing(facing, harvInfo.HarvestFacings) * (256 / harvInfo.HarvestFacings);
+				if (desired != facing)
+					return Util.SequenceActivities(new Turn(self, desired), this);
 			}
 
 			var resLayer = self.World.WorldActor.Trait<ResourceLayer>();
 			var resource = resLayer.Harvest(self.Location);
 			if (resource == null)
 			{
-				if (territory != null) territory.UnclaimByActor(self);
+				if (territory != null)
+					territory.UnclaimByActor(self);
 				return NextActivity;
 			}
 
-			var renderUnit = self.Trait<RenderUnit>();	/* better have one of these! */
-			if (renderUnit.anim.CurrentSequence.Name != "harvest")
-			{
-				isHarvesting = true;
-				renderUnit.PlayCustomAnimation(self, "harvest", () => isHarvesting = false);
-			}
-
 			harv.AcceptResource(resource);
-			return this;
+
+			foreach (var t in self.TraitsImplementing<INotifyHarvest>())
+				t.Harvested(self, resource);
+
+			return Util.SequenceActivities(new Wait(harvInfo.LoadTicksPerBale), this);
 		}
 	}
 }

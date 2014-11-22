@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -16,21 +16,19 @@ namespace OpenRA.Widgets
 {
 	public class PerfGraphWidget : Widget
 	{
-		public PerfGraphWidget() : base() { }
-
 		public override void Draw()
 		{
 			var rect = RenderBounds;
-			float2 origin = new float2(rect.Right, rect.Bottom);
-			float2 basis = new float2(-rect.Width / 100, -rect.Height / 100);
+			var origin = new float2(rect.Right, rect.Bottom);
+			var basis = new float2(-rect.Width / 100, -rect.Height / 100);
 
 			Game.Renderer.LineRenderer.DrawLine(origin, origin + new float2(100, 0) * basis, Color.White, Color.White);
 			Game.Renderer.LineRenderer.DrawLine(origin + new float2(100, 0) * basis, origin + new float2(100, 100) * basis, Color.White, Color.White);
 
-			int k = 0;
+			var k = 0;
 			foreach (var item in PerfHistory.items.Values.ToArray())
 			{
-				int n = 0;
+				var n = 0;
 				item.Samples().Aggregate((a, b) =>
 				{
 					Game.Renderer.LineRenderer.DrawLine(

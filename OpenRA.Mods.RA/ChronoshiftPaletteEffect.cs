@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,11 +10,12 @@
 
 using System.Collections.Generic;
 using System.Drawing;
-using OpenRA.FileFormats;
+using OpenRA.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Apply palette full screen rotations during chronoshifts. Add this to the world actor.")]
 	class ChronoshiftPaletteEffectInfo : TraitInfo<ChronoshiftPaletteEffect> { }
 
 	public class ChronoshiftPaletteEffect : IPaletteModifier, ITick
@@ -33,16 +34,16 @@ namespace OpenRA.Mods.RA
 				remainingFrames--;
 		}
 
-		public void AdjustPalette(Dictionary<string,Palette> palettes)
+		public void AdjustPalette(IReadOnlyDictionary<string, MutablePalette> palettes)
 		{
 			if (remainingFrames == 0)
 				return;
 
 			var frac = (float)remainingFrames / chronoEffectLength;
-			
+
 			foreach (var pal in palettes)
 			{
-				for (var x = 0; x < 256; x++)
+				for (var x = 0; x < Palette.Size; x++)
 				{
 					var orig = pal.Value.GetColor(x);
 					var lum = (int)(255 * orig.GetBrightness());

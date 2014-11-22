@@ -1,426 +1,676 @@
-Selectable: True
+Selectable: False
 
-MapFormat: 5
+MapFormat: 6
 
 RequiresMod: ra
 
-Title: Allies 01
+Title: Allies 01: In the thick of it
 
-Description: Allies' first mission
+Description: Rescue Einstein from the Headquarters inside this Soviet complex.\n\nOnce found, evacuate him via the helicopter at the signal flare.\n\nEinstein and Tanya must be kept alive at all costs.\n\nBeware the Soviet's Tesla Coils.\n\nDirect Tanya to destroy the westmost power plants to take them off-line.
 
-Author: Scott_NZ
+Author: Westwood Studios
+
+PreviewVideo: ally1.vqa
 
 Tileset: SNOW
 
-MapSize: 48,64
+MapSize: 128,128
 
-Bounds: 8,8,32,38
+Bounds: 49,45,30,36
 
 UseAsShellmap: False
 
 Type: Campaign
 
-Difficulties: Easy, Normal
+Options:
+	Crates: False
+	Fog: True
+	Shroud: True
+	AllyBuildRadius: False
+	FragileAlliances: False
+	StartingCash: 0
+	ConfigurableStartingUnits: False
 
 Players:
+	PlayerReference@USSR:
+		Name: USSR
+		Race: soviet
+		ColorRamp: 3,255,127
+		Enemies: Greece, England
 	PlayerReference@Neutral:
 		Name: Neutral
 		OwnsWorld: True
 		NonCombatant: True
 		Race: allies
-	PlayerReference@Creeps:
-		Name: Creeps
-		NonCombatant: True
-		Race: allies
-	PlayerReference@Allies:
-		Name: Allies
+		Enemies: USSR, Greece, England
+	PlayerReference@Greece:
+		Name: Greece
 		Playable: True
 		AllowBots: False
+		Required: True
 		LockRace: True
 		Race: allies
 		LockColor: True
-		ColorRamp: 161,134,200,30
+		ColorRamp: 161,134,200
 		LockSpawn: True
 		LockTeam: True
-		Allies: Creeps
-		Enemies: Soviets
-	PlayerReference@Soviets:
-		Name: Soviets
-		Race: soviet
-		ColorRamp: 3,255,127,28
-		Enemies: Allies,Creeps
+		Allies: England
+		Enemies: Neutral, USSR
+	PlayerReference@England:
+		Name: England
+		Race: allies
+		ColorRamp: 76,196,190
+		Allies: Greece
+		Enemies: USSR
 
 Actors:
-	Actor1: tc01
-		Location: 13,9
+	Actor0: t16
+		Location: 66,46
 		Owner: Neutral
-	Actor10: oilb
-		Location: 17,19
-		Owner: Soviets
-	Actor3: t13
-		Location: 17,13
+	Actor1: t17
+		Location: 59,46
 		Owner: Neutral
-	Actor5: t16
-		Location: 25,9
+	Actor2: tc04
+		Location: 75,44
 		Owner: Neutral
-	Actor4: t17
-		Location: 17,10
+	Actor3: tc05
+		Location: 76,45
 		Owner: Neutral
-	Actor8: brl3
-		Location: 19,21
-		Owner: Soviets
-	Actor7: barl
-		Location: 19,20
-		Owner: Soviets
-	Actor2: brl3
-		Location: 19,19
-		Owner: Soviets
-	Actor6: brl3
-		Location: 20,19
-		Owner: Soviets
-	Actor71: t01
-		Location: 33,31
+	Actor4: t01
+		Location: 52,50
 		Owner: Neutral
-	Actor11: powr
-		Location: 20,20
-		Owner: Soviets
-	Actor12: powr
-		Location: 24,20
-		Owner: Soviets
-	Actor13: powr
-		Location: 26,20
-		Owner: Soviets
-	Actor14: t08
-		Location: 25,13
+	Actor5: t02
+		Location: 70,68
 		Owner: Neutral
-	Actor15: fenc
-		Location: 27,18
-		Owner: Soviets
-	Actor16: fenc
-		Location: 28,18
-		Owner: Soviets
-	Actor17: fenc
-		Location: 27,17
-		Owner: Soviets
-	Actor18: jeep
-		Location: 21,13
-		Owner: Allies
-	Actor19: jeep
-		Location: 22,13
-		Owner: Allies
-	Actor20: jeep
-		Location: 23,13
-		Owner: Allies
-	Actor22: e2
-		Location: 21,19
-		Owner: Soviets
-	Actor23: e1
-		Location: 17,23
-		Owner: Soviets
-	Actor28: e1
-		Location: 23,12
-		Owner: Allies
-	Actor26: e1
-		Location: 22,12
-		Owner: Allies
-	Actor25: e1
-		Location: 21,12
-		Owner: Allies
-	Actor65: fenc
-		Location: 33,33
-		Owner: Soviets
-	Actor31: mine
-		Location: 33,14
+	Actor6: t05
+		Location: 73,64
 		Owner: Neutral
-	Actor32: tc03
-		Location: 28,13
+	Actor7: t14
+		Location: 59,50
 		Owner: Neutral
-	Actor33: v04
-		Location: 35,8
+	Actor8: t17
+		Location: 56,61
 		Owner: Neutral
-	Actor34: tsla
-		Location: 30,22
-		Owner: Soviets
-	Actor35: proc
-		Location: 32,21
-		Owner: Soviets
-	Actor37: e1
-		Location: 23,24
-		Owner: Soviets
-	Actor0: e2
-		Location: 22,27
-		Owner: Soviets
-	Actor21: e2
-		Location: 20,27
-		Owner: Soviets
-	Actor40: weap
-		Location: 24,25
-		Owner: Soviets
-	Actor41: fact
-		Location: 28,25
-		Owner: Soviets
-	Actor42: barr
-		Location: 20,28
-		Owner: Soviets
-	Actor43: silo
-		Location: 18,28
-		Owner: Soviets
-	Actor44: dome
-		Location: 26,28
-		Owner: Soviets
-	Actor45: t12
-		Location: 15,19
+	Actor9: tc01
+		Location: 53,64
 		Owner: Neutral
-	Actor46: t12
-		Location: 15,25
+	Actor10: tc02
+		Location: 49,66
 		Owner: Neutral
-	Actor47: fenc
-		Location: 14,27
-		Owner: Soviets
-	Actor48: fenc
-		Location: 14,28
-		Owner: Soviets
-	Actor49: fenc
-		Location: 14,29
-		Owner: Soviets
-	Actor50: fenc
-		Location: 14,30
-		Owner: Soviets
-	Actor51: tsla
-		Location: 19,30
-		Owner: Soviets
-	Actor52: tsla
-		Location: 26,30
-		Owner: Soviets
-	Actor53: fenc
-		Location: 14,31
-		Owner: Soviets
-	Actor54: fenc
-		Location: 15,31
-		Owner: Soviets
-	Actor55: fenc
-		Location: 16,31
-		Owner: Soviets
-	Actor56: fenc
-		Location: 17,31
-		Owner: Soviets
-	Actor57: fenc
-		Location: 17,32
-		Owner: Soviets
-	Actor70: fenc
-		Location: 35,33
-		Owner: Soviets
-	Actor59: e1
-		Location: 23,31
-		Owner: Soviets
-	Actor60: e1
-		Location: 21,31
-		Owner: Soviets
-	Actor61: powr
-		Location: 34,30
-		Owner: Soviets
-	Actor58: powr
-		Location: 36,27
-		Owner: Soviets
-	Actor64: t05
-		Location: 32,27
+	Actor11: t07
+		Location: 49,59
 		Owner: Neutral
-	Actor62: powr
-		Location: 36,30
-		Owner: Soviets
-	Actor63: fenc
-		Location: 32,33
-		Owner: Soviets
-	Actor30: powr
-		Location: 34,27
-		Owner: Soviets
-	Actor67: fenc
-		Location: 34,33
-		Owner: Soviets
-	Actor68: c1
-		Location: 28,16
-		Owner: Creeps
-	Actor69: c2
-		Location: 30,17
-		Owner: Creeps
-	Actor72: e1
-		Location: 35,29
-		Owner: Soviets
-	Actor66: e1
-		Location: 31,29
-		Owner: Soviets
-	Actor9: barl
-		Location: 18,21
-		Owner: Soviets
-	Actor74: tc02
-		Location: 11,23
+	Actor12: tc05
+		Location: 49,60
 		Owner: Neutral
-	Actor73: tc03
-		Location: 37,22
+	Actor13: tc04
+		Location: 50,58
 		Owner: Neutral
-	Actor75: t02
-		Location: 29,31
+	Actor14: tc03
+		Location: 69,50
 		Owner: Neutral
-	Actor76: t02
-		Location: 12,34
+	Actor15: t11
+		Location: 77,60
 		Owner: Neutral
-	Actor79: fenc
-		Location: 14,21
-		Owner: Soviets
-	Actor78: fenc
-		Location: 14,22
-		Owner: Soviets
-	Actor77: fenc
-		Location: 14,23
-		Owner: Soviets
-	Actor85: 3tnk
-		Location: 17,25
-		Owner: Soviets
+	Actor16: t01
+		Location: 78,59
+		Owner: Neutral
+	Actor17: tc01
+		Location: 76,56
+		Owner: Neutral
+	Actor18: t08
+		Location: 66,50
+		Owner: Neutral
+	Actor19: t17
+		Location: 57,56
+		Owner: Neutral
+	Actor20: t01
+		Location: 73,67
+		Owner: Neutral
+	Actor21: tc01
+		Location: 54,45
+		Owner: Neutral
+	Actor22: tsla
+		Location: 71,59
+		Owner: USSR
+		Health: 1
 		Facing: 0
-	Actor92: wood
-		Location: 34,9
-		Owner: Neutral
-	Actor94: c1
-		Location: 19,24
-		Owner: Soviets
-	Actor95: c2
-		Location: 31,23
-		Owner: Soviets
-	InsertionLZ: waypoint
-		Location: 22,10
-		Owner: Neutral
-	Lab: stek.autotargetignore
-		Location: 20,24
-		Owner: Soviets
-	Actor24: e2
-		Location: 27,24
-		Owner: Soviets
-	ShipSpawnPoint: waypoint
-		Location: 23,45
-		Owner: Neutral
-	ShipMovePoint: waypoint
-		Location: 23,40
-		Owner: Neutral
-	InsertionLZEntryPoint: waypoint
-		Location: 22,4
-		Owner: Neutral
-	Actor27: e2
-		Location: 27,27
-		Owner: Soviets
-	ChinookExitPoint: waypoint
-		Location: 55,11
-		Owner: Neutral
-	ExtractionLZEntryPoint: waypoint
-		Location: 31,48
-		Owner: Neutral
-	SovietAttackEntryPoint2: waypoint
-		Location: 39,11
-		Owner: Neutral
+	Actor23: powr
+		Location: 75,64
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor24: powr
+		Location: 67,57
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor25: powr
+		Location: 61,57
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Lab: stek
+		Location: 61,60
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor27: fact
+		Location: 69,62
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor28: dome
+		Location: 67,65
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor29: barr
+		Location: 61,64
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor30: tsla
+		Location: 67,67
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor31: tsla
+		Location: 60,66
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor32: weap
+		Location: 65,62
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor33: proc
+		Location: 73,58
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		FreeActor: False
+	Actor34: kenn
+		Location: 64,65
+		Owner: USSR
+		Health: 0.9921875
+		Facing: 0
+	Actor35: powr
+		Location: 65,57
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor36: powr
+		Location: 77,64
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor37: powr
+		Location: 75,67
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor38: silo
+		Location: 59,64
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor39: powr
+		Location: 77,67
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	OilPump: v19
+		Location: 59,57
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor41: brl3
+		Location: 60,57
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor42: barl
+		Location: 60,56
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor43: barl
+		Location: 61,56
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor44: brl3
+		Location: 60,58
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor45: barl
+		Location: 58,56
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor46: barl
+		Location: 59,59
+		Owner: USSR
+		Health: 1
+		Facing: 0
+	Actor47: jeep
+		Location: 63,50
+		Owner: Greece
+		Health: 1
+		Facing: 128
+	Harvester: harv
+		Location: 72,60
+		Owner: USSR
+		Health: 1
+		Facing: 224
+	Actor49: jeep
+		Location: 62,50
+		Owner: Greece
+		Health: 1
+		Facing: 128
+	Actor50: jeep
+		Location: 64,50
+		Owner: Greece
+		Health: 1
+		Facing: 128
+	Patrol1: dog
+		Location: 63,59
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 2
+	Patrol2: e1
+		Location: 64,58
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 3
+	LabGuard3: e1
+		Location: 61,63
+		Owner: USSR
+		Health: 1
+		Facing: 128
+		SubCell: 0
+	LabGuard2: e1
+		Location: 63,63
+		Owner: USSR
+		Health: 1
+		Facing: 96
+		SubCell: 0
+	Actor55: e2
+		Location: 73,66
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 1
+	Actor56: e1
+		Location: 62,67
+		Owner: USSR
+		Health: 1
+		Facing: 128
+		SubCell: 4
+	Actor57: e1
+		Location: 67,67
+		Owner: USSR
+		Health: 1
+		Facing: 160
+		SubCell: 3
+	Actor58: e1
+		Location: 65,67
+		Owner: USSR
+		Health: 1
+		Facing: 160
+		SubCell: 3
+	Actor59: e1
+		Location: 56,60
+		Owner: USSR
+		Health: 1
+		Facing: 96
+		SubCell: 1
+	Patrol4: e1
+		Location: 62,55
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 4
+	Patrol3: e1
+		Location: 64,59
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 2
+	LabGuard1: e1
+		Location: 64,61
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 4
+	Actor63: e1
+		Location: 58,60
+		Owner: USSR
+		Health: 1
+		Facing: 64
+		SubCell: 1
+	Actor64: e1
+		Location: 64,49
+		Owner: Greece
+		Health: 1
+		Facing: 128
+		SubCell: 1
+	Actor65: e1
+		Location: 63,49
+		Owner: Greece
+		Health: 1
+		Facing: 128
+		SubCell: 0
+	Actor66: e1
+		Location: 62,49
+		Owner: Greece
+		Health: 1
+		Facing: 160
+		SubCell: 2
+	Civilian1: c8
+		Location: 74,50
+		Owner: England
+		Health: 1
+		Facing: 0
+		SubCell: 0
+	Civilian2: c7
+		Location: 76,48
+		Owner: England
+		Health: 1
+		Facing: 0
+		SubCell: 3
+	Actor69: e2
+		Location: 62,56
+		Owner: USSR
+		Health: 1
+		Facing: 32
+		SubCell: 1
+	Actor70: e2
+		Location: 62,56
+		Owner: USSR
+		Health: 1
+		Facing: 0
+		SubCell: 4
+	Actor71: e1
+		Location: 64,49
+		Owner: Greece
+		Health: 1
+		Facing: 128
+		SubCell: 2
+	Actor72: e1
+		Location: 62,49
+		Owner: Greece
+		Health: 1
+		Facing: 128
+		SubCell: 1
 	ExtractionLZ: waypoint
-		Location: 13,12
+		Location: 53,49
 		Owner: Neutral
-	Actor36: e1
-		Location: 20,12
-		Owner: Allies
-	Actor38: e1
-		Location: 24,12
-		Owner: Allies
-	Actor39: e3
-		Location: 21,11
-		Owner: Allies
-	Actor80: e3
-		Location: 22,11
-		Owner: Allies
-	Actor81: e3
-		Location: 23,11
-		Owner: Allies
-	SovietAttackEntryPoint1: waypoint
-		Location: 8,30
+	waypoint1: waypoint
+		Location: 57,74
 		Owner: Neutral
-	Actor29: kenn
-		Location: 23,28
-		Owner: Soviets
+	waypoint2: waypoint
+		Location: 53,79
+		Owner: Neutral
+	waypoint3: waypoint
+		Location: 57,65
+		Owner: Neutral
+	CruiserCameraPoint: waypoint
+		Location: 69,67
+		Owner: Neutral
+	waypoint7: waypoint
+		Location: 69,56
+		Owner: Neutral
+	waypoint6: waypoint
+		Location: 55,60
+		Owner: Neutral
+	EinsteinSpawnPoint: waypoint
+		Location: 62,61
+		Owner: Neutral
+	waypoint8: waypoint
+		Location: 49,55
+		Owner: Neutral
+	waypoint9: waypoint
+		Location: 55,56
+		Owner: Neutral
+	InsertionLZ: waypoint
+		Location: 63,47
+		Owner: Neutral
+	InsertionEntry: waypoint
+		Location: 63,45
+		Owner: Neutral
+	BaseCameraPoint: waypoint
+		Location: 64,63
+		Owner: Neutral
+	CruiserPoint4: waypoint
+		Location: 72,75
+		Owner: Neutral
+	SouthReinforcementsPoint: waypoint
+		Location: 66,80
+		Owner: Neutral
+	ExtractionFlarePoint: waypoint
+		Location: 54,48
+		Owner: Neutral
+	CruiserPoint2: waypoint
+		Location: 64,75
+		Owner: Neutral
+	CruiserPoint3: waypoint
+		Location: 68,76
+		Owner: Neutral
+	CruiserPoint1: waypoint
+		Location: 60,74
+		Owner: Neutral
+	waypoint78: waypoint
+		Location: 70,60
+		Owner: Neutral
+	waypoint98: waypoint
+		Location: 63,47
+		Owner: Neutral
+	Actor48: fenc
+		Location: 53,60
+		Owner: USSR
+	Actor51: fenc
+		Location: 53,59
+		Owner: USSR
+	Actor52: fenc
+		Location: 54,59
+		Owner: USSR
+	Actor60: fenc
+		Location: 53,63
+		Owner: USSR
+	Actor61: fenc
+		Location: 54,63
+		Owner: USSR
+	Actor73: fenc
+		Location: 55,63
+		Owner: USSR
+	Actor74: fenc
+		Location: 55,64
+		Owner: USSR
+	Actor75: fenc
+		Location: 55,65
+		Owner: USSR
+	Actor76: fenc
+		Location: 55,66
+		Owner: USSR
+	Actor77: fenc
+		Location: 55,67
+		Owner: USSR
+	Actor78: fenc
+		Location: 56,67
+		Owner: USSR
+	Actor79: fenc
+		Location: 57,67
+		Owner: USSR
+	Actor80: fenc
+		Location: 58,67
+		Owner: USSR
+	Actor81: fenc
+		Location: 58,68
+		Owner: USSR
+	Actor82: fenc
+		Location: 73,70
+		Owner: USSR
+	Actor83: fenc
+		Location: 74,70
+		Owner: USSR
+	Actor84: fenc
+		Location: 78,70
+		Owner: USSR
+	Actor85: fenc
+		Location: 77,70
+		Owner: USSR
+	Actor86: fenc
+		Location: 76,70
+		Owner: USSR
+	Actor87: fenc
+		Location: 78,58
+		Owner: USSR
+	Actor99: fenc
+		Location: 78,59
+		Owner: USSR
+	Actor88: fenc
+		Location: 77,58
+		Owner: USSR
+	Actor89: fenc
+		Location: 78,57
+		Owner: USSR
+	Actor90: fenc
+		Location: 78,56
+		Owner: USSR
+	Actor91: fenc
+		Location: 77,56
+		Owner: USSR
+	Actor98: fenc
+		Location: 76,56
+		Owner: USSR
+	Actor92: fenc
+		Location: 75,56
+		Owner: USSR
+	Actor93: fenc
+		Location: 74,56
+		Owner: USSR
+	Actor94: fenc
+		Location: 74,55
+		Owner: USSR
+	Actor95: fenc
+		Location: 68,55
+		Owner: USSR
+	Actor96: fenc
+		Location: 69,55
+		Owner: USSR
+	Actor97: fenc
+		Location: 68,54
+		Owner: USSR
+	ExtractionExitPoint: waypoint
+		Location: 78,49
+		Owner: Neutral
 
 Smudges:
 
 Rules:
 	Player:
 		-ConquestVictoryConditions:
+		MissionObjectives:
+			EarlyGameOver: true
 	World:
-		-CrateDrop:
+		-CrateSpawner:
 		-SpawnMPUnits:
 		-MPStartLocations:
-		Allies01Script:
-		MissionObjectivesPanel:
-			ObjectivesPanel: MISSION_OBJECTIVES
-	TRAN:
-		-Selectable:
+		LuaScript:
+			Scripts: allies01.lua
+		ObjectivesPanel:
+			PanelName: MISSION_OBJECTIVES
+		-StartGameNotification:
+	TRAN.Extraction:
+		Inherits: TRAN
+		RenderUnit:
+			Image: tran
 		RevealsShroud:
-			Range: 0
-	E7:
-		AutoTarget:
-			InitialStance: Defend
-		Passenger:
-			Weight: 0
+			Range: 0c0
+		RejectsOrders:
+		-Selectable:
+		Cargo:
+			Types: Einstein
+			MaxWeight: 1
+	TRAN.Insertion:
+		Inherits: TRAN.Extraction
+		RenderUnit:
+			Image: tran
+		Cargo:
+			MaxWeight: 0
 	EINSTEIN:
 		Passenger:
-			Weight: 0
-	STEK.AutoTargetIgnore:
-		Inherits: STEK
-		RenderBuilding:
-			Image: STEK
-		Tooltip:
-			Icon: STEK
-		AutoTargetIgnore:
+			CargoType: Einstein
 	^Vehicle:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
+		Demolishable:
 	^Tank:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
 	^Infantry:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
 	^Ship:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
 	^Plane:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
+	^Helicopter:
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
 	^Building:
-		GivesBounty:
-			Percentage: 0
+		Tooltip:
+			GenericVisibility: Enemy
+			ShowOwnerRow: false
+	^Wall:
+		Tooltip:
+			ShowOwnerRow: false
+	^Husk:
+		Tooltip:
+			GenericVisibility: Enemy, Ally, Neutral
+			GenericStancePrefix: false
+			ShowOwnerRow: false
+	^CivInfantry:
+		RevealsShroud:
+			Range: 0c0
+	JEEP:
+		Cargo:
+			Types: Infantry, Einstein
+	E7:
+		AutoTarget:
+			EnableStances: false
+		-AttackMove:
 
 Sequences:
 
+VoxelSequences:
+
 Weapons:
 	8Inch:
-		ROF: 200
-		Range: 25
-		Burst: 2
-		Report: TURRET1
-		Projectile: Bullet
-			Speed: 30
-			High: true
-			Angle: .1
-			Inaccuracy: 100
-			Image: 120MM
-			ContrailLength: 10
-		Warhead:
-			Spread: 5
-			Versus:
-				None: 60%
-				Wood: 75%
-				Light: 60%
-				Heavy: 25%
-			Explosion: large_explosion
-			WaterExplosion: large_splash
-			InfDeath: 2
-			SmudgeType: Crater
-			Damage: 500
-			ImpactSound: kaboom12
-			WaterImpactSound: splash9
+		Range: 25c0
+	M60mg:
+		Range: 5c0
+		ReloadDelay: 20
+		Burst: 1
+		Warhead: SpreadDamage
+			Damage: 20
 
 Voices:
 
 Notifications:
+
+Translations:

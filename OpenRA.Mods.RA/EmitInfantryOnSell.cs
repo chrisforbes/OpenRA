@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,26 +9,29 @@
 #endregion
 
 using System.Linq;
-using OpenRA.FileFormats;
+using OpenRA.Mods.Common;
 using OpenRA.Mods.RA.Buildings;
+using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Spawn new actors when sold.")]
 	class EmitInfantryOnSellInfo : TraitInfo<EmitInfantryOnSell>
 	{
 		public readonly float ValuePercent = 40;
 		public readonly float MinHpPercent = 30;
 
 		[ActorReference]
+		[Desc("Be sure to use lowercase. Default value is \"e1\".")]
 		public readonly string[] ActorTypes = { "e1" };
 	}
 
-	class EmitInfantryOnSell : INotifySold, INotifyKilled
+	class EmitInfantryOnSell : INotifySold
 	{
 		public void Selling(Actor self) { }
 
-		void Emit(Actor self)
+		static void Emit(Actor self)
 		{
 			var info = self.Info.Traits.Get<EmitInfantryOnSellInfo>();
 			var csv = self.Info.Traits.GetOrDefault<CustomSellValueInfo>();
@@ -42,7 +45,7 @@ namespace OpenRA.Mods.RA
 			dudesValue /= 100;
 
 			var eligibleLocations = FootprintUtils.Tiles(self).ToList();
-			var actorTypes = info.ActorTypes.Select(a => new { Name = a, Cost = Rules.Info[a].Traits.Get<ValuedInfo>().Cost }).ToArray();
+			var actorTypes = info.ActorTypes.Select(a => new { Name = a, Cost = self.World.Map.Rules.Actors[a].Traits.Get<ValuedInfo>().Cost }).ToArray();
 
 			while (eligibleLocations.Count > 0 && actorTypes.Any(a => a.Cost <= dudesValue))
 			{
@@ -54,17 +57,12 @@ namespace OpenRA.Mods.RA
 
 				self.World.AddFrameEndTask(w => w.CreateActor(at.Name, new TypeDictionary
 				{
-					new LocationInit( loc ),
-					new OwnerInit( self.Owner ),
+					new LocationInit(loc),
+					new OwnerInit(self.Owner),
 				}));
 			}
 		}
 
 		public void Sold(Actor self) { Emit(self); }
-
-		public void Killed(Actor self, AttackInfo e)
-		{
-			Emit(self);
-		}
 	}
 }

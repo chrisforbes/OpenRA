@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -20,30 +20,30 @@ namespace OpenRA.Mods.RA.Widgets
 	public class ObserverSupportPowerIconsWidget : Widget
 	{
 		public Func<Player> GetPlayer;
-		Dictionary<string, Sprite> iconSprites;
+		Animation icon;
 		World world;
 		WorldRenderer worldRenderer;
 		Dictionary<string, Animation> clocks;
 
+		public int IconWidth = 32;
+		public int IconHeight = 24;
+		public int IconSpacing = 8;
+
 		[ObjectCreator.UseCtor]
 		public ObserverSupportPowerIconsWidget(World world, WorldRenderer worldRenderer)
-			: base()
 		{
-			iconSprites = Rules.Info.Values.SelectMany(u => u.Traits.WithInterface<SupportPowerInfo>())
-				.Select(u => u.Image).Distinct()
-				.ToDictionary(
-					u => u,
-					u => Game.modData.SpriteLoader.LoadAllSprites(u)[0]);
+
 			this.world = world;
 			this.worldRenderer = worldRenderer;
 			clocks = new Dictionary<string, Animation>();
+			icon = new Animation(world, "icon");
 		}
 
 		protected ObserverSupportPowerIconsWidget(ObserverSupportPowerIconsWidget other)
 			: base(other)
 		{
 			GetPlayer = other.GetPlayer;
-			iconSprites = other.iconSprites;
+			icon = other.icon;
 			world = other.world;
 			worldRenderer = other.worldRenderer;
 			clocks = other.clocks;
@@ -62,27 +62,27 @@ namespace OpenRA.Mods.RA.Widgets
 			{
 				if (!clocks.ContainsKey(power.a.Key))
 				{
-					clocks.Add(power.a.Key, new Animation("clock"));
+					clocks.Add(power.a.Key, new Animation(world, "clock"));
 				}
 			}
+
+			var iconSize = new float2(IconWidth, IconHeight);
 			foreach (var power in powers)
 			{
 				var item = power.a.Value;
-				if (item == null)
-				{
+				if (item == null || item.Info == null || item.Info.Icon == null)
 					continue;
-				}
-				var sprite = iconSprites[item.Info.Image];
-				var size = sprite.size / new float2(2, 2);
-				var location = new float2(RenderBounds.Location) + new float2(power.i * (int)size.Length, 0);
-				WidgetUtils.DrawSHP(sprite, location, worldRenderer, size);
+
+				icon.Play(item.Info.Icon);
+				var location = new float2(RenderBounds.Location) + new float2(power.i * (IconWidth + IconSpacing), 0);
+				WidgetUtils.DrawSHPCentered(icon.Image, location + 0.5f * iconSize, worldRenderer, 0.5f);
 
 				var clock = clocks[power.a.Key];
 				clock.PlayFetchIndex("idle",
 					() => item.TotalTime == 0 ? 0 : ((item.TotalTime - item.RemainingTime)
 						* (clock.CurrentSequence.Length - 1) / item.TotalTime));
 				clock.Tick();
-				WidgetUtils.DrawSHP(clock.Image, location, worldRenderer, size);
+				WidgetUtils.DrawSHPCentered(clock.Image, location + 0.5f * iconSize, worldRenderer, 0.5f);
 
 				var tiny = Game.Renderer.Fonts["Tiny"];
 				var text = GetOverlayForItem(item);
@@ -92,7 +92,7 @@ namespace OpenRA.Mods.RA.Widgets
 			}
 		}
 
-		static string GetOverlayForItem(SupportPowerManager.SupportPowerInstance item)
+		static string GetOverlayForItem(SupportPowerInstance item)
 		{
 			if (item.Disabled) return "ON HOLD";
 			if (item.Ready) return "READY";

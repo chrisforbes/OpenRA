@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,40 +9,47 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using OpenRA.FileFormats;
+using OpenRA.Primitives;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA.Widgets.Logic
 {
 	public class MapChooserLogic
 	{
-		Map map;
+		string selectedUid;
+
+		// May be a subset of available maps if a mode filter is active
+		List<string> visibleMaps;
+
 		ScrollPanelWidget scrollpanel;
 		ScrollItemWidget itemTemplate;
+		string mapFilter;
 		string gameMode;
-		Thread mapLoaderThread;
 
 		[ObjectCreator.UseCtor]
-		internal MapChooserLogic(Widget widget, string initialMap, Action onExit, Action<Map> onSelect)
+		internal MapChooserLogic(Widget widget, string initialMap, Action onExit, Action<string> onSelect)
 		{
-			map = Game.modData.AvailableMaps[WidgetUtils.ChooseInitialMap(initialMap)];
+			selectedUid = WidgetUtils.ChooseInitialMap(initialMap);
 
-			widget.Get<ButtonWidget>("BUTTON_OK").OnClick = () => { Ui.CloseWindow(); onSelect(map); };
-			widget.Get<ButtonWidget>("BUTTON_CANCEL").OnClick = () => { Ui.CloseWindow(); onExit(); };
+			var approving = new Action(() => { Ui.CloseWindow(); onSelect(selectedUid); });
+			var canceling = new Action(() => { Ui.CloseWindow(); onExit(); });
+
+			widget.Get<ButtonWidget>("BUTTON_OK").OnClick = approving;
+			widget.Get<ButtonWidget>("BUTTON_CANCEL").OnClick = canceling;
 
 			scrollpanel = widget.Get<ScrollPanelWidget>("MAP_LIST");
-			scrollpanel.ScrollVelocity = 40f;
+			scrollpanel.Layout = new GridLayout(scrollpanel);
 
 			itemTemplate = scrollpanel.Get<ScrollItemWidget>("MAP_TEMPLATE");
 
 			var gameModeDropdown = widget.GetOrNull<DropDownButtonWidget>("GAMEMODE_FILTER");
 			if (gameModeDropdown != null)
 			{
-				var selectableMaps = Game.modData.AvailableMaps.Where(m => m.Value.Selectable).ToList();
+				var selectableMaps = Game.modData.MapCache.Where(m => m.Status == MapStatus.Available && m.Map.Selectable);
 				var gameModes = selectableMaps
-					.GroupBy(m => m.Value.Type)
+					.GroupBy(m => m.Type)
 					.Select(g => Pair.New(g.Key, g.Count())).ToList();
 
 				// 'all game types' extra item
@@ -55,7 +62,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				{
 					var item = ScrollItemWidget.Setup(template,
 						() => gameMode == ii.First,
-						() => { gameMode = ii.First; EnumerateMapsAsync(); });
+						() => { gameMode = ii.First; EnumerateMaps(onSelect); });
 					item.Get<LabelWidget>("LABEL").GetText = () => showItem(ii);
 					return item;
 				};
@@ -66,57 +73,80 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				gameModeDropdown.GetText = () => showItem(gameModes.First(m => m.First == gameMode));
 			}
 
-			EnumerateMapsAsync();
-		}
-
-		void EnumerateMapsAsync()
-		{
-			if (mapLoaderThread != null && mapLoaderThread.IsAlive) 
-				mapLoaderThread.Abort(); // violent, but should be fine since we are not doing anything sensitive in this thread
-
-			mapLoaderThread = new Thread(EnumerateMaps);
-			mapLoaderThread.Start();
-		}
-
-		void EnumerateMaps()
-		{
-			Game.RunAfterTick(() => scrollpanel.RemoveChildren()); // queue removal in case another thread added any items to the game queue
-			scrollpanel.Layout = new GridLayout(scrollpanel);
-			scrollpanel.ScrollToTop();
-
-			var maps = Game.modData.AvailableMaps
-				.Where(kv => kv.Value.Selectable)
-				.Where(kv => kv.Value.Type == gameMode || gameMode == null)
-				.OrderBy(kv => kv.Value.PlayerCount)
-				.ThenBy(kv => kv.Value.Title);
-
-			foreach (var kv in maps)
+			var mapfilterInput = widget.GetOrNull<TextFieldWidget>("MAPFILTER_INPUT");
+			if (mapfilterInput != null)
 			{
-				var m = kv.Value;
-				var item = ScrollItemWidget.Setup(itemTemplate, () => m == map, () => map = m);
+				mapfilterInput.TakeKeyboardFocus();
+				mapfilterInput.OnEscKey = () =>
+				{ 
+					if (mapfilterInput.Text.Length == 0)
+						canceling();
+					else
+					{
+						mapFilter = mapfilterInput.Text = null;
+						EnumerateMaps(onSelect);
+					}
+					return true; 
+				};
+				mapfilterInput.OnEnterKey = () => { approving(); return true; };
+				mapfilterInput.OnTextEdited = () =>
+					{ mapFilter = mapfilterInput.Text; EnumerateMaps(onSelect); };
+			}
+
+			var randomMapButton = widget.GetOrNull<ButtonWidget>("RANDOMMAP_BUTTON");
+			if (randomMapButton != null)
+			{
+				randomMapButton.OnClick = () =>
+				{
+					var uid = visibleMaps.Random(Game.CosmeticRandom);
+					selectedUid = uid;
+					scrollpanel.ScrollToItem(uid, smooth: true);
+				};
+				randomMapButton.IsDisabled = () => visibleMaps == null || visibleMaps.Count == 0;
+			}
+
+			EnumerateMaps(onSelect);
+		}
+
+		void EnumerateMaps(Action<string> onSelect)
+		{
+			var maps = Game.modData.MapCache
+				.Where(m => m.Status == MapStatus.Available && m.Map.Selectable)
+				.Where(m => gameMode == null || m.Type == gameMode)
+				.Where(m => mapFilter == null || m.Title.IndexOf(mapFilter, StringComparison.OrdinalIgnoreCase) >= 0 || m.Author.IndexOf(mapFilter, StringComparison.OrdinalIgnoreCase) >= 0)
+				.OrderBy(m => m.PlayerCount)
+				.ThenBy(m => m.Title);
+
+			scrollpanel.RemoveChildren();
+			foreach (var loop in maps)
+			{
+				var preview = loop;
+
+				// Access the minimap to trigger async generation of the minimap.
+				preview.GetMinimap();
+
+				var item = ScrollItemWidget.Setup(preview.Uid, itemTemplate, () => selectedUid == preview.Uid, () => selectedUid = preview.Uid, () => { Ui.CloseWindow(); onSelect(preview.Uid); });
+				item.IsVisible = () => item.RenderBounds.IntersectsWith(scrollpanel.RenderBounds);
 
 				var titleLabel = item.Get<LabelWidget>("TITLE");
-				titleLabel.GetText = () => m.Title;
+				titleLabel.GetText = () => preview.Title;
 
 				var previewWidget = item.Get<MapPreviewWidget>("PREVIEW");
-				previewWidget.IgnoreMouseOver = true;
-				previewWidget.IgnoreMouseInput = true;
-				previewWidget.Map = () => m;
-				previewWidget.LoadMapPreview();
+				previewWidget.Preview = () => preview;
 
-				var detailsWidget = item.Get<LabelWidget>("DETAILS");
+				var detailsWidget = item.GetOrNull<LabelWidget>("DETAILS");
 				if (detailsWidget != null)
-					detailsWidget.GetText = () => "{0} ({1})".F(m.Type, m.PlayerCount);
+					detailsWidget.GetText = () => "{0} ({1} players)".F(preview.Type, preview.PlayerCount);
 
-				var authorWidget = item.Get<LabelWidget>("AUTHOR");
+				var authorWidget = item.GetOrNull<LabelWidget>("AUTHOR");
 				if (authorWidget != null)
-					authorWidget.GetText = () => m.Author;
+					authorWidget.GetText = () => "Created by {0}".F(preview.Author);
 
-				var sizeWidget = item.Get<LabelWidget>("SIZE");
+				var sizeWidget = item.GetOrNull<LabelWidget>("SIZE");
 				if (sizeWidget != null)
 				{
-					var size = m.Bounds.Width + "x" + m.Bounds.Height;
-					var numberPlayableCells = m.Bounds.Width * m.Bounds.Height;
+					var size = preview.Bounds.Width + "x" + preview.Bounds.Height;
+					var numberPlayableCells = preview.Bounds.Width * preview.Bounds.Height;
 					if (numberPlayableCells >= 120 * 120) size += " (Huge)";
 					else if (numberPlayableCells >= 90 * 90) size += " (Large)";
 					else if (numberPlayableCells >= 60 * 60) size += " (Medium)";
@@ -124,8 +154,12 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 					sizeWidget.GetText = () => size;
 				}
 
-				Game.RunAfterTick(() => scrollpanel.AddChild(item));
+				scrollpanel.AddChild(item);
 			}
+
+			visibleMaps = maps.Select(m => m.Uid).ToList();
+			if (visibleMaps.Contains(selectedUid))
+				scrollpanel.ScrollToItem(selectedUid);
 		}
 	}
 }

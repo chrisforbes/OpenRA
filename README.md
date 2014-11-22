@@ -2,11 +2,11 @@
 
 A Libre/Free Real Time Strategy game engine supporting early Westwood classics.
 
-* Website: [http://www.open-ra.org](http://www.open-ra.org)
+* Website: [http://www.openra.net](http://www.openra.net)
 * IRC: \#openra on irc.freenode.net
-* Repository: [https://github.com/openra/openra](https://github.com/openra/openra)
+* Repository: [https://github.com/OpenRA/OpenRA](https://github.com/OpenRA/OpenRA) [![Build Status](https://travis-ci.org/OpenRA/OpenRA.svg?branch=bleed)](https://travis-ci.org/OpenRA/OpenRA)
 
-Please read the [FAQ](https://github.com/OpenRA/OpenRA/wiki/FAQ) in our [Wiki](https://github.com/OpenRA/OpenRA/wiki) and report problems at [http://bugs.open-ra.org](http://bugs.open-ra.org).
+Please read the [FAQ](http://wiki.openra.net/FAQ) in our [Wiki](http://wiki.openra.net) and report problems at [http://bugs.openra.net](http://bugs.openra.net).
 
 Join the [Forums](http://www.sleipnirstuff.com/forum/viewforum.php?f=80) for discussion.
 
@@ -15,31 +15,38 @@ Join the [Forums](http://www.sleipnirstuff.com/forum/viewforum.php?f=80) for dis
 Distributed mods include a reimagining of
 * Command & Conquer: Red Alert
 * Command & Conquer: Tiberian Dawn
-* Dune 2000 (experimental)
+* Dune 2000
 
 Check our [Playing the Game](https://github.com/OpenRA/OpenRA/wiki/Playing-the-game) Guide to win multiplayer matches.
 
 ## Contribute
-
-* Please read [INSTALL](https://github.com/OpenRA/OpenRA/blob/bleed/INSTALL) and [Compiling](https://github.com/OpenRA/OpenRA/wiki/Compiling) on how to set up an OpenRA development environment.
-* Read [HACKING](https://github.com/OpenRA/OpenRA/blob/bleed/HACKING) for an overview of the engine.
-* To get your patches merged please adhere to the [Contributing](https://github.com/OpenRA/OpenRA/blob/bleed/CONTRIBUTING.md) guidelines.
-* Some insights on the upcoming [Translation](https://github.com/OpenRA/OpenRA/wiki/Translation) framework.
+[![Bountysource](https://api.bountysource.com/badge/team?team_id=528&style=bounties_received)](https://www.bountysource.com/teams/openra/issues?utm_source=OpenRA&utm_medium=shield&utm_campaign=bounties_received)
+* Please read [INSTALL.md](https://github.com/OpenRA/OpenRA/blob/bleed/INSTALL.md) and [Compiling](http://wiki.openra.net/Compiling) on how to set up an OpenRA development environment.
+* See [Hacking](http://wiki.openra.net/Hacking) for an overview of the engine.
+* To get your patches merged, please adhere to the [Contributing](https://github.com/OpenRA/OpenRA/blob/bleed/CONTRIBUTING.md) guidelines.
 
 ## Mapping
 
-* We offer a [Mapping](https://github.com/OpenRA/OpenRA/wiki/Mapping) Tutorial as you can change gameplay drastically with custom maps.
-* If you want to share custom maps, mini-games and units with the community upload them at [http://content.open-ra.org](http://content.open-ra.org)
+* We offer a [Mapping](http://wiki.openra.net/Mapping) Tutorial as you can change gameplay drastically with custom rules.
+* For scripted mission have a look at the [Lua API](http://wiki.openra.net/New-Lua-API).
+* If you want to share your maps with the community, upload them at the [OpenRA Resource Center](http://resource.openra.net).
 
 ## Modding
 
-* There exists an incomplete [Trait documentation](https://github.com/OpenRA/OpenRA/wiki/Trait-Documentation) to get started with yaml files.
-* Check the [Modding Guide](https://github.com/OpenRA/OpenRA/wiki/Modding%20Guide) to create your own classic RTS.
-* Some hints on to create new OpenRA compatible [Pixelart](https://github.com/OpenRA/OpenRA/wiki/Pixelart).
-* Upload total conversions at [our ModDB profile](http://www.moddb.com/games/openra/mods)
+* There exists an auto-generated [Trait documentation](http://wiki.openra.net/Traits) to get started with yaml files.
+* Check the [Modding Guide](http://wiki.openra.net/Modding-Guide) to create your own classic RTS.
+* Some hints on how to create new OpenRA compatible [Pixelart](http://wiki.openra.net/Pixelart).
+* Upload total conversions at [our ModDB profile](http://www.moddb.com/games/openra/mods).
 
 ## Support
 
-* Sponsor a mirror server if you have some bandwidth to spare (ask in IRC).
-* You can immediately set up a [Dedicated](https://github.com/OpenRA/OpenRA/wiki/Dedicated) Game Server.
-* Fund development by creating [Bounties](https://www.bountysource.com/#repos/OpenRA/OpenRA) on specific tasks.
+* Sponsor a [mirror server](https://github.com/OpenRA/OpenRAWeb/tree/master/content/packages) if you have some bandwidth to spare.
+* You can immediately set up a [Dedicated](http://wiki.openra.net/Dedicated) Game Server.
+* Fund development by creating [Bounties](https://www.bountysource.com/trackers/36085-openra) on specific tasks.
+
+## License
+Copyright 2007-2014 The OpenRA Developers (see [AUTHORS](https://github.com/OpenRA/OpenRA/blob/bleed/AUTHORS))
+This file is part of OpenRA, which is free software. It is made 
+available to you under the terms of the GNU General Public License
+as published by the Free Software Foundation. For more information,
+see [COPYING](https://github.com/OpenRA/OpenRA/blob/bleed/COPYING).

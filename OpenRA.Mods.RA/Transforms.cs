@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,36 +9,39 @@
 #endregion
 
 using System.Collections.Generic;
-using OpenRA.Mods.RA.Activities;
-using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Orders;
-using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
+using OpenRA.Mods.RA.Render;
+using OpenRA.Mods.RA.Buildings;
+using OpenRA.Mods.RA.Activities;
+using OpenRA.Mods.Common.Orders;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Actor becomes a specified actor type when this trait is triggered.")]
 	class TransformsInfo : ITraitInfo
 	{
 		[ActorReference] public readonly string IntoActor = null;
-		public readonly int2 Offset = int2.Zero;
+		public readonly CVec Offset = CVec.Zero;
 		public readonly int Facing = 96;
-		public readonly string[] TransformSounds = {};
-		public readonly string[] NoTransformSounds = {};
+		public readonly string[] TransformSounds = { };
+		public readonly string[] NoTransformSounds = { };
 
-		public virtual object Create(ActorInitializer init) { return new Transforms(init.self, this); }
+		public virtual object Create(ActorInitializer init) { return new Transforms(init, this); }
 	}
 
 	class Transforms : IIssueOrder, IResolveOrder, IOrderVoice
 	{
-		Actor self;
-		TransformsInfo Info;
-		BuildingInfo bi;
+		readonly Actor self;
+		readonly TransformsInfo info;
+		readonly BuildingInfo bi;
+		readonly string race;
 
-		public Transforms(Actor self, TransformsInfo info)
+		public Transforms(ActorInitializer init, TransformsInfo info)
 		{
-			this.self = self;
-			Info = info;
-			bi = Rules.Info[info.IntoActor].Traits.GetOrDefault<BuildingInfo>();
+			self = init.self;
+			this.info = info;
+			bi = self.World.Map.Rules.Actors[info.IntoActor].Traits.GetOrDefault<BuildingInfo>();
+			race = init.Contains<RaceInit>() ? init.Get<RaceInit, string>() : self.Owner.Country.Race;
 		}
 
 		public string VoicePhraseForOrder(Actor self, Order order)
@@ -52,45 +55,55 @@ namespace OpenRA.Mods.RA
 			if (b != null && b.Locked)
 				return false;
 
-			return (bi == null || self.World.CanPlaceBuilding(Info.IntoActor, bi, self.Location + (CVec)Info.Offset, self));
+			return bi == null || self.World.CanPlaceBuilding(info.IntoActor, bi, self.Location + info.Offset, self);
 		}
 
 		public IEnumerable<IOrderTargeter> Orders
 		{
-			get { yield return new DeployOrderTargeter( "DeployTransform", 5, () => CanDeploy() ); }
+			get { yield return new DeployOrderTargeter("DeployTransform", 5, () => CanDeploy()); }
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order.OrderID == "DeployTransform" )
-				return new Order( order.OrderID, self, queued );
+			if (order.OrderID == "DeployTransform")
+				return new Order(order.OrderID, self, queued);
 
 			return null;
 		}
 
-		public void ResolveOrder( Actor self, Order order )
+		public void DeployTransform(bool queued)
 		{
-			if (order.OrderString == "DeployTransform")
-			{
-				var b = self.TraitOrDefault<Building>();
+			var b = self.TraitOrDefault<Building>();
 
-				if (!CanDeploy() || (b != null && !b.Lock()))
-				{
-					foreach (var s in Info.NoTransformSounds)
-						Sound.PlayToPlayer(self.Owner, s);
-					return;
-				}
+			if (!CanDeploy() || (b != null && !b.Lock()))
+			{
+				foreach (var s in info.NoTransformSounds)
+					Sound.PlayToPlayer(self.Owner, s);
+
+				return;
+			}
+
+			if (!queued)
 				self.CancelActivity();
 
-				if (self.HasTrait<IFacing>())
-					self.QueueActivity(new Turn(Info.Facing));
+			if (self.HasTrait<IFacing>())
+				self.QueueActivity(new Turn(self, info.Facing));
 
-				var rb = self.TraitOrDefault<RenderBuilding>();
-				if (rb != null && self.Info.Traits.Get<RenderBuildingInfo>().HasMakeAnimation)
-					self.QueueActivity(new MakeAnimation(self, true, () => rb.PlayCustomAnim(self, "make")));
+			foreach (var nt in self.TraitsImplementing<INotifyTransform>())
+				nt.BeforeTransform(self);
 
-				self.QueueActivity(new Transform(self, Info.IntoActor) { Offset = (CVec)Info.Offset, Facing = Info.Facing, Sounds = Info.TransformSounds });
-			}
+			var transform = new Transform(self, info.IntoActor) { Offset = info.Offset, Facing = info.Facing, Sounds = info.TransformSounds, Race = race };
+			var makeAnimation = self.TraitOrDefault<WithMakeAnimation>();
+			if (makeAnimation != null)
+				makeAnimation.Reverse(self, transform);
+			else
+				self.QueueActivity(transform);
+		}
+
+		public void ResolveOrder(Actor self, Order order)
+		{
+			if (order.OrderString == "DeployTransform")
+				DeployTransform(order.Queued);
 		}
 	}
 }

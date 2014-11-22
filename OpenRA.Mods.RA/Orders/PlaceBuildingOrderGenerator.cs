@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,12 +8,16 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common;
 using OpenRA.Mods.RA.Buildings;
+using OpenRA.Mods.Common.Graphics;
 using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
+using OpenRA.Primitives;
 
 namespace OpenRA.Mods.RA.Orders
 {
@@ -22,18 +26,22 @@ namespace OpenRA.Mods.RA.Orders
 		readonly Actor Producer;
 		readonly string Building;
 		readonly BuildingInfo BuildingInfo;
-		IEnumerable<Renderable> preview;
+		IActorPreview[] preview;
+
 		Sprite buildOk, buildBlocked;
 		bool initialized = false;
 
-		public PlaceBuildingOrderGenerator(Actor producer, string name)
+		public PlaceBuildingOrderGenerator(ProductionQueue queue, string name)
 		{
-			Producer = producer;
+			Producer = queue.Actor;
 			Building = name;
-			BuildingInfo = Rules.Info[Building].Traits.Get<BuildingInfo>();
 
-			buildOk = SequenceProvider.GetSequence("overlay", "build-valid").GetSprite(0);
-			buildBlocked = SequenceProvider.GetSequence("overlay", "build-invalid").GetSprite(0);
+			var map = Producer.World.Map;
+			var tileset = Producer.World.TileSet.Id.ToLowerInvariant();
+			BuildingInfo = map.Rules.Actors[Building].Traits.Get<BuildingInfo>();
+
+			buildOk = map.SequenceProvider.GetSequence("overlay", "build-valid-{0}".F(tileset)).GetSprite(0);
+			buildBlocked = map.SequenceProvider.GetSequence("overlay", "build-invalid").GetSprite(0);
 		}
 
 		public IEnumerable<Order> Order(World world, CPos xy, MouseInput mi)
@@ -50,38 +58,60 @@ namespace OpenRA.Mods.RA.Orders
 
 		IEnumerable<Order> InnerOrder(World world, CPos xy, MouseInput mi)
 		{
+			if (world.Paused)
+				yield break;
+
 			if (mi.Button == MouseButton.Left)
 			{
 				var topLeft = xy - FootprintUtils.AdjustForBuildingSize(BuildingInfo);
 				if (!world.CanPlaceBuilding(Building, BuildingInfo, topLeft, null)
 					|| !BuildingInfo.IsCloseEnoughToBase(world, Producer.Owner, Building, topLeft))
 				{
-					Sound.PlayNotification(Producer.Owner, "Speech", "BuildingCannotPlaceAudio", Producer.Owner.Country.Race);
+					Sound.PlayNotification(world.Map.Rules, Producer.Owner, "Speech", "BuildingCannotPlaceAudio", Producer.Owner.Country.Race);
 					yield break;
 				}
 
-				var isLineBuild = Rules.Info[Building].Traits.Contains<LineBuildInfo>();
-				yield return new Order(isLineBuild ? "LineBuild" : "PlaceBuilding",
-					Producer.Owner.PlayerActor, false) { TargetLocation = topLeft, TargetString = Building };
+				var isLineBuild = world.Map.Rules.Actors[Building].Traits.Contains<LineBuildInfo>();
+				yield return new Order(isLineBuild ? "LineBuild" : "PlaceBuilding", Producer.Owner.PlayerActor, false)
+				{
+					TargetLocation = topLeft,
+					TargetActor = Producer,
+					TargetString = Building,
+					SuppressVisualFeedback = true
+				};
 			}
 		}
 
-		public void Tick(World world) {}
-		public void RenderAfterWorld(WorldRenderer wr, World world) {}
-		public void RenderBeforeWorld(WorldRenderer wr, World world)
+		public void Tick(World world)
 		{
-			var position = Game.viewport.ViewToWorld(Viewport.LastMousePos);
-			var topLeft = position - FootprintUtils.AdjustForBuildingSize(BuildingInfo);
+			if (preview == null)
+				return;
 
-			var actorInfo = Rules.Info[Building];
+			foreach (var p in preview)
+				p.Tick();
+		}
+
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
+		public IEnumerable<IRenderable> RenderAfterWorld(WorldRenderer wr, World world)
+		{
+			var xy = wr.Viewport.ViewToWorld(Viewport.LastMousePos);
+			var topLeft = xy - FootprintUtils.AdjustForBuildingSize(BuildingInfo);
+
+			var rules = world.Map.Rules;
+
+			var actorInfo = rules.Actors[Building];
 			foreach (var dec in actorInfo.Traits.WithInterface<IPlaceBuildingDecoration>())
-				dec.Render(wr, world, actorInfo, Traits.Util.CenterOfCell(position));	/* hack hack */
+				foreach (var r in dec.Render(wr, world, actorInfo, world.Map.CenterOfCell(xy)))
+					yield return r;
 
 			var cells = new Dictionary<CPos, bool>();
 			// Linebuild for walls.
-			// Assumes a 1x1 footprint; weird things will happen for other footprints
-			if (Rules.Info[Building].Traits.Contains<LineBuildInfo>())
+			// Requires a 1x1 footprint
+			if (rules.Actors[Building].Traits.Contains<LineBuildInfo>())
 			{
+				if (BuildingInfo.Dimensions.X != 1 || BuildingInfo.Dimensions.Y != 1)
+					throw new InvalidOperationException("LineBuild requires a 1x1 sized Building");
+
 				foreach (var t in BuildingUtils.GetLineBuildCells(world, topLeft, Building, BuildingInfo))
 					cells.Add(t, BuildingInfo.IsCloseEnoughToBase(world, world.LocalPlayer, Building, t));
 			}
@@ -89,27 +119,36 @@ namespace OpenRA.Mods.RA.Orders
 			{
 				if (!initialized)
 				{
-					var rbi = Rules.Info[Building].Traits.Get<RenderBuildingInfo>();
-					var palette = rbi.Palette ?? (Producer.Owner != null ?
-					                              rbi.PlayerPalette + Producer.Owner.InternalName : null);
+					var init = new ActorPreviewInitializer(rules.Actors[Building], Producer.Owner, wr, new TypeDictionary());
+					preview = rules.Actors[Building].Traits.WithInterface<IRenderActorPreviewInfo>()
+						.SelectMany(rpi => rpi.RenderPreview(init))
+						.ToArray();
 
-					preview = rbi.RenderPreview(Rules.Info[Building], wr.Palette(palette));
 					initialized = true;
 				}
 
-				foreach (var r in preview)
-					r.Sprite.DrawAt(topLeft.ToPPos().ToFloat2() + r.Pos,
-									r.Palette.Index,
-									r.Scale*r.Sprite.size);
+				var comparer = new RenderableComparer(wr);
+				var offset = world.Map.CenterOfCell(topLeft) + FootprintUtils.CenterOffset(world, BuildingInfo);
+				var previewRenderables = preview
+					.SelectMany(p => p.Render(wr, offset))
+					.OrderBy(r => r, comparer);
+
+				foreach (var r in previewRenderables)
+					yield return r;
 
 				var res = world.WorldActor.Trait<ResourceLayer>();
 				var isCloseEnough = BuildingInfo.IsCloseEnoughToBase(world, world.LocalPlayer, Building, topLeft);
-				foreach (var t in FootprintUtils.Tiles(Building, BuildingInfo, topLeft))
+				foreach (var t in FootprintUtils.Tiles(rules, Building, BuildingInfo, topLeft))
 					cells.Add(t, isCloseEnough && world.IsCellBuildable(t, BuildingInfo) && res.GetResource(t) == null);
 			}
 
+			var pal = wr.Palette("terrain");
 			foreach (var c in cells)
-				(c.Value ? buildOk : buildBlocked).DrawAt(wr, c.Key.ToPPos().ToFloat2(), "terrain");
+			{
+				var tile = c.Value ? buildOk : buildBlocked;
+				yield return new SpriteRenderable(tile, world.Map.CenterOfCell(c.Key),
+					WVec.Zero, -511, pal, 1f, true);
+			}
 		}
 
 		public string GetCursor(World world, CPos xy, MouseInput mi) { return "default"; }

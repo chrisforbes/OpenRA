@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,7 +8,6 @@
  */
 #endregion
 
-using System.Linq;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
@@ -17,17 +16,22 @@ namespace OpenRA.Mods.RA
 	{
 		public readonly string[] CloakedTargetTypes = {};
 
-		public override object Create( ActorInitializer init ) { return new TargetableSubmarine(init.self, this); }
+		public override object Create(ActorInitializer init) { return new TargetableSubmarine(init.self, this); }
 	}
 
-	public class TargetableSubmarine : TargetableUnit<TargetableSubmarineInfo>
+	public class TargetableSubmarine : TargetableUnit
 	{
+		readonly TargetableSubmarineInfo info;
+
 		public TargetableSubmarine(Actor self, TargetableSubmarineInfo info)
-			: base(self, info) {}
+			: base(self, info)
+		{
+			this.info = info;
+		}
 
 		public override string[] TargetTypes
 		{
-			get { return Cloak.Cloaked ? info.CloakedTargetTypes
+			get { return cloak.Cloaked ? info.CloakedTargetTypes
 									   : info.TargetTypes;}
 		}
 	}

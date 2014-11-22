@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -23,6 +23,7 @@ namespace OpenRA
 		TargetString = 0x04,
 		Queued = 0x08,
 		ExtraLocation = 0x10,
+		ExtraData = 0x20
 	}
 
 	static class OrderFieldsExts
@@ -42,12 +43,14 @@ namespace OpenRA
 		public CPos TargetLocation;
 		public string TargetString;
 		public CPos ExtraLocation;
+		public uint ExtraData;
 		public bool IsImmediate;
+		public bool SuppressVisualFeedback;
 
-		public Player Player { get { return Subject.Owner; } }
+		public Player Player { get { return Subject != null ? Subject.Owner : null; } }
 
 		Order(string orderString, Actor subject,
-			Actor targetActor, CPos targetLocation, string targetString, bool queued, CPos extraLocation)
+			Actor targetActor, CPos targetLocation, string targetString, bool queued, CPos extraLocation, uint extraData)
 		{
 			this.OrderString = orderString;
 			this.Subject = subject;
@@ -56,67 +59,7 @@ namespace OpenRA
 			this.TargetString = targetString;
 			this.Queued = queued;
 			this.ExtraLocation = extraLocation;
-		}
-
-		// For scripting special powers
-		public Order()
-			: this(null, null, null, CPos.Zero, null, false, CPos.Zero) { }
-
-		public Order(string orderString, Actor subject, bool queued)
-			: this(orderString, subject, null, CPos.Zero, null, queued, CPos.Zero) { }
-
-		public Order(string orderstring, Order order)
-			: this(orderstring, order.Subject, order.TargetActor, order.TargetLocation,
-				   order.TargetString, order.Queued, order.ExtraLocation) {}
-
-		public byte[] Serialize()
-		{
-			if (IsImmediate)		/* chat, whatever */
-			{
-				var ret = new MemoryStream();
-				var w = new BinaryWriter(ret);
-				w.Write((byte)0xfe);
-				w.Write(OrderString);
-				w.Write(TargetString);
-				return ret.ToArray();
-			}
-
-			switch (OrderString)
-			{
-				// Format:
-				//		u8    : orderID.
-				//					0xFF: Full serialized order.
-				//		varies: rest of order.
-				default:
-					// TODO: specific serializers for specific orders.
-					{
-						var ret = new MemoryStream();
-						var w = new BinaryWriter(ret);
-						w.Write( (byte)0xFF );
-						w.Write(OrderString);
-						w.Write(UIntFromActor(Subject));
-
-						OrderFields fields = 0;
-						if (TargetActor != null) fields |= OrderFields.TargetActor;
-						if (TargetLocation != CPos.Zero) fields |= OrderFields.TargetLocation;
-						if (TargetString != null) fields |= OrderFields.TargetString;
-						if (Queued) fields |= OrderFields.Queued;
-						if (ExtraLocation != CPos.Zero) fields |= OrderFields.ExtraLocation;
-
-						w.Write((byte)fields);
-
-						if (TargetActor != null)
-							w.Write(UIntFromActor(TargetActor));
-						if (TargetLocation != CPos.Zero)
-							w.Write(TargetLocation.ToInt2());
-						if (TargetString != null)
-							w.Write(TargetString);
-						if (ExtraLocation != CPos.Zero)
-							w.Write(ExtraLocation.ToInt2());
-
-						return ret.ToArray();
-					}
-			}
+			this.ExtraData = extraData;
 		}
 
 		public static Order Deserialize(World world, BinaryReader r)
@@ -129,17 +72,21 @@ namespace OpenRA
 						var subjectId = r.ReadUInt32();
 						var flags = (OrderFields)r.ReadByte();
 
-						var targetActorId = flags.HasField(OrderFields.TargetActor) ?  r.ReadUInt32() : 0xffffffff;
-						var targetLocation = (CPos)( flags.HasField(OrderFields.TargetLocation) ? r.ReadInt2() : int2.Zero );
+						var targetActorId = flags.HasField(OrderFields.TargetActor) ? r.ReadUInt32() : 0xffffffff;
+						var targetLocation = (CPos)(flags.HasField(OrderFields.TargetLocation) ? r.ReadInt2() : int2.Zero);
 						var targetString = flags.HasField(OrderFields.TargetString) ? r.ReadString() : null;
 						var queued = flags.HasField(OrderFields.Queued);
 						var extraLocation = (CPos)(flags.HasField(OrderFields.ExtraLocation) ? r.ReadInt2() : int2.Zero);
+						var extraData = flags.HasField(OrderFields.ExtraData) ? r.ReadUInt32() : 0;
+
+						if (world == null)
+							return new Order(order, null, null, targetLocation, targetString, queued, extraLocation, extraData);
 
 						Actor subject, targetActor;
-						if( !TryGetActorFromUInt( world, subjectId, out subject ) || !TryGetActorFromUInt( world, targetActorId, out targetActor ) )
+						if (!TryGetActorFromUInt(world, subjectId, out subject) || !TryGetActorFromUInt(world, targetActorId, out targetActor))
 							return null;
 
-						return new Order( order, subject, targetActor, targetLocation, targetString, queued, extraLocation);
+						return new Order(order, subject, targetActor, targetLocation, targetString, queued, extraLocation, extraData);
 					}
 
 				case 0xfe:
@@ -147,19 +94,12 @@ namespace OpenRA
 						var name = r.ReadString();
 						var data = r.ReadString();
 
-						return new Order( name, null, false ) { IsImmediate = true, TargetString = data };
+						return new Order(name, null, false) { IsImmediate = true, TargetString = data };
 					}
 
 				default:
 					throw new NotImplementedException();
 			}
-		}
-
-		public override string ToString()
-		{
-			return ("OrderString: \"{0}\" \n\t Subject: \"{1}\". \n\t TargetActor: \"{2}\" \n\t TargetLocation: {3}." +
-				"\n\t TargetString: \"{4}\".\n\t IsImmediate: {5}.\n\t Player(PlayerName): {6}\n").F(
-				OrderString, Subject, TargetActor != null ? TargetActor.Info.Name : null , TargetLocation, TargetString, IsImmediate, Player != null ? Player.PlayerName : null);
 		}
 
 		static uint UIntFromActor(Actor a)
@@ -168,20 +108,21 @@ namespace OpenRA
 			return a.ActorID;
 		}
 
-		static bool TryGetActorFromUInt(World world, uint aID, out Actor ret )
+		static bool TryGetActorFromUInt(World world, uint aID, out Actor ret)
 		{
-			if( aID == 0xFFFFFFFF )
+			if (aID == 0xFFFFFFFF)
 			{
 				ret = null;
 				return true;
 			}
 			else
 			{
-				foreach( var a in world.Actors.Where( x => x.ActorID == aID ) )
+				foreach (var a in world.Actors.Where(x => x.ActorID == aID))
 				{
 					ret = a;
 					return true;
 				}
+
 				ret = null;
 				return false;
 			}
@@ -189,28 +130,26 @@ namespace OpenRA
 
 		// Named constructors for Orders.
 		// Now that Orders are resolved by individual Actors, these are weird; you unpack orders manually, but not pack them.
-
 		public static Order Chat(bool team, string text)
 		{
-			return new Order(team ? "TeamChat" : "Chat", null, false) { IsImmediate = true, TargetString = text};
+			return new Order(team ? "TeamChat" : "Chat", null, false) { IsImmediate = true, TargetString = text };
 		}
 
 		public static Order HandshakeResponse(string text)
 		{
 			return new Order("HandshakeResponse", null, false) { IsImmediate = true, TargetString = text };
 		}
-		
-		public static Order PauseRequest()
+
+		public static Order Pong(string pingTime)
 		{
-			return new Order("PauseRequest", null, false) { IsImmediate = true, TargetString="" }; //TODO: targetbool?
-		}
-                
-		public static Order PauseGame()
-		{
-			return new Order("PauseGame", null, false) { IsImmediate = true, TargetString=""}; //TODO: targetbool?
+			return new Order("Pong", null, false) { IsImmediate = true, TargetString = pingTime };
 		}
 
-		
+		public static Order PauseGame(bool paused)
+		{
+			return new Order("PauseGame", null, false) { TargetString = paused ? "Pause" : "UnPause" };
+		}
+
 		public static Order Command(string text)
 		{
 			return new Order("Command", null, false) { IsImmediate = true, TargetString = text };
@@ -218,17 +157,90 @@ namespace OpenRA
 
 		public static Order StartProduction(Actor subject, string item, int count)
 		{
-			return new Order("StartProduction", subject, false) { TargetLocation = new CPos(count, 0), TargetString = item };
+			return new Order("StartProduction", subject, false) { ExtraData = (uint)count, TargetString = item };
 		}
 
 		public static Order PauseProduction(Actor subject, string item, bool pause)
 		{
-			return new Order("PauseProduction", subject, false) { TargetLocation = new CPos(pause ? 1 : 0, 0), TargetString = item };
+			return new Order("PauseProduction", subject, false) { ExtraData = pause ? 1u : 0u, TargetString = item };
 		}
 
 		public static Order CancelProduction(Actor subject, string item, int count)
 		{
-			return new Order("CancelProduction", subject, false) { TargetLocation = new CPos(count, 0), TargetString = item };
+			return new Order("CancelProduction", subject, false) { ExtraData = (uint)count, TargetString = item };
+		}
+
+		// For scripting special powers
+		public Order()
+			: this(null, null, null, CPos.Zero, null, false, CPos.Zero, 0) { }
+
+		public Order(string orderString, Actor subject, bool queued)
+			: this(orderString, subject, null, CPos.Zero, null, queued, CPos.Zero, 0) { }
+
+		public Order(string orderstring, Order order)
+			: this(orderstring, order.Subject, order.TargetActor, order.TargetLocation,
+				   order.TargetString, order.Queued, order.ExtraLocation, order.ExtraData) { }
+
+		public byte[] Serialize()
+		{
+			if (IsImmediate)
+			{
+				var ret = new MemoryStream();
+				var w = new BinaryWriter(ret);
+				w.Write((byte)0xfe);
+				w.Write(OrderString);
+				w.Write(TargetString);
+				return ret.ToArray();
+			}
+
+			switch (OrderString)
+			{
+				/* 
+				 * Format:
+				 * u8: orderID.
+				 * 0xFF: Full serialized order.
+				 * varies: rest of order.
+				 */
+				default:
+					// TODO: specific serializers for specific orders.
+					{
+						var ret = new MemoryStream();
+						var w = new BinaryWriter(ret);
+						w.Write((byte)0xFF);
+						w.Write(OrderString);
+						w.Write(UIntFromActor(Subject));
+
+						OrderFields fields = 0;
+						if (TargetActor != null) fields |= OrderFields.TargetActor;
+						if (TargetLocation != CPos.Zero) fields |= OrderFields.TargetLocation;
+						if (TargetString != null) fields |= OrderFields.TargetString;
+						if (Queued) fields |= OrderFields.Queued;
+						if (ExtraLocation != CPos.Zero) fields |= OrderFields.ExtraLocation;
+						if (ExtraData != 0) fields |= OrderFields.ExtraData;
+
+						w.Write((byte)fields);
+
+						if (TargetActor != null)
+							w.Write(UIntFromActor(TargetActor));
+						if (TargetLocation != CPos.Zero)
+							w.Write(TargetLocation);
+						if (TargetString != null)
+							w.Write(TargetString);
+						if (ExtraLocation != CPos.Zero)
+							w.Write(ExtraLocation);
+						if (ExtraData != 0)
+							w.Write(ExtraData);
+
+						return ret.ToArray();
+					}
+			}
+		}
+
+		public override string ToString()
+		{
+			return ("OrderString: \"{0}\" \n\t Subject: \"{1}\". \n\t TargetActor: \"{2}\" \n\t TargetLocation: {3}." +
+				"\n\t TargetString: \"{4}\".\n\t IsImmediate: {5}.\n\t Player(PlayerName): {6}\n").F(
+				OrderString, Subject, TargetActor != null ? TargetActor.Info.Name : null, TargetLocation, TargetString, IsImmediate, Player != null ? Player.PlayerName : null);
 		}
 	}
 }

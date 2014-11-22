@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,9 +8,12 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using OpenRA.Effects;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common.Traits;
+using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
@@ -32,59 +35,74 @@ namespace OpenRA.Mods.RA.Effects
 		GpsDotInfo info;
 		Animation anim;
 
-		GpsWatcher watcher;
-		HiddenUnderFog huf;
-		Spy spy;
+		Lazy<HiddenUnderFog> huf;
+		Lazy<FrozenUnderFog> fuf;
+		Lazy<Disguise> disguise;
+		Lazy<Cloak> cloak;
+		Cache<Player, GpsWatcher> watcher;
+		Cache<Player, FrozenActorLayer> frozen;
+
 		bool show = false;
 
 		public GpsDot(Actor self, GpsDotInfo info)
 		{
 			this.self = self;
 			this.info = info;
-			anim = new Animation("gpsdot");
+			anim = new Animation(self.World, "gpsdot");
 			anim.PlayRepeating(info.String);
 
 			self.World.AddFrameEndTask(w => w.Add(this));
-			if (self.World.LocalPlayer != null)
-				watcher = self.World.LocalPlayer.PlayerActor.Trait<GpsWatcher>();
+
+			huf = Exts.Lazy(() => self.TraitOrDefault<HiddenUnderFog>());
+			fuf = Exts.Lazy(() => self.TraitOrDefault<FrozenUnderFog>());
+			disguise = Exts.Lazy(() => self.TraitOrDefault<Disguise>());
+			cloak = Exts.Lazy(() => self.TraitOrDefault<Cloak>());
+
+			watcher = new Cache<Player, GpsWatcher>(p => p.PlayerActor.Trait<GpsWatcher>());
+			frozen = new Cache<Player, FrozenActorLayer>(p => p.PlayerActor.Trait<FrozenActorLayer>());
 		}
 
-		bool firstTick = true;
+		bool ShouldShowIndicator()
+		{
+			if (cloak.Value != null && cloak.Value.Cloaked)
+				return false;
+
+			if (disguise.Value != null && disguise.Value.Disguised)
+				return false;
+
+			if (huf.Value != null && !huf.Value.IsVisible(self, self.World.RenderPlayer))
+				return true;
+
+			if (fuf.Value == null)
+				return false;
+
+			var f = frozen[self.World.RenderPlayer].FromID(self.ActorID);
+			if (f == null)
+				return false;
+
+			return f.Visible && !f.HasRenderables;
+		}
+
 		public void Tick(World world)
 		{
 			if (self.Destroyed)
 				world.AddFrameEndTask(w => w.Remove(this));
 
-			if (world.LocalPlayer == null || !self.IsInWorld || self.Destroyed)
+			show = false;
+			if (!self.IsInWorld || self.IsDead() || self.World.RenderPlayer == null)
 				return;
 
-			// Can be granted at runtime via a crate, so can't cache
-			var cloak = self.TraitOrDefault<Cloak>();
-
-			if (firstTick)
-			{
-				huf = self.TraitOrDefault<HiddenUnderFog>();
-				spy = self.TraitOrDefault<Spy>();
-				firstTick = false;
-			}
-
-			var hasGps = (watcher != null && (watcher.Granted || watcher.GrantedAllies));
-			var hasDot = (huf != null && !huf.IsVisible(self.World.RenderedShroud, self)); // WRONG (why?)
-			var dotHidden = (cloak != null && cloak.Cloaked) || (spy != null && spy.Disguised);
-
-			show = hasGps && hasDot && !dotHidden;
+			var gps = watcher[self.World.RenderPlayer];
+			show = (gps.Granted || gps.GrantedAllies) && ShouldShowIndicator();
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
 			if (!show || self.Destroyed)
-				yield break;
+				return SpriteRenderable.None;
 
-			var p = self.CenterLocation;
-			var palette = wr.Palette(info.IndicatorPalettePrefix+self.Owner.InternalName);
-			yield return new Renderable(anim.Image, p.ToFloat2() - 0.5f * anim.Image.size, palette, p.Y)
-				.WithScale(1.5f);
-
+			var palette = wr.Palette(info.IndicatorPalettePrefix + self.Owner.InternalName);
+			return anim.Render(self.CenterPosition, palette);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,18 +12,21 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
+using OpenRA.Support;
 
 namespace OpenRA.Widgets
 {
 	public static class Ui
 	{
-		public static Widget Root = new ContainerWidget();
+		public static Widget Root = new RootWidget();
+
+		public static int LastTickTime = Game.RunTime;
 
 		static Stack<Widget> WindowList = new Stack<Widget>();
 
-		public static Widget SelectedWidget;
+		public static Widget MouseFocusWidget;
+		public static Widget KeyboardFocusWidget;
 		public static Widget MouseOverWidget;
 
 		public static void CloseWindow()
@@ -48,6 +51,20 @@ namespace OpenRA.Widgets
 			return window;
 		}
 
+		public static Widget CurrentWindow()
+		{
+			return WindowList.Count > 0 ? WindowList.Peek() : null;
+		}
+
+		public static T LoadWidget<T>(string id, Widget parent, WidgetArgs args) where T : Widget
+		{
+			var widget = LoadWidget(id, parent, args) as T;
+			if (widget == null)
+				throw new InvalidOperationException(
+					"Widget {0} is not of type {1}".F(id, typeof(T).Name));
+			return widget;
+		}
+
 		public static Widget LoadWidget(string id, Widget parent, WidgetArgs args)
 		{
 			return Game.modData.WidgetLoader.LoadWidget(args, parent, id);
@@ -64,8 +81,8 @@ namespace OpenRA.Widgets
 			if (mi.Event == MouseInputEvent.Move)
 				MouseOverWidget = null;
 
-			bool handled = false;
-			if (SelectedWidget != null && SelectedWidget.HandleMouseInputOuter(mi))
+			var handled = false;
+			if (MouseFocusWidget != null && MouseFocusWidget.HandleMouseInputOuter(mi))
 				handled = true;
 
 			if (!handled && Root.HandleMouseInputOuter(mi))
@@ -91,12 +108,18 @@ namespace OpenRA.Widgets
 
 		public static bool HandleKeyPress(KeyInput e)
 		{
-			if (SelectedWidget != null)
-				return SelectedWidget.HandleKeyPressOuter(e);
+			if (KeyboardFocusWidget != null)
+				return KeyboardFocusWidget.HandleKeyPressOuter(e);
 
-			if (Root.HandleKeyPressOuter(e))
-				return true;
-			return false;
+			return Root.HandleKeyPressOuter(e);
+		}
+
+		public static bool HandleTextInput(string text)
+		{
+			if (KeyboardFocusWidget != null)
+				return KeyboardFocusWidget.HandleTextInputOuter(text);
+
+			return Root.HandleTextInputOuter(text);
 		}
 
 		public static void ResetAll()
@@ -144,6 +167,7 @@ namespace OpenRA.Widgets
 
 			IsVisible = widget.IsVisible;
 			IgnoreChildMouseOver = widget.IgnoreChildMouseOver;
+			IgnoreMouseOver = widget.IgnoreMouseOver;
 
 			foreach (var child in widget.Children)
 				AddChild(child.Clone());
@@ -178,21 +202,21 @@ namespace OpenRA.Widgets
 		{
 			// Parse the YAML equations to find the widget bounds
 			var parentBounds = (Parent == null)
-				? new Rectangle(0, 0, Game.viewport.Width, Game.viewport.Height)
+				? new Rectangle(0, 0, Game.Renderer.Resolution.Width, Game.Renderer.Resolution.Height)
 				: Parent.Bounds;
 
 			var substitutions = args.ContainsKey("substitutions") ?
 				new Dictionary<string, int>((Dictionary<string, int>)args["substitutions"]) :
 				new Dictionary<string, int>();
 
-			substitutions.Add("WINDOW_RIGHT", Game.viewport.Width);
-			substitutions.Add("WINDOW_BOTTOM", Game.viewport.Height);
+			substitutions.Add("WINDOW_RIGHT", Game.Renderer.Resolution.Width);
+			substitutions.Add("WINDOW_BOTTOM", Game.Renderer.Resolution.Height);
 			substitutions.Add("PARENT_RIGHT", parentBounds.Width);
 			substitutions.Add("PARENT_LEFT", parentBounds.Left);
 			substitutions.Add("PARENT_TOP", parentBounds.Top);
 			substitutions.Add("PARENT_BOTTOM", parentBounds.Height);
-			int width = Evaluator.Evaluate(Width, substitutions);
-			int height = Evaluator.Evaluate(Height, substitutions);
+			var width = Evaluator.Evaluate(Width, substitutions);
+			var height = Evaluator.Evaluate(Height, substitutions);
 
 			substitutions.Add("WIDTH", width);
 			substitutions.Add("HEIGHT", height);
@@ -219,39 +243,67 @@ namespace OpenRA.Widgets
 
 		public virtual Rectangle GetEventBounds()
 		{
-			return Children
-				.Where(c => c.IsVisible())
-				.Select(c => c.GetEventBounds())
-				.Aggregate(EventBounds, Rectangle.Union);
+			var bounds = EventBounds;
+			foreach (var child in Children)
+				if (child.IsVisible())
+					bounds = Rectangle.Union(bounds, child.GetEventBounds());
+			return bounds;
 		}
 
-		public bool Focused { get { return Ui.SelectedWidget == this; } }
+		public bool HasMouseFocus { get { return Ui.MouseFocusWidget == this; } }
+		public bool HasKeyboardFocus { get { return Ui.KeyboardFocusWidget == this; } }
 
-		public virtual bool TakeFocus(MouseInput mi)
+		public virtual bool TakeMouseFocus(MouseInput mi)
 		{
-			if (Focused)
+			if (HasMouseFocus)
 				return true;
 
-			if (Ui.SelectedWidget != null && !Ui.SelectedWidget.LoseFocus(mi))
+			if (Ui.MouseFocusWidget != null && !Ui.MouseFocusWidget.YieldMouseFocus(mi))
 				return false;
 
-			Ui.SelectedWidget = this;
+			Ui.MouseFocusWidget = this;
 			return true;
 		}
 
-		// Remove focus from this widget; return false if you don't want to give it up
-		public virtual bool LoseFocus(MouseInput mi)
+		// Remove focus from this widget; return false to hint that you don't want to give it up
+		public virtual bool YieldMouseFocus(MouseInput mi)
 		{
-			// Some widgets may need to override focus depending on mouse click
-			return LoseFocus();
-		}
-
-		public virtual bool LoseFocus()
-		{
-			if (Ui.SelectedWidget == this)
-				Ui.SelectedWidget = null;
+			if (Ui.MouseFocusWidget == this)
+				Ui.MouseFocusWidget = null;
 
 			return true;
+		}
+
+		void ForceYieldMouseFocus()
+		{
+			if (Ui.MouseFocusWidget == this && !YieldMouseFocus(default(MouseInput)))
+				Ui.MouseFocusWidget = null;
+		}
+
+		public virtual bool TakeKeyboardFocus()
+		{
+			if (HasKeyboardFocus)
+				return true;
+
+			if (Ui.KeyboardFocusWidget != null && !Ui.KeyboardFocusWidget.YieldKeyboardFocus())
+				return false;
+
+			Ui.KeyboardFocusWidget = this;
+			return true;
+		}
+
+		public virtual bool YieldKeyboardFocus()
+		{
+			if (Ui.KeyboardFocusWidget == this)
+				Ui.KeyboardFocusWidget = null;
+
+			return true;
+		}
+
+		void ForceYieldKeyboardFocus()
+		{
+			if (Ui.KeyboardFocusWidget == this && !YieldKeyboardFocus())
+				Ui.KeyboardFocusWidget = null;
 		}
 
 		public virtual string GetCursor(int2 pos) { return "default"; }
@@ -279,7 +331,7 @@ namespace OpenRA.Widgets
 		public bool HandleMouseInputOuter(MouseInput mi)
 		{
 			// Are we able to handle this event?
-			if (!(Focused || (IsVisible() && GetEventBounds().Contains(mi.Location))))
+			if (!(HasMouseFocus || (IsVisible() && GetEventBounds().Contains(mi.Location))))
 				return false;
 
 			var oldMouseOver = Ui.MouseOverWidget;
@@ -309,8 +361,26 @@ namespace OpenRA.Widgets
 				if (child.HandleKeyPressOuter(e))
 					return true;
 
-			// Do any widgety behavior (enter text etc)
+			// Do any widgety behavior
 			var handled = HandleKeyPress(e);
+
+			return handled;
+		}
+
+		public virtual bool HandleTextInput(string text) { return false; }
+
+		public virtual bool HandleTextInputOuter(string text)
+		{
+			if (!IsVisible())
+				return false;
+
+			// Can any of our children handle this?
+			foreach (var child in Children.OfType<Widget>().Reverse())
+				if (child.HandleTextInputOuter(text))
+					return true;
+
+			// Do any widgety behavior (enter text etc)
+			var handled = HandleTextInput(text);
 
 			return handled;
 		}
@@ -347,8 +417,11 @@ namespace OpenRA.Widgets
 
 		public virtual void RemoveChild(Widget child)
 		{
-			Children.Remove(child);
-			child.Removed();
+			if (child != null)
+			{
+				Children.Remove(child);
+				child.Removed();
+			}
 		}
 
 		public virtual void RemoveChildren()
@@ -359,6 +432,11 @@ namespace OpenRA.Widgets
 
 		public virtual void Removed()
 		{
+			// Using the forced versions because the widgets
+			// have been removed
+			ForceYieldKeyboardFocus();
+			ForceYieldMouseFocus();
+
 			foreach (var c in Children.OfType<Widget>().Reverse())
 				c.Removed();
 		}
@@ -397,17 +475,19 @@ namespace OpenRA.Widgets
 
 	public class ContainerWidget : Widget
 	{
-		public ContainerWidget() : base() { IgnoreMouseOver = true; }
+		public ContainerWidget() { IgnoreMouseOver = true; }
 		public ContainerWidget(ContainerWidget other)
 			: base(other) { IgnoreMouseOver = true; }
 
 		public override string GetCursor(int2 pos) { return null; }
 		public override Widget Clone() { return new ContainerWidget(this); }
+		public Func<KeyInput, bool> OnKeyPress = _ => false;
+		public override bool HandleKeyPress(KeyInput e)	{ return OnKeyPress(e);	}
 	}
 
 	public class WidgetArgs : Dictionary<string, object>
 	{
-		public WidgetArgs() : base() { }
+		public WidgetArgs() { }
 		public WidgetArgs(Dictionary<string, object> args) : base(args) { }
 		public void Add(string key, Action val) { base.Add(key, val); }
 	}

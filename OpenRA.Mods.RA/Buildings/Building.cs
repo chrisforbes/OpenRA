@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,73 +11,110 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenRA.FileFormats;
+using OpenRA.Primitives;
 using OpenRA.Traits;
+using OpenRA.Mods.Common;
+using OpenRA.Mods.RA.Render;
 
 namespace OpenRA.Mods.RA.Buildings
 {
+	[Desc("Remove this trait to limit base-walking by cheap or defensive buildings.")]
 	public class GivesBuildableAreaInfo : TraitInfo<GivesBuildableArea> {}
 	public class GivesBuildableArea {}
 
-	public class BuildingInfo : ITraitInfo, UsesInit<LocationInit>
+	public class BuildingInfo : ITraitInfo, IOccupySpaceInfo, UsesInit<LocationInit>
 	{
-		public readonly int Power = 0;
+		[Desc("Where you are allowed to place the building (Water, Clear, ...)")]
 		public readonly string[] TerrainTypes = {};
+		[Desc("The range to the next building it can be constructed. Set it higher for walls.")]
 		public readonly int Adjacent = 2;
+		[Desc("x means space it blocks, _ is a part that is passable by actors.")]
 		public readonly string Footprint = "x";
-		public readonly int2 Dimensions = new int2(1, 1);
+		public readonly CVec Dimensions = new CVec(1, 1);
+		public readonly bool RequiresBaseProvider = false;
+		public readonly bool AllowInvalidPlacement = false;
 
-		public readonly string[] BuildSounds = {"placbldg.aud", "build5.aud"};
-		public readonly string[] SellSounds = {"cashturn.aud"};
+		public readonly string[] BuildSounds = { "placbldg.aud", "build5.aud" };
+		public readonly string[] UndeploySounds = { "cashturn.aud" };
 
 		public object Create(ActorInitializer init) { return new Building(init, this); }
+
+		public Actor FindBaseProvider(World world, Player p, CPos topLeft)
+		{
+			var center = world.Map.CenterOfCell(topLeft) + FootprintUtils.CenterOffset(world, this);
+			foreach (var bp in world.ActorsWithTrait<BaseProvider>())
+			{
+				var validOwner = bp.Actor.Owner == p || (world.LobbyInfo.GlobalSettings.AllyBuildRadius && bp.Actor.Owner.Stances[p] == Stance.Ally);
+				if (!validOwner || !bp.Trait.Ready())
+					continue;
+
+				// Range is counted from the center of the actor, not from each cell.
+				var target = Target.FromPos(bp.Actor.CenterPosition);
+				if (target.IsInRange(center, WRange.FromCells(bp.Trait.Info.Range)))
+					return bp.Actor;
+			}
+			return null;
+		}
 
 		public bool IsCloseEnoughToBase(World world, Player p, string buildingName, CPos topLeft)
 		{
 			if (p.PlayerActor.Trait<DeveloperMode>().BuildAnywhere)
 				return true;
 
-			var buildingMaxBounds = (CVec)Dimensions;
-			if( Rules.Info[ buildingName ].Traits.Contains<BibInfo>() )
+			if (RequiresBaseProvider && FindBaseProvider(world, p, topLeft) == null)
+				return false;
+
+			var buildingMaxBounds = Dimensions;
+			var buildingTraits = world.Map.Rules.Actors[buildingName].Traits;
+			if (buildingTraits.Contains<BibInfo>() && !(buildingTraits.Get<BibInfo>().HasMinibib))
 				buildingMaxBounds += new CVec(0, 1);
 
-			var scanStart = world.ClampToWorld( topLeft - new CVec( Adjacent, Adjacent ) );
-			var scanEnd = world.ClampToWorld(topLeft + buildingMaxBounds + new CVec(Adjacent, Adjacent));
+			var scanStart = world.Map.Clamp(topLeft - new CVec(Adjacent, Adjacent));
+			var scanEnd = world.Map.Clamp(topLeft + buildingMaxBounds + new CVec(Adjacent, Adjacent));
 
 			var nearnessCandidates = new List<CPos>();
 
 			var bi = world.WorldActor.Trait<BuildingInfluence>();
+			var allyBuildRadius = world.LobbyInfo.GlobalSettings.AllyBuildRadius;
 
-			for( int y = scanStart.Y ; y < scanEnd.Y ; y++ )
-				for( int x = scanStart.X ; x < scanEnd.X ; x++ )
+			for (var y = scanStart.Y; y < scanEnd.Y; y++)
+			{
+				for (var x = scanStart.X; x < scanEnd.X; x++)
 				{
-					var at = bi.GetBuildingAt( new CPos( x, y ) );
-					if( at != null && at.Owner.Stances[ p ] == Stance.Ally && at.HasTrait<GivesBuildableArea>() )
-						nearnessCandidates.Add( new CPos( x, y ) );
-				}
+					var pos = new CPos(x, y);
+					var at = bi.GetBuildingAt(pos);
+					if (at == null || !at.IsInWorld || !at.HasTrait<GivesBuildableArea>())
+						continue;
 
-			var buildingTiles = FootprintUtils.Tiles( buildingName, this, topLeft ).ToList();
+					if (at.Owner == p || (allyBuildRadius && at.Owner.Stances[p] == Stance.Ally))
+						nearnessCandidates.Add(pos);
+				}
+			}
+
+			var buildingTiles = FootprintUtils.Tiles(world.Map.Rules, buildingName, this, topLeft).ToList();
 			return nearnessCandidates
-				.Any( a => buildingTiles
-					.Any( b => Math.Abs( a.X - b.X ) <= Adjacent
-							&& Math.Abs( a.Y - b.Y ) <= Adjacent ) );
+				.Any(a => buildingTiles
+					.Any(b => Math.Abs(a.X - b.X) <= Adjacent
+						&& Math.Abs(a.Y - b.Y) <= Adjacent));
 		}
 	}
 
-	public class Building : INotifyDamage, IOccupySpace, INotifyCapture, ISync, ITechTreePrerequisite
+	public class Building : IOccupySpace, INotifySold, INotifyTransform, ISync, ITechTreePrerequisite, INotifyCreated, INotifyAddedToWorld, INotifyRemovedFromWorld
 	{
-		readonly Actor self;
 		public readonly BuildingInfo Info;
+		public bool BuildComplete { get; private set; }
 		[Sync] readonly CPos topLeft;
+		readonly Actor self;
+		public readonly bool SkipMakeAnimation;
 
-		PowerManager PlayerPower;
-		PPos pxPosition;
-
-		[Sync] public bool Locked;	/* shared activity lock: undeploy, sell, capture, etc */
+		/* shared activity lock: undeploy, sell, capture, etc */
+		[Sync] public bool Locked = true;
 
 		public bool Lock()
 		{
-			if (Locked) return false;
+			if (Locked)
+				return false;
+
 			Locked = true;
 			return true;
 		}
@@ -85,7 +122,7 @@ namespace OpenRA.Mods.RA.Buildings
 		public void Unlock() { Locked = false; }
 
 		public CPos TopLeft { get { return topLeft; } }
-		public PPos PxPosition { get { return pxPosition; } }
+		public WPos CenterPosition { get; private set; }
 
 		public IEnumerable<string> ProvidesPrerequisites { get { yield return self.Info.Name; } }
 
@@ -94,35 +131,62 @@ namespace OpenRA.Mods.RA.Buildings
 			this.self = init.self;
 			this.topLeft = init.Get<LocationInit, CPos>();
 			this.Info = info;
-			this.PlayerPower = init.self.Owner.PlayerActor.Trait<PowerManager>();
 
 			occupiedCells = FootprintUtils.UnpathableTiles( self.Info.Name, Info, TopLeft )
 				.Select(c => Pair.New(c, SubCell.FullCell)).ToArray();
-			pxPosition = (PPos) (( 2 * topLeft.ToInt2() + Info.Dimensions ) * Game.CellSize / 2);
-		}
 
-		public int GetPowerUsage()
-		{
-			if (Info.Power <= 0)
-				return Info.Power;
-
-			var health = self.TraitOrDefault<Health>();
-			return health != null ? (Info.Power * health.HP / health.MaxHP) : Info.Power;
-		}
-
-		public void Damaged(Actor self, AttackInfo e)
-		{
-			// Power plants lose power with damage
-			if (Info.Power > 0)
-				PlayerPower.UpdateActor(self, GetPowerUsage());
+			CenterPosition = init.world.Map.CenterOfCell(topLeft) + FootprintUtils.CenterOffset(init.world, Info);
+			SkipMakeAnimation = init.Contains<SkipMakeAnimsInit>();
 		}
 
 		Pair<CPos, SubCell>[] occupiedCells;
 		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { return occupiedCells; }
 
-		public void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner)
+		public void Created(Actor self)
 		{
-			PlayerPower = newOwner.PlayerActor.Trait<PowerManager>();
+			if (SkipMakeAnimation || !self.HasTrait<WithMakeAnimation>())
+				NotifyBuildingComplete(self);
 		}
+
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
+		}
+
+		public void RemovedFromWorld(Actor self)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
+		}
+
+		public void NotifyBuildingComplete(Actor self)
+		{
+			if (BuildComplete)
+				return;
+
+			BuildComplete = true;
+			Locked = false;
+
+			foreach (var notify in self.TraitsImplementing<INotifyBuildComplete>())
+				notify.BuildingComplete(self);
+		}
+
+		public void Selling(Actor self)
+		{
+			BuildComplete = false;
+		}
+
+		public void Sold(Actor self) { }
+
+		public void BeforeTransform(Actor self)
+		{
+			foreach (var s in Info.UndeploySounds)
+				Sound.PlayToPlayer(self.Owner, s, self.CenterPosition);
+		}
+		public void OnTransform(Actor self) { }
+		public void AfterTransform(Actor self) { }
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,18 +12,31 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using OpenRA.FileFormats;
 
 namespace OpenRA.Network
 {
-	class ReplayRecorderConnection : IConnection
+	sealed class ReplayRecorderConnection : IConnection
 	{
+		public ReplayMetadata Metadata;
+
 		IConnection inner;
 		BinaryWriter writer;
 		Func<string> chooseFilename;
 		MemoryStream preStartBuffer = new MemoryStream();
 
-		public ReplayRecorderConnection( IConnection inner, Func<string> chooseFilename )
+		static bool IsGameStart(byte[] data)
+		{
+			if (data.Length == 5 && data[4] == 0xbf)
+				return false;
+			if (data.Length >= 5 && data[4] == 0x65)
+				return false;
+
+			var frame = BitConverter.ToInt32(data, 0);
+			return frame == 0 && data.ToOrderList(null).Any(o => o.OrderString == "StartGame");
+		}
+
+		public ReplayRecorderConnection(IConnection inner, Func<string> chooseFilename)
 		{
 			this.chooseFilename = chooseFilename;
 			this.inner = inner;
@@ -34,23 +47,25 @@ namespace OpenRA.Network
 		void StartSavingReplay(byte[] initialContent)
 		{
 			var filename = chooseFilename();
-			var replaysDirectory = Path.Combine(Platform.SupportDir, "Replays");
+			var mod = Game.modData.Manifest.Mod;
+			var dir = Platform.ResolvePath("^", "Replays", mod.Id, mod.Version);
 
-			if (!Directory.Exists(replaysDirectory))
-				Directory.CreateDirectory(replaysDirectory);
+			if (!Directory.Exists(dir))
+				Directory.CreateDirectory(dir);
 
-			string fullFilename;
+			FileStream file = null;
 			var id = -1;
-			do
+			while (file == null)
 			{
-				fullFilename = Path.Combine(replaysDirectory, id < 0
-					? "{0}.rep".F(filename)
-					: "{0}-{1}.rep".F(filename, id));
+				var fullFilename = Path.Combine(dir, id < 0 ? "{0}.rep".F(filename) : "{0}-{1}.rep".F(filename, id));
 				id++;
+				try
+				{
+					file = File.Create(fullFilename);
+				}
+				catch (IOException) { }
 			}
-			while (File.Exists(fullFilename));
 
-			var file = File.Create(fullFilename);
 			file.Write(initialContent);
 			this.writer = new BinaryWriter(file);
 		}
@@ -58,11 +73,11 @@ namespace OpenRA.Network
 		public int LocalClientId { get { return inner.LocalClientId; } }
 		public ConnectionState ConnectionState { get { return inner.ConnectionState; } }
 
-		public void Send( int frame, List<byte[]> orders ) { inner.Send( frame, orders ); }
-		public void SendImmediate( List<byte[]> orders ) { inner.SendImmediate( orders ); }
-		public void SendSync( int frame, byte[] syncData ) { inner.SendSync( frame, syncData ); }
+		public void Send(int frame, List<byte[]> orders) { inner.Send(frame, orders); }
+		public void SendImmediate(List<byte[]> orders) { inner.SendImmediate(orders); }
+		public void SendSync(int frame, byte[] syncData) { inner.SendSync(frame, syncData); }
 
-		public void Receive( Action<int, byte[]> packetFn )
+		public void Receive(Action<int, byte[]> packetFn)
 		{
 			inner.Receive((client, data) =>
 				{
@@ -78,37 +93,28 @@ namespace OpenRA.Network
 					writer.Write(data.Length);
 					writer.Write(data);
 					packetFn(client, data);
-				} );
-		}
-
-		bool IsGameStart(byte[] data)
-		{
-			if (data.Length == 5 && data[4] == 0xbf)
-				return false;
-			if (data.Length >= 5 && data[4] == 0x65)
-				return false;
-
-			var frame = BitConverter.ToInt32(data, 0);
-			return frame == 0 && data.ToOrderList(null).Any(
-				o => o.OrderString == "StartGame");
+				});
 		}
 
 		bool disposed;
 
 		public void Dispose()
 		{
-			if( disposed )
+			if (disposed)
 				return;
+			disposed = true;
 
+			if (Metadata != null)
+			{
+				if (Metadata.GameInfo != null)
+					Metadata.GameInfo.EndTimeUtc = DateTime.UtcNow;
+				Metadata.Write(writer);
+			}
+
+			if (preStartBuffer != null)
+				preStartBuffer.Dispose();
 			writer.Close();
 			inner.Dispose();
-			disposed = true;
-		}
-
-		~ReplayRecorderConnection()
-		{
-			Dispose();
 		}
 	}
 }
-

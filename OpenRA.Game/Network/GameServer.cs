@@ -1,15 +1,12 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
  * see COPYING.
  */
 #endregion
-
-using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenRA.Network
 {
@@ -21,48 +18,47 @@ namespace OpenRA.Network
 		public readonly int State = 0;
 		public readonly int Players = 0;
 		public readonly string Map = null;
-		public readonly string[] Mods = { };
+
+		// Retained name compatibility with the master server
+		public readonly string Mods = "";
 		public readonly int TTL = 0;
-
-		public Dictionary<string, string> UsefulMods
-		{
-			get
-			{
-				return Mods
-					.Where(v => v.Contains('@'))
-					.ToDictionary(v => v.Split('@')[0], v => v.Split('@')[1]);
-			}
-		}
-
-		static bool AreVersionsCompatible(string a, string b)
-		{
-			/* dev versions are assumed compatible; if you're using one,
-			 * we trust that you know what you're doing. */
-
-			return a == "{DEV_VERSION}" || b == "{DEV_VERSION}" || a == b;
-		}
 
 		public bool CanJoin()
 		{
-			//"waiting for players"
+			// "waiting for players"
 			if (State != 1)
 				return false;
 
-			// Mods won't match if there are a different number
-			if (Game.CurrentMods.Count != Mods.Count())
+			if (!CompatibleVersion())
 				return false;
 
 			// Don't have the map locally
-			if (!Game.modData.AvailableMaps.ContainsKey(Map))
+			// TODO: We allow joining, then drop on game start if the map isn't available
+			if (Game.modData.MapCache[Map].Status != MapStatus.Available && !Game.Settings.Game.AllowDownloading)
 				return false;
 
-			return CompatibleVersion();
+			return true;
 		}
 
 		public bool CompatibleVersion()
 		{
-			return UsefulMods.All(m => Game.CurrentMods.ContainsKey(m.Key)
-				&& AreVersionsCompatible(m.Value, Game.CurrentMods[m.Key].Version));
+			// Invalid game listing - we require one entry of id@version
+			var modVersion = Mods.Split('@');
+			if (modVersion.Length != 2)
+				return false;
+
+			var mod = Game.modData.Manifest.Mod;
+
+			// Different mod
+			// TODO: Allow mod switch when joining server
+			if (modVersion[0] != mod.Id)
+				return false;
+
+			// Same mod, but different version
+			if (modVersion[1] != mod.Version && !Game.Settings.Debug.IgnoreVersionMismatch)
+				return false;
+
+			return true;
 		}
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,7 +9,7 @@
 #endregion
 
 using System;
-using OpenRA.Mods.RA.Render;
+using OpenRA.Mods.Common;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
@@ -25,10 +25,11 @@ namespace OpenRA.Mods.RA.Activities
 		public override Activity Tick(Actor self)
 		{
 			if (IsCanceled) return NextActivity;
-			if (host != null && !host.IsInWorld) return NextActivity;
+			if (host == null || !host.IsInWorld) return NextActivity;
 
 			health = self.TraitOrDefault<Health>();
 			if (health == null) return NextActivity;
+
 			if (health.DamageState == DamageState.Undamaged)
 				return NextActivity;
 
@@ -44,11 +45,11 @@ namespace OpenRA.Mods.RA.Activities
 					remainingTicks = 1;
 					return this;
 				}
+
 				self.InflictDamage(self, -hpToRepair, null);
 
-				if (host != null)
-					host.Trait<RenderBuilding>()
-						.PlayCustomAnim(host, "active");
+				foreach (var depot in host.TraitsImplementing<INotifyRepair>())
+					depot.Repairing(self, host);
 
 				remainingTicks = repairsUnits.Interval;
 			}

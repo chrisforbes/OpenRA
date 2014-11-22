@@ -1,4 +1,7 @@
 Speech:
+	Prefixes:
+		gdi: gdi
+		nod: nod
 	Notifications:
 		Repairing: repair1
 		LowPower: lopower1
@@ -6,12 +9,12 @@ Speech:
 		PrimaryBuildingSelected: pribldg1
 		BuildingCannotPlaceAudio: deploy1
 		NewOptions: newopt1
-		AbilityInsufficientPower: nopower1
 		Win: accom1
 		Lose: fail1
 		BaseAttack: baseatk1
 		HarvesterAttack:
 		Leave: batlcon1
+		StartGame:
 		UnitReady: unitredy
 		NoBuild: nobuild1
 		Training: bldging1
@@ -20,15 +23,24 @@ Speech:
 		Building: bldging1
 		ConstructionComplete: constru1
 		Reinforce: reinfor1
+		UnitLost: unitlost
+		BuildingLost: strclost
+		CivilianKilled: civdead1
+		BuildingCaptured: capt1
+		CivilianBuildingCaptured: civcapt1
+	DisablePrefixes: Repairing, LowPower, SilosNeeded, PrimaryBuildingSelected, BuildingCannotPlaceAudio, NewOptions, AbilityInsufficientPower, Win, Lose, BaseAttack, HarvesterAttack, Leave, UnitReady, NoBuild, Training, OnHold, Cancelled, Building, ConstructionComplete, Reinforce, UnitLost, BuildingLost, CivilianKilled, CivilianBuildingCaptured
 
 Sounds:
 	Notifications:
 		RadarUp: comcntr1
 		RadarDown: powrdn1
-		CashTickUp:
-		CashTickDown:
+		CashTickUp:tone15
+		CashTickDown:tone16
 		LevelUp: text2
+		DisablePower: bleep11
+		EnablePower: bleep12
 		ChatLine: scold1
 		TabClick: button
 		ClickSound: button
 		ClickDisabledSound: scold2
+		Beacon: bleep2

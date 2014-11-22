@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,14 +9,16 @@
 #endregion
 
 using System;
-using OpenRA.Mods.RA.Air;
+using OpenRA.Mods.RA.Traits;
+using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class ReservableInfo : TraitInfo<Reservable> {}
+	[Desc("Reserve landing places for aircraft.")]
+	class ReservableInfo : TraitInfo<Reservable> { }
 
-	public class Reservable : ITick, INotifyKilled, INotifyCapture, INotifySold
+	public class Reservable : ITick, INotifyKilled, INotifyOwnerChanged, INotifySold
 	{
 		Actor reservedFor;
 		Aircraft reservedForAircraft;
@@ -26,7 +28,7 @@ namespace OpenRA.Mods.RA
 			if (reservedFor == null)
 				return;		/* nothing to do */
 
-			if (!Target.FromActor( reservedFor ).IsValid)
+			if (!Target.FromActor(reservedFor).IsValidFor(self))
 				reservedFor = null;		/* not likely to arrive now. */
 		}
 
@@ -58,15 +60,15 @@ namespace OpenRA.Mods.RA
 				reservedForAircraft.UnReserve();
 		}
 
-		public void OnCapture (Actor self, Actor captor, Player oldOwner, Player newOwner)
+		public void OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
 		{
 			if (reservedForAircraft != null)
 				reservedForAircraft.UnReserve();
 		}
 
-		public void Selling (Actor self) { Sold(self); }
+		public void Selling(Actor self) { Sold(self); }
 
-		public void Sold (Actor self)
+		public void Sold(Actor self)
 		{
 			if (reservedForAircraft != null)
 				reservedForAircraft.UnReserve();

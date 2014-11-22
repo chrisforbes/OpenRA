@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,8 +10,6 @@
 
 using System;
 using System.Drawing;
-using OpenRA.Traits;
-using OpenRA.Graphics;
 
 namespace OpenRA.Widgets
 {
@@ -31,15 +29,20 @@ namespace OpenRA.Widgets
 
 		public Func<bool> OnEnterKey = () => false;
 		public Func<bool> OnTabKey = () => false;
+		public Func<bool> OnEscKey = () => false;
+		public Func<bool> OnAltKey = () => false;
 		public Action OnLoseFocus = () => { };
-		public int CursorPosition { get; protected set; }
+		public Action OnTextEdited = () => { };
+		public int CursorPosition { get; set; }
 
 		public Func<bool> IsDisabled = () => false;
-		public Color TextColor = Color.White;
-		public Color DisabledColor = Color.Gray;
-		public string Font = "Regular";
+		public Func<bool> IsValid = () => true;
+		public string Font = ChromeMetrics.Get<string>("TextfieldFont");
+		public Color TextColor = ChromeMetrics.Get<Color>("TextfieldColor");
+		public Color TextColorDisabled = ChromeMetrics.Get<Color>("TextfieldColorDisabled");
+		public Color TextColorInvalid = ChromeMetrics.Get<Color>("TextfieldColorInvalid");
 
-		public TextFieldWidget() : base() {}
+		public TextFieldWidget() { }
 		protected TextFieldWidget(TextFieldWidget widget)
 			: base(widget)
 		{
@@ -47,15 +50,15 @@ namespace OpenRA.Widgets
 			MaxLength = widget.MaxLength;
 			Font = widget.Font;
 			TextColor = widget.TextColor;
-			DisabledColor = widget.DisabledColor;
+			TextColorDisabled = widget.TextColorDisabled;
+			TextColorInvalid = widget.TextColorInvalid;
 			VisualHeight = widget.VisualHeight;
 		}
 
-		public override bool LoseFocus(MouseInput mi)
+		public override bool YieldKeyboardFocus()
 		{
 			OnLoseFocus();
-			var lose = base.LoseFocus(mi);
-			return lose;
+			return base.YieldKeyboardFocus();
 		}
 
 		public override bool HandleMouseInput(MouseInput mi)
@@ -63,14 +66,11 @@ namespace OpenRA.Widgets
 			if (IsDisabled())
 				return false;
 
-			if (mi.Event == MouseInputEvent.Move)
+			if (mi.Event != MouseInputEvent.Down)
 				return false;
 
-			// Lose focus if they click outside the box; return false so the next widget can grab this event
-			if (mi.Event == MouseInputEvent.Down && !RenderBounds.Contains(mi.Location) && LoseFocus(mi))
-				return false;
-
-			if (mi.Event == MouseInputEvent.Down && !TakeFocus(mi))
+			// Attempt to take keyboard focus
+			if (!RenderBounds.Contains(mi.Location) || !TakeKeyboardFocus())
 				return false;
 
 			blinkCycle = 10;
@@ -88,12 +88,12 @@ namespace OpenRA.Widgets
 			var textSize = font.Measure(apparentText);
 
 			var start = RenderOrigin.X + LeftMargin;
-			if (textSize.X > Bounds.Width - LeftMargin - RightMargin && Focused)
+			if (textSize.X > Bounds.Width - LeftMargin - RightMargin && HasKeyboardFocus)
 				start += Bounds.Width - LeftMargin - RightMargin - textSize.X;
 
-			int minIndex = -1;
-			int minValue = int.MaxValue;
-			for (int i = 0; i <= apparentText.Length; i++)
+			var minIndex = -1;
+			var minValue = int.MaxValue;
+			for (var i = 0; i <= apparentText.Length; i++)
 			{
 				var dist = Math.Abs(start + font.Measure(apparentText.Substring(0, i)).X - x);
 				if (dist > minValue)
@@ -101,27 +101,32 @@ namespace OpenRA.Widgets
 				minValue = dist;
 				minIndex = i;
 			}
+
 			return minIndex;
 		}
 
 		public override bool HandleKeyPress(KeyInput e)
 		{
-			if (IsDisabled())
+			if (IsDisabled() || e.Event == KeyInputEvent.Up)
 				return false;
-
-			if (e.Event == KeyInputEvent.Up) return false;
 
 			// Only take input if we are focused
-			if (!Focused)
+			if (!HasKeyboardFocus)
 				return false;
 
-			if ((e.KeyName == "return" || e.KeyName == "enter") && OnEnterKey())
+			if ((e.Key == Keycode.RETURN || e.Key == Keycode.KP_ENTER) && OnEnterKey())
 				return true;
 
-			if (e.KeyName == "tab" && OnTabKey())
+			if (e.Key == Keycode.TAB && OnTabKey())
 				return true;
 
-			if (e.KeyName == "left")
+			if (e.Key == Keycode.ESCAPE && OnEscKey())
+				return true;
+
+			if (e.Key == Keycode.LALT && OnAltKey())
+				return true;
+
+			if (e.Key == Keycode.LEFT)
 			{
 				if (CursorPosition > 0)
 					CursorPosition--;
@@ -129,61 +134,102 @@ namespace OpenRA.Widgets
 				return true;
 			}
 
-			if (e.KeyName == "right")
+			if (e.Key == Keycode.RIGHT)
 			{
-				if (CursorPosition <= Text.Length-1)
+				if (CursorPosition <= Text.Length - 1)
 					CursorPosition++;
 
 				return true;
 			}
 
-			if (e.KeyName == "home")
+			if (e.Key == Keycode.HOME)
 			{
 				CursorPosition = 0;
 				return true;
 			}
 
-			if (e.KeyName == "end")
+			if (e.Key == Keycode.END)
 			{
 				CursorPosition = Text.Length;
 				return true;
 			}
 
-			if (e.KeyName == "delete")
+			if (e.Key == Keycode.DELETE)
 			{
 				if (CursorPosition < Text.Length)
+				{
 					Text = Text.Remove(CursorPosition, 1);
+					OnTextEdited();
+				}
+
 				return true;
 			}
 
-			TypeChar(e);
-			return true;
-		}
-
-		public void TypeChar(KeyInput key)
-		{
-			if (key.KeyName == "backspace" && CursorPosition > 0)
+			if (e.Key == Keycode.BACKSPACE && CursorPosition > 0)
 			{
 				CursorPosition--;
 				Text = Text.Remove(CursorPosition, 1);
+				OnTextEdited();
+				return true;
 			}
 
-			else if (key.IsValidInput())
+			if (e.Key == Keycode.V &&
+				((Platform.CurrentPlatform != PlatformType.OSX && e.Modifiers.HasModifier(Modifiers.Ctrl)) ||
+				 (Platform.CurrentPlatform == PlatformType.OSX && e.Modifiers.HasModifier(Modifiers.Meta))))
 			{
-				if (MaxLength > 0 && Text.Length >= MaxLength)
-					return;
+				var clipboardText = Game.Renderer.Device.GetClipboardText();
 
-				Text = Text.Insert(CursorPosition, key.UnicodeChar.ToString());
+				// Take only the first line of the clipboard contents
+				var nl = clipboardText.IndexOf('\n');
+				if (nl > 0)
+					clipboardText = clipboardText.Substring(0, nl);
 
-				CursorPosition++;
+				clipboardText = clipboardText.Trim();
+				if (clipboardText.Length > 0)
+					HandleTextInput(clipboardText);
+
+				return true;
 			}
+
+			return true;
+		}
+
+		public override bool HandleTextInput(string text)
+		{
+			if (!HasKeyboardFocus || IsDisabled())
+				return false;
+
+			if (MaxLength > 0 && Text.Length >= MaxLength)
+				return true;
+
+			var pasteLength = text.Length;
+
+			// Truncate the pasted string if the total length (current + paste) is greater than the maximum.
+			if (MaxLength > 0 && MaxLength > Text.Length)
+				pasteLength = Math.Min(text.Length, MaxLength - Text.Length);
+
+			Text = Text.Insert(CursorPosition, text.Substring(0, pasteLength));
+			CursorPosition += pasteLength;
+			OnTextEdited();
+
+			return true;
 		}
 
 		protected int blinkCycle = 10;
 		protected bool showCursor = true;
 
+		bool wasDisabled;
 		public override void Tick()
 		{
+			// Remove the blicking cursor when disabled
+			var isDisabled = IsDisabled();
+			if (isDisabled != wasDisabled)
+			{
+				wasDisabled = isDisabled;
+				if (isDisabled && Ui.KeyboardFocusWidget == this)
+					YieldKeyboardFocus();
+			}
+
 			if (--blinkCycle <= 0)
 			{
 				blinkCycle = 20;
@@ -202,7 +248,7 @@ namespace OpenRA.Widgets
 
 			var disabled = IsDisabled();
 			var state = disabled ? "textfield-disabled" :
-				Focused ? "textfield-focused" :
+				HasKeyboardFocus ? "textfield-focused" :
 				Ui.MouseOverWidget == this ? "textfield-hover" :
 				"textfield";
 
@@ -215,18 +261,20 @@ namespace OpenRA.Widgets
 			// Right align when editing and scissor when the text overflows
 			if (textSize.X > Bounds.Width - LeftMargin - RightMargin)
 			{
-				if (Focused)
+				if (HasKeyboardFocus)
 					textPos += new int2(Bounds.Width - LeftMargin - RightMargin - textSize.X, 0);
 
-				Game.Renderer.EnableScissor(pos.X + LeftMargin, pos.Y,
-					Bounds.Width - LeftMargin - RightMargin, Bounds.Bottom);
+				Game.Renderer.EnableScissor(new Rectangle(pos.X + LeftMargin, pos.Y,
+					Bounds.Width - LeftMargin - RightMargin, Bounds.Bottom));
 			}
 
-			var color = disabled ? DisabledColor : TextColor;
+			var color = disabled ? TextColorDisabled
+			            : IsValid() ? TextColor
+			            : TextColorInvalid;
 			font.DrawText(apparentText, textPos, color);
 
-			if (showCursor && Focused)
-				font.DrawText("|", new float2(textPos.X + cursorPosition.X - 2, textPos.Y), Color.White);
+			if (showCursor && HasKeyboardFocus)
+				font.DrawText("|", new float2(textPos.X + cursorPosition.X - 2, textPos.Y), TextColor);
 
 			if (textSize.X > Bounds.Width - LeftMargin - RightMargin)
 				Game.Renderer.DisableScissor();

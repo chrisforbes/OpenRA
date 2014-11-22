@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,7 +11,6 @@
 using System;
 using System.Drawing;
 using OpenRA.Graphics;
-using System.Reflection;
 
 namespace OpenRA.Widgets
 {
@@ -20,12 +19,12 @@ namespace OpenRA.Widgets
 		public string CheckType = "checked";
 		public Func<string> GetCheckType;
 		public Func<bool> IsChecked = () => false;
-		public int BaseLine = 1;
 		public int CheckOffset = 2;
 		public bool HasPressedState = ChromeMetrics.Get<bool>("CheckboxPressedState");
 
-		public CheckboxWidget()
-			: base()
+		[ObjectCreator.UseCtor]
+		public CheckboxWidget(Ruleset modRules)
+			: base(modRules)
 		{
 			GetCheckType = () => CheckType;
 		}
@@ -36,7 +35,6 @@ namespace OpenRA.Widgets
 			CheckType = other.CheckType;
 			GetCheckType = other.GetCheckType;
 			IsChecked = other.IsChecked;
-			BaseLine = other.BaseLine;
 			CheckOffset = other.CheckOffset;
 			HasPressedState = other.HasPressedState;
 		}
@@ -44,19 +42,30 @@ namespace OpenRA.Widgets
 		public override void Draw()
 		{
 			var disabled = IsDisabled();
+			var highlighted = IsHighlighted();
 			var font = Game.Renderer.Fonts[Font];
+			var color = GetColor();
+			var colordisabled = GetColorDisabled();
+			var contrast = GetContrastColor();
 			var rect = RenderBounds;
+			var text = GetText();
+			var textSize = font.Measure(text);
 			var check = new Rectangle(rect.Location, new Size(Bounds.Height, Bounds.Height));
 			var state = disabled ? "checkbox-disabled" :
+						highlighted ? "checkbox-highlighted" :
 						Depressed && HasPressedState ? "checkbox-pressed" :
 						Ui.MouseOverWidget == this ? "checkbox-hover" :
 						"checkbox";
 
 			WidgetUtils.DrawPanel(state, check);
+			var position = new float2(rect.Left + rect.Height * 1.5f, RenderOrigin.Y - BaseLine + (Bounds.Height - textSize.Y)/2);
 
-			var textSize = font.Measure(Text);
-			font.DrawText(Text,
-				new float2(rect.Left + rect.Height * 1.5f, RenderOrigin.Y - BaseLine + (Bounds.Height - textSize.Y)/2), Color.White);
+			if (Contrast)
+				font.DrawTextWithContrast(text, position,
+					disabled ? colordisabled : color, contrast, 2);
+			else
+				font.DrawText(text, position,
+					disabled ? colordisabled : color);
 
 			if (IsChecked() || (Depressed && HasPressedState && !disabled))
 			{

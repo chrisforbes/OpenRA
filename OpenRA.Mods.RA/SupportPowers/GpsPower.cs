@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,21 +8,21 @@
  */
 #endregion
 
-using System.Linq;
-using System.Drawing;
 using System.Collections.Generic;
+using System.Linq;
 using OpenRA.Effects;
 using OpenRA.Mods.RA.Effects;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Required for GpsPower. Attach this to the player actor.")]
 	class GpsWatcherInfo : ITraitInfo
 	{
 		public object Create (ActorInitializer init) { return new GpsWatcher(init.self.Owner); }
 	}
 
-	class GpsWatcher : ISync
+	class GpsWatcher : ISync, IFogVisibilityModifier
 	{
 		[Sync] bool Launched = false;
 		[Sync] public bool GrantedAllies = false;
@@ -31,7 +31,7 @@ namespace OpenRA.Mods.RA
 
 		List<Actor> actors = new List<Actor> { };
 
-		public GpsWatcher( Player owner ) { this.owner = owner; }
+		public GpsWatcher(Player owner) { this.owner = owner; }
 
 		public void GpsRem(Actor atek)
 		{
@@ -47,7 +47,7 @@ namespace OpenRA.Mods.RA
 
 		public void Launch(Actor atek, SupportPowerInfo info)
 		{
-			atek.World.Add(new DelayedAction((info as GpsPowerInfo).RevealDelay * 25,
+			atek.World.Add(new DelayedAction(((GpsPowerInfo)info).RevealDelay * 25,
 					() =>
 					{
 						Launched = true;
@@ -59,21 +59,25 @@ namespace OpenRA.Mods.RA
 		{
 			RefreshGranted();
 			
-			foreach (TraitPair<GpsWatcher> i in atek.World.ActorsWithTrait<GpsWatcher>())
+			foreach (var i in atek.World.ActorsWithTrait<GpsWatcher>())
 				i.Trait.RefreshGranted();
 
-			if ((Granted || GrantedAllies) && atek.World.LocalPlayer != null && (atek.World.LocalPlayer.Stances[atek.Owner] == Stance.Ally))
+			if ((Granted || GrantedAllies) && atek.Owner.IsAlliedWith(atek.World.RenderPlayer))
 				atek.Owner.Shroud.ExploreAll(atek.World);
 		}
 
 		void RefreshGranted()
 		{
 			Granted = (actors.Count > 0 && Launched);
-			GrantedAllies = owner.World.ActorsWithTrait<GpsWatcher>().Any(p =>
-					p.Actor.Owner.Stances[owner] == Stance.Ally && p.Trait.Granted);
-					
+			GrantedAllies = owner.World.ActorsWithTrait<GpsWatcher>().Any(p => p.Actor.Owner.IsAlliedWith(owner) && p.Trait.Granted);
+
 			if (Granted || GrantedAllies)
 				owner.Shroud.ExploreAll(owner.World);
+		}
+
+		public bool HasFogVisibility(Player byPlayer)
+		{
+			return Granted || GrantedAllies;
 		}
 	}
 
@@ -84,7 +88,7 @@ namespace OpenRA.Mods.RA
 		public override object Create(ActorInitializer init) { return new GpsPower(init.self, this); }
 	}
 
-	class GpsPower : SupportPower, INotifyKilled, INotifyStanceChanged, INotifySold, INotifyCapture
+	class GpsPower : SupportPower, INotifyKilled, INotifyStanceChanged, INotifySold, INotifyOwnerChanged
 	{
 		GpsWatcher owner;
 
@@ -99,8 +103,10 @@ namespace OpenRA.Mods.RA
 			self.Owner.PlayerActor.Trait<SupportPowerManager>().Powers[key].Activate(new Order());
 		}
 
-		public override void Activate(Actor self, Order order)
+		public override void Activate(Actor self, Order order, SupportPowerManager manager)
 		{
+			base.Activate(self, order, manager);
+
 			self.World.AddFrameEndTask(w =>
 			{
 				Sound.PlayToPlayer(self.Owner, Info.LaunchSound);
@@ -127,10 +133,10 @@ namespace OpenRA.Mods.RA
 			owner.RefreshGps(self);
 		}
 
-		public void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner)
+		public void OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
 		{
 			RemoveGps(self);
-			owner = captor.Owner.PlayerActor.Trait<GpsWatcher>();
+			owner = newOwner.PlayerActor.Trait<GpsWatcher>();
 			owner.GpsAdd(self);
 		}
 	}

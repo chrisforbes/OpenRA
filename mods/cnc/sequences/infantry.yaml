@@ -2,18 +2,80 @@ vice:
 	idle:
 		Start: 0
 		Length: *
-	muzzle: chem
+	muzzle0: chem-n
 		Start: 0
-		Length: 13
-		Facings: 8
+		Length: *
+		Offset: 3,4
+	muzzle1: chem-nw
+		Start: 0
+		Length: *
+		Offset: 4,1
+	muzzle2: chem-w
+		Start: 0
+		Length: *
+		Offset: 7,-3
+	muzzle3: chem-sw
+		Start: 0
+		Length: *
+		Offset: 3,-6
+	muzzle4: chem-s
+		Start: 0
+		Length: *
+		Offset: 1,-6
+	muzzle5: chem-se
+		Start: 0
+		Length: *
+		Offset: -3,-5
+	muzzle6: chem-e
+		Start: 0
+		Length: *
+		Offset: -6,-3
+	muzzle7: chem-ne
+		Start: 0
+		Length: *
+		Offset: -1,0
+	icon: viceicnh
+		Start: 0
+
 pvice:
 	idle:
 		Start: 0
 		Length: *
-	muzzle: chem
+	muzzle0: chem-n
 		Start: 0
-		Length: 13
-		Facings: 8
+		Length: *
+		Offset: 3,4
+	muzzle1: chem-nw
+		Start: 0
+		Length: *
+		Offset: 4,1
+	muzzle2: chem-w
+		Start: 0
+		Length: *
+		Offset: 7,-3
+	muzzle3: chem-sw
+		Start: 0
+		Length: *
+		Offset: 3,-6
+	muzzle4: chem-s
+		Start: 0
+		Length: *
+		Offset: 1,-6
+	muzzle5: chem-se
+		Start: 0
+		Length: *
+		Offset: -3,-5
+	muzzle6: chem-e
+		Start: 0
+		Length: *
+		Offset: -6,-3
+	muzzle7: chem-ne
+		Start: 0
+		Length: *
+		Offset: -1,0
+	icon: viceicnh
+		Start: 0
+
 e1:
 	stand:
 		Start: 0
@@ -25,6 +87,7 @@ e1:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 8
@@ -37,6 +100,7 @@ e1:
 		Start: 144
 		Length: 4
 		Facings: 8
+		Tick: 100
 	# stand -> prone transition
 	liedown:
 		Start: 128
@@ -107,6 +171,9 @@ e1:
 		Start: 16
 		Length: 4
 		Tick: 1600
+		ZOffset: -511
+	icon: e1icnh
+		Start: 0
 
 e2:
 	stand:
@@ -119,6 +186,7 @@ e2:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 20
@@ -141,6 +209,7 @@ e2:
 		Start: 240
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 288
 		Length: 12
@@ -192,6 +261,9 @@ e2:
 		Start: 16
 		Length: 4
 		Tick: 1600
+		ZOffset: -511
+	icon: e2icnh
+		Start: 0
 
 e3:
 	stand:
@@ -204,6 +276,7 @@ e3:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 8
@@ -226,6 +299,7 @@ e3:
 		Start: 144
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 192
 		Length: 10
@@ -277,6 +351,9 @@ e3:
 		Start: 16
 		Length: 4
 		Tick: 1600
+		ZOffset: -511
+	icon: e3icnh
+		Start: 0
 
 e4:
 	stand:
@@ -289,6 +366,7 @@ e4:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 16
@@ -311,6 +389,7 @@ e4:
 		Start: 208
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 256
 		Length: 16
@@ -362,10 +441,42 @@ e4:
 		Start: 16
 		Length: 4
 		Tick: 1600
-	muzzle: flame
+		ZOffset: -511
+	muzzle0: flame-n
 		Start: 0
-		Length: 13
-		Facings: 8
+		Length: *
+		Offset: 1,6
+	muzzle1: flame-nw
+		Start: 0
+		Length: *
+		Offset: 8,7
+	muzzle2: flame-w
+		Start: 0
+		Length: *
+		Offset: 8,2
+	muzzle3: flame-sw
+		Start: 0
+		Length: *
+		Offset: 7,-2
+	muzzle4: flame-s
+		Start: 0
+		Length: *
+		Offset: 1,-2
+	muzzle5: flame-se
+		Start: 0
+		Length: *
+		Offset: -5,-2
+	muzzle6: flame-e
+		Start: 0
+		Length: *
+		Offset: -7,2
+	muzzle7: flame-ne
+		Start: 0
+		Length: *
+		Offset: -7,8
+	icon: e4icnh
+		Start: 0
+
 e5:
 	stand:
 		Start: 0
@@ -377,6 +488,7 @@ e5:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 16
@@ -399,6 +511,7 @@ e5:
 		Start: 208
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 256
 		Length: 16
@@ -450,10 +563,42 @@ e5:
 		Start: 16
 		Length: 4
 		Tick: 1600
-	muzzle: chem
+		ZOffset: -511
+	muzzle0: chem-n
 		Start: 0
-		Length: 13
-		Facings: 8
+		Length: *
+		Offset: 1,2
+	muzzle1: chem-nw
+		Start: 0
+		Length: *
+		Offset: 8,2
+	muzzle2: chem-w
+		Start: 0
+		Length: *
+		Offset: 8,-3
+	muzzle3: chem-sw
+		Start: 0
+		Length: *
+		Offset: 7,-6
+	muzzle4: chem-s
+		Start: 0
+		Length: *
+		Offset: 1,-6
+	muzzle5: chem-se
+		Start: 0
+		Length: *
+		Offset: -5,-6
+	muzzle6: chem-e
+		Start: 0
+		Length: *
+		Offset: -7,-3
+	muzzle7: chem-ne
+		Start: 0
+		Length: *
+		Offset: -3,2
+	icon: e5icnh
+		Start: 0
+
 e6:
 	stand:
 		Start: 0
@@ -465,6 +610,7 @@ e6:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	# stand -> prone transition
 	liedown:
 		Start: 66
@@ -483,6 +629,7 @@ e6:
 		Start: 82
 		Length: 4
 		Facings: 8
+		Tick: 100
 	idle1:
 		Start: 114
 		Length: 6
@@ -530,6 +677,10 @@ e6:
 		Start: 16
 		Length: 4
 		Tick: 1600
+		ZOffset: -511
+	icon: e6icnh
+		Start: 0
+
 rmbo:
 	stand:
 		Start: 0
@@ -541,6 +692,7 @@ rmbo:
 		Start: 16
 		Length: 6
 		Facings: 8
+		Tick: 100
 	shoot:
 		Start: 64
 		Length: 4
@@ -563,6 +715,7 @@ rmbo:
 		Start: 112
 		Length: 4
 		Facings: 8
+		Tick: 100
 	prone-shoot:
 		Start: 160
 		Length: 4
@@ -618,3 +771,6 @@ rmbo:
 		Start: 16
 		Length: 4
 		Tick: 1600
+		ZOffset: -511
+	icon: rmboicnh
+		Start: 0

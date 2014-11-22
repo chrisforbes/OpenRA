@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,11 +8,9 @@
  */
 #endregion
 
-using System;
 using System.Drawing;
 using System.Linq;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA.Widgets
@@ -48,7 +46,7 @@ namespace OpenRA.Mods.RA.Widgets
 			{
 				WidgetUtils.DrawRGBA(ChromeProvider.GetImage("strategic", "critical_unowned"), offset + new float2(rb.Left + curX, rb.Top));
 
-				if (WorldUtils.AreMutualAllies(a.Actor.Owner, world.LocalPlayer))
+				if (world.LocalPlayer != null && WorldUtils.AreMutualAllies(a.Actor.Owner, world.LocalPlayer))
 					WidgetUtils.DrawRGBA(ChromeProvider.GetImage("strategic", "player_owned"), offset + new float2(rb.Left + curX, rb.Top));
 				else if (!a.Actor.Owner.NonCombatant)
 					WidgetUtils.DrawRGBA(ChromeProvider.GetImage("strategic", "enemy_owned"), offset + new float2(rb.Left + curX, rb.Top));
@@ -78,7 +76,7 @@ namespace OpenRA.Mods.RA.Widgets
 		public Player FindFirstWinningPlayer(World world)
 		{
 			// loop through all players, see who is 'winning' and get the one with the shortest 'time to win'
-			int shortest = int.MaxValue;
+			var shortest = int.MaxValue;
 			Player shortestPlayer = null;
 
 			foreach (var p in world.Players.Where(p => !p.NonCombatant))

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,23 +8,55 @@
  */
 #endregion
 
+using System.Drawing;
+
 namespace OpenRA.Widgets
 {
 	public class BackgroundWidget : Widget
 	{
 		public readonly string Background = "dialog";
 		public readonly bool ClickThrough = false;
+		public readonly bool Draggable = false;
 
 		public override void Draw()
 		{
 			WidgetUtils.DrawPanel(Background, RenderBounds);
 		}
 
-		public BackgroundWidget() : base() { }
+		public BackgroundWidget() { }
+
+		bool moving;
+		int2? prevMouseLocation;
 
 		public override bool HandleMouseInput(MouseInput mi)
 		{
-			return !ClickThrough;
+			if (ClickThrough || !RenderBounds.Contains(mi.Location))
+				return false;
+
+			if (!Draggable || moving && (!TakeMouseFocus(mi) || mi.Button != MouseButton.Left))
+				return true;
+
+			if (prevMouseLocation == null)
+				prevMouseLocation = mi.Location;
+			var vec = mi.Location - (int2)prevMouseLocation;
+			prevMouseLocation = mi.Location;
+			switch (mi.Event)
+			{
+				case MouseInputEvent.Up:
+					moving = false;
+					YieldMouseFocus(mi);
+					break;
+				case MouseInputEvent.Down:
+					moving = true;
+					Bounds = new Rectangle(Bounds.X + vec.X, Bounds.Y + vec.Y, Bounds.Width, Bounds.Height);
+					break;
+				case MouseInputEvent.Move:
+					if (moving)
+						Bounds = new Rectangle(Bounds.X + vec.X, Bounds.Y + vec.Y, Bounds.Width, Bounds.Height);
+					break;
+			}
+
+			return true;
 		}
 
 		protected BackgroundWidget(BackgroundWidget other)
@@ -32,6 +64,7 @@ namespace OpenRA.Widgets
 		{
 			Background = other.Background;
 			ClickThrough = other.ClickThrough;
+			Draggable = other.Draggable;
 		}
 
 		public override Widget Clone() { return new BackgroundWidget(this); }

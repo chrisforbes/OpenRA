@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,47 +9,57 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Linq;
 using OpenRA.Effects;
 using OpenRA.Graphics;
 using OpenRA.Mods.RA.Buildings;
-using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Effects
 {
 	class RepairIndicator : IEffect
 	{
-		Actor building;
-		Player player;
-		string palettePrefix;
-		Animation anim = new Animation("allyrepair");
-		RepairableBuilding rb;
+		readonly Actor building;
+		readonly string palettePrefix;
+		readonly Animation anim;
+		readonly RepairableBuilding rb;
+		int shownPlayer = 0;
 
-		public RepairIndicator(Actor building, string palettePrefix, Player player)
+		public RepairIndicator(Actor building, string palettePrefix)
 		{
 			this.building = building;
-			this.player = player;
 			this.palettePrefix = palettePrefix;
-			rb = building.Trait<RepairableBuilding>();
-			anim.PlayRepeating("repair");
+
+			rb = building.TraitOrDefault<RepairableBuilding>();
+			anim = new Animation(building.World, "allyrepair");
+			anim.Paused = () => !rb.RepairActive;
+
+			CycleRepairer();
 		}
 
 		public void Tick(World world)
 		{
-			if (!building.IsInWorld || building.IsDead() ||
-				rb.Repairer == null || rb.Repairer != player)
+			if (!building.IsInWorld || building.IsDead() || 
+				rb == null || !rb.Repairers.Any()) 
 				world.AddFrameEndTask(w => w.Remove(this));
 
 			anim.Tick();
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			if (!building.Destroyed)
-			{
-				yield return new Renderable(anim.Image,
-					building.CenterLocation.ToFloat2() - .5f * anim.Image.size,
-					wr.Palette(palettePrefix+player.InternalName), (int)building.CenterLocation.Y);
-			}
+			if (building.Destroyed || wr.world.FogObscures(building) || rb.Repairers.Count == 0)
+				return SpriteRenderable.None;
+
+			var palette = wr.Palette(palettePrefix + rb.Repairers[shownPlayer % rb.Repairers.Count].InternalName);
+			return anim.Render(building.CenterPosition, palette);
+		}
+
+		void CycleRepairer() 
+		{
+			anim.PlayThen("repair", CycleRepairer);
+
+			if (++shownPlayer == rb.Repairers.Count)
+				shownPlayer = 0;
 		}
 	}
 }

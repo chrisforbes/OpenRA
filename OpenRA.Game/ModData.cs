@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,9 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using OpenRA.FileFormats;
+using OpenRA.FileSystem;
 using OpenRA.Graphics;
-using OpenRA.Traits;
 using OpenRA.Widgets;
 
 namespace OpenRA
@@ -23,107 +22,146 @@ namespace OpenRA
 	{
 		public readonly Manifest Manifest;
 		public readonly ObjectCreator ObjectCreator;
-		public Dictionary<string, Map> AvailableMaps { get; private set; }
 		public readonly WidgetLoader WidgetLoader;
+		public readonly MapCache MapCache;
+		public readonly ISpriteLoader[] SpriteLoaders;
 		public ILoadScreen LoadScreen = null;
-		public SheetBuilder SheetBuilder;
-		public SpriteLoader SpriteLoader;
+		public VoxelLoader VoxelLoader;
+		public readonly RulesetCache RulesetCache;
+		public CursorProvider CursorProvider { get; private set; }
 
-		public ModData( params string[] mods )
+		Lazy<Ruleset> defaultRules;
+		public Ruleset DefaultRules { get { return defaultRules.Value; } }
+
+		public ModData(string mod)
 		{
-			Manifest = new Manifest( mods );
-			ObjectCreator = new ObjectCreator( Manifest );
+			Languages = new string[0];
+			Manifest = new Manifest(mod);
+			ObjectCreator = new ObjectCreator(Manifest);
 			LoadScreen = ObjectCreator.CreateObject<ILoadScreen>(Manifest.LoadScreen.Value);
-			LoadScreen.Init(Manifest.LoadScreen.NodesDict.ToDictionary(x => x.Key, x => x.Value.Value));
+			LoadScreen.Init(Manifest, Manifest.LoadScreen.ToDictionary(my => my.Value));
 			LoadScreen.Display();
-			WidgetLoader = new WidgetLoader( this );
+			WidgetLoader = new WidgetLoader(this);
+			RulesetCache = new RulesetCache(this);
+			RulesetCache.LoadingProgress += HandleLoadingProgress;
+			MapCache = new MapCache(this);
+
+			var loaders = new List<ISpriteLoader>();
+			foreach (var format in Manifest.SpriteFormats)
+			{
+				var loader = ObjectCreator.FindType(format + "Loader");
+				if (loader == null || !loader.GetInterfaces().Contains(typeof(ISpriteLoader)))
+					throw new InvalidOperationException("Unable to find a sprite loader for type '{0}'.".F(format));
+
+				loaders.Add((ISpriteLoader)ObjectCreator.CreateBasic(loader));
+			}
+
+			SpriteLoaders = loaders.ToArray();
+
+			// HACK: Mount only local folders so we have a half-working environment for the asset installer
+			GlobalFileSystem.UnmountAll();
+			foreach (var dir in Manifest.Folders)
+				GlobalFileSystem.Mount(dir);
+
+			defaultRules = Exts.Lazy(() => RulesetCache.LoadDefaultRules());
+
+			initialThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
 		}
 
-		public void LoadInitialAssets()
+		// HACK: Only update the loading screen if we're in the main thread.
+		int initialThreadId;
+		void HandleLoadingProgress(object sender, EventArgs e)
+		{
+			if (LoadScreen != null && System.Threading.Thread.CurrentThread.ManagedThreadId == initialThreadId)
+				LoadScreen.Display();
+		}
+
+		public void InitializeLoaders()
 		{
 			// all this manipulation of static crap here is nasty and breaks
 			// horribly when you use ModData in unexpected ways.
-
-			FileSystem.UnmountAll();
-			foreach (var dir in Manifest.Folders)
-				FileSystem.Mount(dir);
-
-			AvailableMaps = FindMaps(Manifest.Mods);
-
 			ChromeMetrics.Initialize(Manifest.ChromeMetrics);
 			ChromeProvider.Initialize(Manifest.Chrome);
-			SheetBuilder = new SheetBuilder(TextureChannel.Red);
-			SpriteLoader = new SpriteLoader(new string[] { ".shp" }, SheetBuilder);
-			CursorProvider.Initialize(Manifest.Cursors);
+			VoxelLoader = new VoxelLoader();
+
+			CursorProvider = new CursorProvider(this);
+		}
+
+		public IEnumerable<string> Languages { get; private set; }
+
+		void LoadTranslations(Map map)
+		{
+			var selectedTranslations = new Dictionary<string, string>();
+			var defaultTranslations = new Dictionary<string, string>();
+
+			if (!Manifest.Translations.Any())
+			{
+				Languages = new string[0];
+				FieldLoader.Translations = new Dictionary<string, string>();
+				return;
+			}
+
+			var yaml = Manifest.Translations.Select(MiniYaml.FromFile).Aggregate(MiniYaml.MergeLiberal);
+			Languages = yaml.Select(t => t.Key).ToArray();
+
+			yaml = MiniYaml.MergeLiberal(map.TranslationDefinitions, yaml);
+
+			foreach (var y in yaml)
+			{
+				if (y.Key == Game.Settings.Graphics.Language)
+					selectedTranslations = y.Value.ToDictionary(my => my.Value ?? "");
+				else if (y.Key == Game.Settings.Graphics.DefaultLanguage)
+					defaultTranslations = y.Value.ToDictionary(my => my.Value ?? "");
+			}
+
+			var translations = new Dictionary<string, string>();
+			foreach (var tkv in defaultTranslations.Concat(selectedTranslations))
+			{
+				if (translations.ContainsKey(tkv.Key))
+					continue;
+				if (selectedTranslations.ContainsKey(tkv.Key))
+					translations.Add(tkv.Key, selectedTranslations[tkv.Key]);
+				else
+					translations.Add(tkv.Key, tkv.Value);
+			}
+
+			FieldLoader.Translations = translations;
 		}
 
 		public Map PrepareMap(string uid)
 		{
 			LoadScreen.Display();
-			if (!AvailableMaps.ContainsKey(uid))
+
+			if (MapCache[uid].Status != MapStatus.Available)
 				throw new InvalidDataException("Invalid map uid: {0}".F(uid));
-			var map = new Map(AvailableMaps[uid].Path);
+
+			// Operate on a copy of the map to avoid gameplay state leaking into the cache
+			var map = new Map(MapCache[uid].Map.Path);
+
+			LoadTranslations(map);
 
 			// Reinit all our assets
-			LoadInitialAssets();
-			foreach (var pkg in Manifest.Packages)
-				FileSystem.Mount(pkg);
+			InitializeLoaders();
+			GlobalFileSystem.LoadFromManifest(Manifest);
 
 			// Mount map package so custom assets can be used. TODO: check priority.
-			FileSystem.Mount(FileSystem.OpenPackage(map.Path, int.MaxValue));
+			GlobalFileSystem.Mount(GlobalFileSystem.OpenPackage(map.Path, null, int.MaxValue));
 
-			Rules.LoadRules(Manifest, map);
-			SpriteLoader = new SpriteLoader( Rules.TileSets[map.Tileset].Extensions, SheetBuilder );
-			SequenceProvider.Initialize(Manifest.Sequences, map.Sequences);
+			using (new Support.PerfTimer("Map.PreloadRules"))
+				map.PreloadRules();
+			using (new Support.PerfTimer("Map.SequenceProvider.Preload"))
+				map.SequenceProvider.Preload();
+
+			VoxelProvider.Initialize(Manifest.VoxelSequences, map.VoxelSequenceDefinitions);
+			VoxelLoader.Finish();
 
 			return map;
-		}
-
-		public static IEnumerable<string> FindMapsIn(string dir)
-		{
-			string[] NoMaps = { };
-
-			if (!Directory.Exists(dir))
-				return NoMaps;
-
-			return Directory.GetDirectories(dir)
-				.Concat(Directory.GetFiles(dir, "*.zip"))
-				.Concat(Directory.GetFiles(dir, "*.oramap"));
-		}
-
-		Dictionary<string, Map> FindMaps(string[] mods)
-		{
-			var paths = mods.SelectMany(p => FindMapsIn("mods{0}{1}{0}maps{0}".F(Path.DirectorySeparatorChar, p)))
-				.Concat(mods.SelectMany(p => FindMapsIn("{1}maps{0}{2}{0}".F(Path.DirectorySeparatorChar, Platform.SupportDir, p))));
-
-			var ret = new Dictionary<string, Map>();
-
-			foreach (var path in paths)
-			{
-				try
-				{
-					var map = new Map(path);
-					ret.Add(map.Uid, map);
-				}
-				catch(Exception e)
-				{
-					Console.WriteLine("Failed to load map: {0}", path);
-					Console.WriteLine("Details: {0}", e.ToString());
-				}
-			}
-
-			return ret;
-		}
-
-		public Map FindMapByUid(string uid)
-		{
-			return AvailableMaps.ContainsKey(uid) ? AvailableMaps[uid] : null;
 		}
 	}
 
 	public interface ILoadScreen
 	{
-		void Init(Dictionary<string, string> info);
+		void Init(Manifest m, Dictionary<string, string> info);
 		void Display();
 		void StartGame();
 	}

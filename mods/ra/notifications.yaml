@@ -6,12 +6,12 @@ Speech:
 		PrimaryBuildingSelected: pribldg1
 		BuildingCannotPlaceAudio: nodeply1
 		NewOptions: newopt1
-		AbilityInsufficientPower: nopowr1
 		Win: misnwon1
 		Lose: misnlst1
 		BaseAttack: baseatk1
 		HarvesterAttack:
 		Leave: bct1
+		StartGame: bctrinit
 		UnitReady: unitrdy1
 		NoBuild: nobuild1
 		Training: train1
@@ -19,6 +19,34 @@ Speech:
 		Cancelled: cancld1
 		Building: abldgin1
 		ConstructionComplete: conscmp1
+		UnitLost: unitlst1
+		NavalUnitLost: navylst1
+		AirUnitLost: aunitl1
+		BuildingCaptured: strucap1
+		UnitStolen: unitsto
+		ReinforcementsArrived: reinfor1
+		SignalFlareNorth: flaren1
+		AlliedReinforcementsArrived: aarrive1
+		AlliedForcesApproaching: aappro1
+		ConvoyApproaching: convyap1
+		ConvoyUnitLost: convlst1
+		TargetFreed: targfre1
+		TargetRescued: targres1
+		ObjectiveMet: objmet1
+		ObjectiveNotMet: objnmet1
+		ObjectiveReached: objrch1
+		ObjectiveNotReached: objnrch1
+		TenMinutesRemaining: 10minr
+		TwentyMinutesRemaining: 20minr
+		ThirtyMinutesRemaining: 30minr
+		FourtyMinutesRemaining: 40minr
+		WarningOneMinuteRemaining: 1minr
+		WarningTwoMinutesRemaining: 2minr
+		WarningThreeMinutesRemaining: 3minr
+		WarningFourMinutesRemaining: 4minr
+		WarningFiveMinutesRemaining: 5minr
+		ControlCenterDeactivated: cntlded1
+		OperationControlTerminated: opterm1
 
 Sounds:
 	Notifications:
@@ -30,8 +58,9 @@ Sounds:
 		DisablePower: bleep11
 		EnablePower: bleep12
 		ChatLine: scold1
-		BuildPaletteOpen: bleep13
-		BuildPaletteClose: bleep13
-		TabClick: ramenu1
-		ClickSound:
+		ClickSound: ramenu1
 		ClickDisabledSound:
+		Beacon: beepslct
+		AlertBuzzer: buzzy1
+		AlertBleep: bleep6
+		BaseSetup: bleep9

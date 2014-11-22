@@ -10,7 +10,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OpenRA.TilesetBuilder</RootNamespace>
     <AssemblyName>OpenRA.TilesetBuilder</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ApplicationIcon>tilesetbuilder_icon copy.ico</ApplicationIcon>
     <FileUpgradeFlags>
@@ -33,40 +32,27 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..</OutputPath>
+    <OutputPath>..\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -74,25 +60,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="frmBuilder.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmBuilder.Designer.cs">
-      <DependentUpon>frmBuilder.cs</DependentUpon>
-    </Compile>
-    <Compile Include="frmNew.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmNew.Designer.cs">
-      <DependentUpon>frmNew.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="frmBuilder.resx">
-      <DependentUpon>frmBuilder.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="frmNew.resx">
-      <DependentUpon>frmNew.cs</DependentUpon>
+      <DependentUpon>FormNew.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -120,15 +90,27 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Template.cs" />
+    <Compile Include="FormBuilder.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBuilder.Designer.cs">
+      <DependentUpon>FormBuilder.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="FormBuilder.resx">
+      <DependentUpon>FormBuilder.cs</DependentUpon>
+    </EmbeddedResource>
+    <Compile Include="FormNew.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormNew.Designer.cs">
+      <DependentUpon>FormNew.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OpenRA.FileFormats\OpenRA.FileFormats.csproj">
-      <Project>{BDAEAB25-991E-46A7-AF1E-4F0E03358DAA}</Project>
-      <Name>OpenRA.FileFormats</Name>
-    </ProjectReference>
     <ProjectReference Include="..\OpenRA.Game\OpenRA.Game.csproj">
       <Project>{0DFB103F-2962-400F-8C6D-E2C28CCBA633}</Project>
       <Name>OpenRA.Game</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

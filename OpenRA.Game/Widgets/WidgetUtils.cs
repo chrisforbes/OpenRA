@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,10 +9,8 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
 
 namespace OpenRA.Widgets
@@ -29,14 +27,14 @@ namespace OpenRA.Widgets
 			Game.Renderer.RgbaSpriteRenderer.DrawSprite(s,pos);
 		}
 
-		public static void DrawSHP(Sprite s, float2 pos, WorldRenderer wr)
+		public static void DrawSHPCentered(Sprite s, float2 pos, WorldRenderer wr)
 		{
-			Game.Renderer.SpriteRenderer.DrawSprite(s,pos, wr, "chrome");
+			Game.Renderer.SpriteRenderer.DrawSprite(s, pos - 0.5f * s.size, wr.Palette("chrome"));
 		}
 
-		public static void DrawSHP(Sprite s, float2 pos, WorldRenderer wr, float2 size)
+		public static void DrawSHPCentered(Sprite s, float2 pos, WorldRenderer wr, float scale)
 		{
-			Game.Renderer.SpriteRenderer.DrawSprite(s, pos, wr, "chrome", size);
+			Game.Renderer.SpriteRenderer.DrawSprite(s, pos - 0.5f * scale * s.size, wr.Palette("chrome"), scale * s.size);
 		}
 
 		public static void DrawPanel(string collection, Rectangle Bounds)
@@ -68,6 +66,11 @@ namespace OpenRA.Widgets
 			Game.Renderer.LineRenderer.FillRect(new RectangleF(r.X, r.Y, r.Width, r.Height), c);
 		}
 
+		public static void FillEllipseWithColor(Rectangle r, Color c)
+		{
+			Game.Renderer.LineRenderer.FillEllipse(new RectangleF(r.X, r.Y, r.Width, r.Height), c);
+		}
+
 		public static int[] GetBorderSizes(string collection)
 		{
 			var images = new[] { "border-t", "border-b", "border-l", "border-r" };
@@ -91,71 +94,78 @@ namespace OpenRA.Widgets
 
 		public static void DrawPanelPartial(Sprite[] ss, Rectangle bounds, PanelSides ps)
 		{
+			var marginLeft = ss[2] == null ? 0 : (int)ss[2].size.X;
+			var marginTop = ss[0] == null ? 0 : (int)ss[0].size.Y;
+			var marginRight = ss[3] == null ? 0 : (int)ss[3].size.X;
+			var marginBottom = ss[1] == null ? 0 : (int)ss[1].size.Y;
+			var marginWidth = marginRight + marginLeft;
+			var marginHeight = marginBottom + marginTop;
+
 			// Background
-			if (ps.HasFlags(PanelSides.Center))
-				FillRectWithSprite(new Rectangle(bounds.Left + (int)ss[2].size.X,
-								 bounds.Top + (int)ss[0].size.Y,
-								 bounds.Right - (int)ss[3].size.X - bounds.Left - (int)ss[2].size.X,
-								 bounds.Bottom - (int)ss[1].size.Y - bounds.Top - (int)ss[0].size.Y),
-				   ss[8]);
+			if (ps.HasFlags(PanelSides.Center) && ss[8] != null)
+				FillRectWithSprite(new Rectangle(bounds.Left + marginLeft, bounds.Top + marginTop,
+					bounds.Width - marginWidth,	bounds.Height - marginHeight),
+					ss[8]);
 
 			// Left border
-			if (ps.HasFlags(PanelSides.Left))
-				FillRectWithSprite(new Rectangle(bounds.Left,
-									 bounds.Top + (int)ss[0].size.Y,
-									 (int)ss[2].size.X,
-									 bounds.Bottom - (int)ss[1].size.Y - bounds.Top - (int)ss[0].size.Y),
-					   ss[2]);
+			if (ps.HasFlags(PanelSides.Left) && ss[2] != null)
+				FillRectWithSprite(new Rectangle(bounds.Left, bounds.Top + marginTop,
+					marginLeft, bounds.Height - marginHeight),
+					ss[2]);
 
 			// Right border
-			if (ps.HasFlags(PanelSides.Right))
-				FillRectWithSprite(new Rectangle(bounds.Right - (int)ss[3].size.X,
-									 bounds.Top + (int)ss[0].size.Y,
-									 (int)ss[2].size.X,
-									 bounds.Bottom - (int)ss[1].size.Y - bounds.Top - (int)ss[0].size.Y),
-					   ss[3]);
+			if (ps.HasFlags(PanelSides.Right) && ss[3] != null)
+				FillRectWithSprite(new Rectangle(bounds.Right - marginRight, bounds.Top + marginTop,
+					marginLeft, bounds.Height - marginHeight),
+					ss[3]);
 
 			// Top border
-			if (ps.HasFlags(PanelSides.Top))
-				FillRectWithSprite(new Rectangle(bounds.Left + (int)ss[2].size.X,
-									 bounds.Top,
-									 bounds.Right - (int)ss[3].size.X - bounds.Left - (int)ss[2].size.X,
-									 (int)ss[0].size.Y),
-					   ss[0]);
+			if (ps.HasFlags(PanelSides.Top) && ss[0] != null)
+				FillRectWithSprite(new Rectangle(bounds.Left + marginLeft, bounds.Top,
+					bounds.Width - marginWidth, marginTop),
+					ss[0]);
 
 			// Bottom border
-			if (ps.HasFlags(PanelSides.Bottom))
-				FillRectWithSprite(new Rectangle(bounds.Left + (int)ss[2].size.X,
-									bounds.Bottom - (int)ss[1].size.Y,
-									 bounds.Right - (int)ss[3].size.X - bounds.Left - (int)ss[2].size.X,
-									 (int)ss[0].size.Y),
-					   ss[1]);
+			if (ps.HasFlags(PanelSides.Bottom) && ss[1] != null)
+				FillRectWithSprite(new Rectangle(bounds.Left + marginLeft, bounds.Bottom - marginBottom,
+					bounds.Width - marginWidth, marginTop),
+					ss[1]);
 
-			if (ps.HasFlags(PanelSides.Left | PanelSides.Top))
+			if (ps.HasFlags(PanelSides.Left | PanelSides.Top) && ss[4] != null)
 				DrawRGBA(ss[4], new float2(bounds.Left, bounds.Top));
-			if (ps.HasFlags(PanelSides.Right | PanelSides.Top))
+			if (ps.HasFlags(PanelSides.Right | PanelSides.Top) && ss[5] != null)
 				DrawRGBA(ss[5], new float2(bounds.Right - ss[5].size.X, bounds.Top));
-			if (ps.HasFlags(PanelSides.Left | PanelSides.Bottom))
+			if (ps.HasFlags(PanelSides.Left | PanelSides.Bottom) && ss[6] != null)
 				DrawRGBA(ss[6], new float2(bounds.Left, bounds.Bottom - ss[6].size.Y));
-			if (ps.HasFlags(PanelSides.Right | PanelSides.Bottom))
+			if (ps.HasFlags(PanelSides.Right | PanelSides.Bottom) && ss[7] != null)
 				DrawRGBA(ss[7], new float2(bounds.Right - ss[7].size.X, bounds.Bottom - ss[7].size.Y));
 		}
 
-
 		public static string FormatTime(int ticks)
 		{
+			return FormatTime(ticks, true);
+		}
+
+		public static string FormatTime(int ticks, bool leadingMinuteZero)
+		{
 			var seconds = (int)Math.Ceiling(ticks / 25f);
-			return FormatTimeSeconds( seconds );
+			return FormatTimeSeconds(seconds, leadingMinuteZero);
 		}
 
 		public static string FormatTimeSeconds(int seconds)
+		{
+			return FormatTimeSeconds(seconds, true);
+		}
+
+		public static string FormatTimeSeconds(int seconds, bool leadingMinuteZero)
 		{
 			var minutes = seconds / 60;
 
 			if (minutes >= 60)
 				return "{0:D}:{1:D2}:{2:D2}".F(minutes / 60, minutes % 60, seconds % 60);
-			else
+			if (leadingMinuteZero)
 				return "{0:D2}:{1:D2}".F(minutes, seconds % 60);
+			return "{0:D}:{1:D2}".F(minutes, seconds % 60);
 		}
 
 		public static string WrapText(string text, int width, SpriteFont font)
@@ -163,77 +173,74 @@ namespace OpenRA.Widgets
 			var textSize = font.Measure(text);
 			if (textSize.X > width)
 			{
-				var lines = text.Split('\n');
-				var newLines = new List<string>();
-				var i = 0;
-				var line = lines[i++];
+				var lines = text.Split('\n').ToList();
 
-				for(;;)
+				for (var i=0; i<lines.Count; i++)
 				{
-					newLines.Add(line);
+					var line = lines[i];
 					var m = font.Measure(line);
-					var spaceIndex = 0;
-					var start = line.Length - 1;
 
 					if (m.X <= width)
-					{
-						if (i < lines.Length - 1)
-						{
-							line = lines[i++];
-							continue;
-						}
-						else
-							break;
-					}
+						continue;
+
+					var bestSpaceIndex = -1;
+					var start = line.Length - 1;
 
 					while (m.X > width)
 					{
-						if (-1 == (spaceIndex = line.LastIndexOf(' ', start)))
+						var spaceIndex = line.LastIndexOf(' ', start);
+						if (spaceIndex == -1)
 							break;
+						bestSpaceIndex = spaceIndex;
+
 						start = spaceIndex - 1;
 						m = font.Measure(line.Substring(0, spaceIndex));
 					}
 
-					if (spaceIndex != -1)
+					if (bestSpaceIndex != -1)
 					{
-						newLines.RemoveAt(newLines.Count - 1);
-						newLines.Add(line.Substring(0, spaceIndex));
-						line = line.Substring(spaceIndex + 1);
+						lines[i] = line.Substring(0, bestSpaceIndex);
+						lines.Insert(i + 1, line.Substring(bestSpaceIndex + 1));
 					}
-					else if (i < lines.Length - 1)
-					{
-						line = lines[i++];
-						continue;
-					}
-					else
-						break;
 				}
-				return newLines.JoinWith("\n");
+
+				return string.Join("\n", lines);
 			}
 			return text;
 		}
 
 		public static Action Once( Action a ) { return () => { if (a != null) { a(); a = null; } }; }
 
-		public static string ActiveModVersion()
+		public static string ChooseInitialMap(string initialUid)
 		{
-			var mod = Game.modData.Manifest.Mods[0];
-			return Mod.AllMods[mod].Version;
-		}
+			if (string.IsNullOrEmpty(initialUid) || Game.modData.MapCache[initialUid].Status != MapStatus.Available)
+			{
+				Func<MapPreview, bool> isIdealMap = m =>
+				{
+					if (m.Status != MapStatus.Available || !m.Map.Selectable)
+						return false;
 
-		public static string ActiveModTitle()
-		{
-			var mod = Game.modData.Manifest.Mods[0];
-			return Mod.AllMods[mod].Title;
-		}
+					// Other map types may have confusing settings or gameplay
+					if (m.Type != "Conquest")
+						return false;
 
-		public static string ChooseInitialMap(string map)
-		{
-			var availableMaps = Game.modData.AvailableMaps;
-			if (string.IsNullOrEmpty(map) || !availableMaps.ContainsKey(map))
-				return availableMaps.First(m => m.Value.Selectable).Key;
+					// Maps with bots disabled confuse new players
+					if (m.Map.Players.Any(s => !s.Value.AllowBots))
+						return false;
 
-			return map;
+					// Large maps expose unfortunate performance problems
+					if (m.Bounds.Width > 128 || m.Bounds.Height > 128)
+						return false;
+
+					return true;
+				};
+
+				var selected = Game.modData.MapCache.Where(m => isIdealMap(m)).RandomOrDefault(Game.CosmeticRandom) ??
+					Game.modData.MapCache.First(m => m.Status == MapStatus.Available && m.Map.Selectable);
+				return selected.Uid;
+			}
+
+			return initialUid;
 		}
 	}
 

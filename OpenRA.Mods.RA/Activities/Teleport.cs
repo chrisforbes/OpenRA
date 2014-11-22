@@ -1,6 +1,6 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,52 +8,113 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using OpenRA.Traits;
 using OpenRA.Mods.RA.Render;
+using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
 {
+	public interface IPreventsTeleport { bool PreventsTeleport(Actor self); }
+
 	public class Teleport : Activity
 	{
-		CPos destination;
-		bool killCargo;
 		Actor chronosphere;
+		CPos destination;
+		int? maximumDistance;
+		bool killCargo;
+		bool screenFlash;
+		string sound;
 
-		public Teleport(Actor chronosphere, CPos destination, bool killCargo)
+		const int maxCellSearchRange = Map.MaxTilesInCircleRange;
+
+		public Teleport(Actor chronosphere, CPos destination, int? maximumDistance, bool killCargo, bool screenFlash, string sound)
 		{
+			if (maximumDistance > maxCellSearchRange)
+				throw new InvalidOperationException("Teleport cannot be used with a maximum teleport distance greater than {0}.".F(maxCellSearchRange));
+
 			this.chronosphere = chronosphere;
 			this.destination = destination;
+			this.maximumDistance = maximumDistance;
 			this.killCargo = killCargo;
+			this.screenFlash = screenFlash;
+			this.sound = sound;
 		}
 
 		public override Activity Tick(Actor self)
 		{
-			Sound.Play("chrono2.aud", self.Location.ToPPos());
-			Sound.Play("chrono2.aud", destination.ToPPos());
+			var pc = self.TraitOrDefault<PortableChrono>();
+			if (pc != null && !pc.CanTeleport)
+				return NextActivity;
 
-			self.Trait<ITeleportable>().SetPosition(self, destination);
+			foreach (var condition in self.TraitsImplementing<IPreventsTeleport>())
+				if (condition.PreventsTeleport(self))
+					return NextActivity;
+
+			var bestCell = ChooseBestDestinationCell(self, destination);
+			if (bestCell == null)
+				return NextActivity;
+
+			destination = bestCell.Value;
+
+			Sound.Play(sound, self.CenterPosition);
+			Sound.Play(sound, self.World.Map.CenterOfCell(destination));
+
+			self.Trait<IPositionable>().SetPosition(self, destination);
+			self.Generation++;
 
 			if (killCargo && self.HasTrait<Cargo>())
 			{
 				var cargo = self.Trait<Cargo>();
-				while (!cargo.IsEmpty(self))
+				if (chronosphere != null)
 				{
-					if (chronosphere != null)
-						chronosphere.Owner.Kills++;
-					var a = cargo.Unload(self);
-					a.Owner.Deaths++;
+					while (!cargo.IsEmpty(self))
+					{
+						var a = cargo.Unload(self);
+						// Kill all the units that are unloaded into the void
+						// Kill() handles kill and death statistics
+						a.Kill(chronosphere);
+					}
 				}
 			}
 
+			// Consume teleport charges if this wasn't triggered via chronosphere
+			if (chronosphere == null && pc != null)
+				pc.ResetChargeTime();
+
 			// Trigger screen desaturate effect
-			foreach (var a in self.World.ActorsWithTrait<ChronoshiftPaletteEffect>())
-				a.Trait.Enable();
+			if (screenFlash)
+				foreach (var a in self.World.ActorsWithTrait<ChronoshiftPaletteEffect>())
+					a.Trait.Enable();
 
 			if (chronosphere != null && !chronosphere.Destroyed && chronosphere.HasTrait<RenderBuilding>())
 				chronosphere.Trait<RenderBuilding>().PlayCustomAnim(chronosphere, "active");
 
 			return NextActivity;
+		}
+
+		CPos? ChooseBestDestinationCell(Actor self, CPos destination)
+		{
+			var restrictTo = maximumDistance == null ? null : self.World.Map.FindTilesInCircle(self.Location, maximumDistance.Value);
+
+			if (maximumDistance != null)
+				destination = restrictTo.MinBy(x => (x - destination).LengthSquared);
+
+			var pos = self.Trait<IPositionable>();
+			if (pos.CanEnterCell(destination) && self.Owner.Shroud.IsExplored(destination))
+				return destination;
+
+			var max = maximumDistance != null ? maximumDistance.Value : maxCellSearchRange;
+			foreach (var tile in self.World.Map.FindTilesInCircle(destination, max))
+			{
+				if (self.Owner.Shroud.IsExplored(tile)
+					&& (restrictTo == null || (restrictTo != null && restrictTo.Contains(tile)))
+					&& pos.CanEnterCell(tile))
+					return tile;
+			}
+
+			return null;
 		}
 	}
 
@@ -65,7 +126,8 @@ namespace OpenRA.Mods.RA.Activities
 
 		public override Activity Tick(Actor self)
 		{
-			self.Trait<ITeleportable>().SetPosition(self, destination);
+			self.Trait<IPositionable>().SetPosition(self, destination);
+			self.Generation++;
 			return NextActivity;
 		}
 	}

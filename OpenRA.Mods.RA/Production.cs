@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,105 +8,110 @@
  */
 #endregion
 
+using System;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
-using OpenRA.Mods.RA;
-using OpenRA.Mods.RA.Air;
+using OpenRA.Mods.Common;
 using OpenRA.Mods.RA.Move;
+using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This unit has access to build queues.")]
 	public class ProductionInfo : ITraitInfo
 	{
+		[Desc("e.g. Infantry, Vehicles, Aircraft, Buildings")]
 		public readonly string[] Produces = { };
 
-		public virtual object Create(ActorInitializer init) { return new Production(this); }
+		public virtual object Create(ActorInitializer init) { return new Production(this, init.self); }
 	}
 
+	[Desc("Where the unit should leave the building. Multiples are allowed if IDs are added: Exit@2, ...")]
 	public class ExitInfo : TraitInfo<Exit>
 	{
-		public readonly int2 SpawnOffset = int2.Zero;	// in px relative to CenterLocation
-		public readonly int2 ExitCell = int2.Zero;			// in cells relative to TopLeft
+		[Desc("Offset at which that the exiting actor is spawned")]
+		public readonly WVec SpawnOffset = WVec.Zero;
+
+		[Desc("Cell offset where the exiting actor enters the ActorMap")]
+		public readonly CVec ExitCell = CVec.Zero;
 		public readonly int Facing = -1;
 
-		public PVecInt SpawnOffsetVector { get { return (PVecInt)SpawnOffset; } }
-		public CVec ExitCellVector { get { return (CVec)ExitCell; } }
+		[Desc("AttackMove to a RallyPoint or stay where you are spawned.")]
+		public readonly bool MoveIntoWorld = true;
 	}
-	public class Exit {}
+
+	public class Exit { }
 
 	public class Production
 	{
+		Lazy<RallyPoint> rp;
+
 		public ProductionInfo Info;
-		public Production(ProductionInfo info)
+		public Production(ProductionInfo info, Actor self)
 		{
 			Info = info;
+			rp = Exts.Lazy(() => self.IsDead() ? null : self.TraitOrDefault<RallyPoint>());
 		}
 
-		public void DoProduction(Actor self, ActorInfo producee, ExitInfo exitinfo)
+		public void DoProduction(Actor self, ActorInfo producee, ExitInfo exitinfo, string raceVariant)
 		{
-			var newUnit = self.World.CreateActor(false, producee.Name, new TypeDictionary
+			var exit = self.Location + exitinfo.ExitCell;
+			var spawn = self.CenterPosition + exitinfo.SpawnOffset;
+			var to = self.World.Map.CenterOfCell(exit);
+
+			var fi = producee.Traits.GetOrDefault<IFacingInfo>();
+			var initialFacing = exitinfo.Facing < 0 ? Util.GetFacing(to - spawn, fi == null ? 0 : fi.GetInitialFacing()) : exitinfo.Facing;
+
+			var exitLocation = rp.Value != null ? rp.Value.Location : exit;
+			var target = Target.FromCell(self.World, exitLocation);
+
+			self.World.AddFrameEndTask(w =>
 			{
-				new OwnerInit( self.Owner ),
+				var td = new TypeDictionary
+				{
+					new OwnerInit(self.Owner),
+					new LocationInit(exit),
+					new CenterPositionInit(spawn),
+					new FacingInit(initialFacing)
+				};
+
+				if (raceVariant != null)
+					td.Add(new RaceInit(raceVariant));
+
+				var newUnit = self.World.CreateActor(producee.Name, td);
+
+				var move = newUnit.TraitOrDefault<IMove>();
+				if (move != null)
+				{
+					if (exitinfo.MoveIntoWorld)
+					{
+						newUnit.QueueActivity(move.MoveIntoWorld(newUnit, exit));
+						newUnit.QueueActivity(new AttackMove.AttackMoveActivity(
+							newUnit, move.MoveTo(exitLocation, 1)));
+					}
+				}
+
+				newUnit.SetTargetLine(target, rp.Value != null ? Color.Red : Color.Green, false);
+
+				if (!self.IsDead())
+					foreach (var t in self.TraitsImplementing<INotifyProduction>())
+						t.UnitProduced(self, newUnit, exit);
+
+				var notifyOthers = self.World.ActorsWithTrait<INotifyOtherProduction>();
+				foreach (var notify in notifyOthers)
+					notify.Trait.UnitProducedByOther(notify.Actor, self, newUnit);
+
+				var bi = newUnit.Info.Traits.GetOrDefault<BuildableInfo>();
+				if (bi != null && bi.InitialActivity != null)
+					newUnit.QueueActivity(Game.CreateObject<Activity>(bi.InitialActivity));
+
+				foreach (var t in newUnit.TraitsImplementing<INotifyBuildComplete>())
+					t.BuildingComplete(newUnit);
 			});
-
-			var exit = self.Location + exitinfo.ExitCellVector;
-			var spawn = self.Trait<IHasLocation>().PxPosition + exitinfo.SpawnOffsetVector;
-
-			var teleportable = newUnit.Trait<ITeleportable>();
-			var facing = newUnit.TraitOrDefault<IFacing>();
-
-			// Set the physical position of the unit as the exit cell
-			teleportable.SetPosition(newUnit,exit);
-			var to = Util.CenterOfCell(exit);
-			teleportable.AdjustPxPosition(newUnit, spawn);
-			if (facing != null)
-				facing.Facing = exitinfo.Facing < 0 ? Util.GetFacing(to - spawn, facing.Facing) : exitinfo.Facing;
-			self.World.Add(newUnit);
-
-			var mobile = newUnit.TraitOrDefault<Mobile>();
-			if (mobile != null)
-			{
-				// Animate the spawn -> exit transition
-				var speed = mobile.MovementSpeedForCell(newUnit, exit);
-				var length = speed > 0 ? (int)((to - spawn).Length * 3 / speed) : 0;
-				newUnit.QueueActivity(new Drag(spawn, to, length));
-			}
-
-			var target = MoveToRallyPoint(self, newUnit, exit);
-
-			newUnit.SetTargetLine(Target.FromCell(target), Color.Green, false);
-			foreach (var t in self.TraitsImplementing<INotifyProduction>())
-				t.UnitProduced(self, newUnit, exit);
 		}
 
-		static CPos MoveToRallyPoint(Actor self, Actor newUnit, CPos exitLocation)
-		{
-			var rp = self.TraitOrDefault<RallyPoint>();
-			if (rp == null)
-				return exitLocation;
-
-			var mobile = newUnit.TraitOrDefault<Mobile>();
-			if (mobile != null)
-			{
-				newUnit.QueueActivity(new AttackMove.AttackMoveActivity(
-					newUnit, mobile.MoveTo(rp.rallyPoint, rp.nearEnough)));
-				return rp.rallyPoint;
-			}
-
-			// todo: don't talk about HeliFly here.
-			var helicopter = newUnit.TraitOrDefault<Helicopter>();
-			if (helicopter != null)
-			{
-				newUnit.QueueActivity(new HeliFly(Util.CenterOfCell(rp.rallyPoint)));
-				return rp.rallyPoint;
-			}
-
-			return exitLocation;
-		}
-
-		public virtual bool Produce(Actor self, ActorInfo producee)
+		public virtual bool Produce(Actor self, ActorInfo producee, string raceVariant)
 		{
 			if (Reservable.IsReserved(self))
 				return false;
@@ -117,7 +122,7 @@ namespace OpenRA.Mods.RA
 
 			if (exit != null)
 			{
-				DoProduction(self, producee, exit);
+				DoProduction(self, producee, exit, raceVariant);
 				return true;
 			}
 
@@ -128,8 +133,15 @@ namespace OpenRA.Mods.RA
 		{
 			var mobileInfo = producee.Traits.GetOrDefault<MobileInfo>();
 
+			foreach (var blocker in self.World.ActorMap.GetUnitsAt(self.Location + s.ExitCell))
+			{
+				// Notify the blocker that he's blocking our move:
+				foreach (var moveBlocked in blocker.TraitsImplementing<INotifyBlockingMove>())
+					moveBlocked.OnNotifyBlockingMove(blocker, self);
+			}
+
 			return mobileInfo == null ||
-				mobileInfo.CanEnterCell(self.World, self, self.Location + s.ExitCellVector, self, true, true);
+				mobileInfo.CanEnterCell(self.World, self, self.Location + s.ExitCell, self);
 		}
 	}
 }

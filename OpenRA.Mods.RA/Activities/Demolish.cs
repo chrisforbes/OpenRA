@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,46 +8,64 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Effects;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
 {
-	class Demolish : Activity
+	class Demolish : Enter
 	{
-		Actor target;
-		int delay;
+		readonly Actor target;
+		readonly IEnumerable<IDemolishable> demolishables;
+		readonly int delay;
+		readonly int flashes;
+		readonly int flashesDelay;
+		readonly int flashInterval;
+		readonly int flashDuration;
 
-		public Demolish( Actor target, int delay )
+		public Demolish(Actor self, Actor target, int delay, int flashes, int flashesDelay, int flashInterval, int flashDuration)
+			: base(self, target)
 		{
 			this.target = target;
+			demolishables = target.TraitsImplementing<IDemolishable>();
 			this.delay = delay;
+			this.flashes = flashes;
+			this.flashesDelay = flashesDelay;
+			this.flashInterval = flashInterval;
+			this.flashDuration = flashDuration;
 		}
 
-		public override Activity Tick(Actor self)
+		protected override bool CanReserve(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (target == null || !target.IsInWorld || target.IsDead()) return NextActivity;
+			return demolishables.Any(i => i.IsValidTarget(target, self));
+		}
 
-			if( !target.OccupiesSpace.OccupiedCells().Any( x => x.First == self.Location ) )
-				return NextActivity;
-
-			self.World.AddFrameEndTask(w => w.Add(new DelayedAction(delay, () =>
+		protected override void OnInside(Actor self)
+		{
+			self.World.AddFrameEndTask(w =>
 			{
-				// Can't demolish an already dead actor
 				if (target.IsDead())
 					return;
 
-				// Invulnerable actors can't be demolished
-				var modifier = (float)target.TraitsImplementing<IDamageModifier>()
-					.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
-					.Select(t => t.GetDamageModifier(self, null)).Product();
+				for (var f = 0; f < flashes; f++)
+					w.Add(new DelayedAction(flashesDelay + f * flashInterval, () =>
+						w.Add(new FlashTarget(target, ticks: flashDuration))));
 
-				if (target.IsInWorld && modifier > 0)
-					target.Kill(self);
-			})));
-			return NextActivity;
+				w.Add(new DelayedAction(delay, () =>
+				{
+					if (target.IsDead())
+						return;
+
+					var modifiers = target.TraitsImplementing<IDamageModifier>()
+						.Concat(self.Owner.PlayerActor.TraitsImplementing<IDamageModifier>())
+						.Select(t => t.GetDamageModifier(self, null));
+
+					if (Util.ApplyPercentageModifiers(100, modifiers) > 0)
+						demolishables.Do(d => d.Demolish(target, self));
+				}));
+			});
 		}
 	}
 }

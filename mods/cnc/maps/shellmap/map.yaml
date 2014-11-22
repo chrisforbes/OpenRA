@@ -1,6 +1,6 @@
 Selectable: False
 
-MapFormat: 5
+MapFormat: 6
 
 RequiresMod: cnc
 
@@ -18,21 +18,23 @@ Bounds: 8,1,80,45
 
 UseAsShellmap: True
 
-Type: Conquest
+Type: Shellmap
+
+Options:
 
 Players:
 	PlayerReference@Nod:
 		Name: Nod
 		Race: nod
-		ColorRamp: 3,255,127,28
+		ColorRamp: 3,255,127
 		Allies: Nod
-		Enemies: GDI,Creeps
+		Enemies: GDI, Creeps
 	PlayerReference@GDI:
 		Name: GDI
 		Race: gdi
-		ColorRamp: 31,222,183,24
+		ColorRamp: 31,222,183
 		Allies: GDI
-		Enemies: Nod,Creeps
+		Enemies: Nod, Creeps
 	PlayerReference@Neutral:
 		Name: Neutral
 		OwnsWorld: True
@@ -41,44 +43,38 @@ Players:
 	PlayerReference@Multi0:
 		Name: Multi0
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Multi1:
 		Name: Multi1
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Multi2:
 		Name: Multi2
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Multi3:
 		Name: Multi3
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Multi4:
 		Name: Multi4
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Multi5:
 		Name: Multi5
 		Playable: True
-		DefaultStartingUnits: True
 		Race: Random
 		Enemies: Creeps
 	PlayerReference@Creeps:
 		Name: Creeps
 		NonCombatant: True
 		Race: Random
-		Enemies: Nod,GDI,Multi0,Multi1,Multi2,Multi3,Multi4,Multi5
+		Enemies: Nod, GDI, Multi0, Multi1, Multi2, Multi3, Multi4, Multi5
 
 Actors:
 	boat1: boat
@@ -986,24 +982,6 @@ Actors:
 		Location: 65,20
 		Owner: Nod
 		Facing: 192
-	tl1: mpspawn
-		Location: 8,33
-		Owner: Neutral
-	tr1: mpspawn
-		Location: 87,33
-		Owner: Neutral
-	tl2: mpspawn
-		Location: 8,35
-		Owner: Neutral
-	tr2: mpspawn
-		Location: 87,35
-		Owner: Neutral
-	tl3: mpspawn
-		Location: 8,37
-		Owner: Neutral
-	tr3: mpspawn
-		Location: 87,37
-		Owner: Neutral
 
 Smudges:
 
@@ -1012,21 +990,30 @@ Rules:
 		-SpawnMPUnits:
 		-MPStartLocations:
 		-CrateSpawner:
+		MenuPaletteEffect:
+			Effect: Desaturated
 		PlayMusicOnMapLoad:
 			Music: map1
 			Loop: true
-		CncShellmapScript:
+		LuaScript:
+			Scripts: shellmap.lua
 		LoadWidgetAtGameStart:
 			Widget: MENU_BACKGROUND
 	LST:
 		Mobile:
-			Speed: 3
+			Speed: 42
 	BOAT:
 		Mobile:
-			Speed: 3
+			Speed: 42
 
 Sequences:
+
+VoxelSequences:
 
 Weapons:
 
 Voices:
+
+Notifications:
+
+Translations:

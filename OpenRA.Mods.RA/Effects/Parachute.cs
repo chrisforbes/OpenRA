@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -18,67 +18,96 @@ namespace OpenRA.Mods.RA.Effects
 {
 	public class Parachute : IEffect
 	{
-		readonly Animation paraAnim;
-		readonly PPos location;
-
+		readonly ParachutableInfo parachutableInfo;
+		readonly Animation parachute;
+		readonly Animation shadow;
+		readonly WVec parachuteOffset;
 		readonly Actor cargo;
+		WPos pos;
+		WVec fallVector;
 
-		int2 offset;
-		float altitude;
-		const float fallRate = .3f;
-
-		public Parachute(Actor cargo, PPos location, int altitude)
+		public Parachute(Actor cargo, WPos dropPosition)
 		{
-			this.location = location;
-			this.altitude = altitude;
 			this.cargo = cargo;
 
-			var pai = cargo.Info.Traits.GetOrDefault<ParachuteAttachmentInfo>();
-			paraAnim = new Animation(pai != null ? pai.ParachuteSprite : "parach");
-			paraAnim.PlayThen("open", () => paraAnim.PlayRepeating("idle"));
+			parachutableInfo = cargo.Info.Traits.GetOrDefault<ParachutableInfo>();
 
-			if (pai != null) offset = pai.Offset;
+			if (parachutableInfo != null)
+				fallVector = new WVec(0, 0, parachutableInfo.FallRate);
 
-			cargo.Trait<ITeleportable>().SetPxPosition(cargo, location);
+			var parachuteSprite = parachutableInfo != null ? parachutableInfo.ParachuteSequence : null;
+			if (parachuteSprite != null)
+			{
+				parachute = new Animation(cargo.World, parachuteSprite);
+				parachute.PlayThen("open", () => parachute.PlayRepeating("idle"));
+			}
+
+			var shadowSprite = parachutableInfo != null ? parachutableInfo.ShadowSequence : null;
+			if (shadowSprite != null)
+			{
+				shadow = new Animation(cargo.World, shadowSprite);
+				shadow.PlayRepeating("idle");
+			}
+
+			if (parachutableInfo != null)
+				parachuteOffset = parachutableInfo.ParachuteOffset;
+
+			// Adjust x,y to match the target subcell
+			cargo.Trait<IPositionable>().SetPosition(cargo, cargo.World.Map.CellContaining(dropPosition));
+			var cp = cargo.CenterPosition;
+			pos = new WPos(cp.X, cp.Y, dropPosition.Z);
 		}
 
 		public void Tick(World world)
 		{
-			paraAnim.Tick();
+			if (parachute != null)
+				parachute.Tick();
 
-			altitude -= fallRate;
+			if (shadow != null)
+				shadow.Tick();
 
-			if (altitude <= 0)
+			pos -= fallVector;
+
+			if (pos.Z <= 0)
+			{
 				world.AddFrameEndTask(w =>
-					{
-						w.Remove(this);
-						var loc = location.ToCPos();
-						cargo.CancelActivity();
-						cargo.Trait<ITeleportable>().SetPosition(cargo, loc);
-						w.Add(cargo);
+				{
+					w.Remove(this);
+					cargo.CancelActivity();
+					w.Add(cargo);
 
-						foreach( var npl in cargo.TraitsImplementing<INotifyParachuteLanded>() )
-							npl.OnLanded();
-					});
+					foreach (var npl in cargo.TraitsImplementing<INotifyParachuteLanded>())
+						npl.OnLanded();
+				});
+			}
 		}
 
-		public IEnumerable<Renderable> Render(WorldRenderer wr)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr)
 		{
-			var rc = cargo.Render(wr).Select(a => a.WithPos(a.Pos - new float2(0, altitude))
-			                                    .WithZOffset(a.ZOffset + (int)altitude));
+			var rc = cargo.Render(wr);
 
 			// Don't render anything if the cargo is invisible (e.g. under fog)
 			if (!rc.Any())
 				yield break;
 
+			var parachuteShadowPalette = wr.Palette(parachutableInfo.ParachuteShadowPalette);
 			foreach (var c in rc)
 			{
-				yield return c.WithPos(location.ToFloat2() - .5f * c.Sprite.size).WithPalette(wr.Palette("shadow")).WithZOffset(0);
-				yield return c.WithZOffset(2);
+				if (!c.IsDecoration && shadow == null)
+					yield return c.WithPalette(parachuteShadowPalette).WithZOffset(c.ZOffset - 1).AsDecoration();
+
+				yield return c.OffsetBy(pos - c.Pos);
 			}
 
-			var pos = location.ToFloat2() - new float2(0, altitude);
-			yield return new Renderable(paraAnim.Image, pos - .5f * paraAnim.Image.size + offset, rc.First().Palette, 3);
+			var shadowPalette = !string.IsNullOrEmpty(parachutableInfo.ShadowPalette) ? wr.Palette(parachutableInfo.ShadowPalette) : rc.First().Palette;
+			if (shadow != null)
+				foreach (var r in shadow.Render(pos - new WVec(0, 0, pos.Z), WVec.Zero, 1, shadowPalette, 1f))
+					yield return r;
+
+			var parachutePalette = !string.IsNullOrEmpty(parachutableInfo.ParachutePalette) ? wr.Palette(parachutableInfo.ParachutePalette) : rc.First().Palette;
+			if (parachute != null)
+				foreach (var r in parachute.Render(pos, parachuteOffset, 1, parachutePalette, 1f))
+					yield return r;
 		}
 	}
 }

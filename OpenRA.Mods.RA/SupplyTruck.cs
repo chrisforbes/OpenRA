@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,26 +10,27 @@
 
 using System.Collections.Generic;
 using System.Drawing;
+using OpenRA.Mods.Common.Orders;
 using OpenRA.Mods.RA.Activities;
-using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Donate money to building if it has the AcceptSupplies: trait.")]
 	class SupplyTruckInfo : ITraitInfo
 	{
+		[Desc("The amount of cash the owner of the building recieves.")]
 		public readonly int Payload = 500;
 		public object Create(ActorInitializer init) { return new SupplyTruck(this); }
 	}
 
 	class SupplyTruck : IIssueOrder, IResolveOrder, IOrderVoice
 	{
-		SupplyTruckInfo Info;
+		SupplyTruckInfo info;
 
 		public SupplyTruck(SupplyTruckInfo info)
 		{
-			Info = info;
+			this.info = info;
 		}
 
 		public IEnumerable<IOrderTargeter> Orders
@@ -39,10 +40,13 @@ namespace OpenRA.Mods.RA
 
 		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if (order.OrderID == "DeliverSupplies")
-				return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
+			if (order.OrderID != "DeliverSupplies")
+				return null;
 
-			return null;
+			if (target.Type == TargetType.FrozenActor)
+				return new Order(order.OrderID, self, queued) { ExtraData = target.FrozenActor.ID };
+
+			return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
 		}
 
 		public string VoicePhraseForOrder(Actor self, Order order)
@@ -52,30 +56,35 @@ namespace OpenRA.Mods.RA
 
 		public void ResolveOrder(Actor self, Order order)
 		{
-			if (order.OrderString == "DeliverSupplies")
-			{
-				self.SetTargetLine(Target.FromOrder(order), Color.Yellow);
+			if (order.OrderString != "DeliverSupplies")
+				return;
+
+			var target = self.ResolveFrozenActorOrder(order, Color.Yellow);
+			if (target.Type != TargetType.Actor)
+				return;
+
+			if (!order.Queued)
 				self.CancelActivity();
-				self.QueueActivity(new Enter(order.TargetActor));
-				self.QueueActivity(new DonateSupplies(order.TargetActor, Info.Payload));
-			}
+
+			self.SetTargetLine(target, Color.Yellow);
+			self.QueueActivity(new DonateSupplies(self, target.Actor, info.Payload));
 		}
 
-		class SupplyTruckOrderTargeter : UnitTraitOrderTargeter<Building>
+		class SupplyTruckOrderTargeter : UnitOrderTargeter
 		{
 			public SupplyTruckOrderTargeter()
 				: base("DeliverSupplies", 5, "enter", false, true)
 			{
 			}
 
-			public override bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public override bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
 			{
-				if (!base.CanTargetActor(self, target, forceAttack, forceQueued, ref cursor)) return false;
-				if (target.AppearsHostileTo(self)) return false;
-				if (!target.HasTrait<AcceptsSupplies>()) return false;
+				return target.HasTrait<AcceptsSupplies>();
+			}
 
-				IsQueued = forceQueued;
-				return true;
+			public override bool CanTargetFrozenActor(Actor self, FrozenActor target, TargetModifiers modifiers, ref string cursor)
+			{
+				return target.Info.Traits.Contains<AcceptsSuppliesInfo>();
 			}
 		}
 	}

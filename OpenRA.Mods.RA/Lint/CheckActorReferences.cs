@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,7 +9,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using OpenRA.Traits;
 
@@ -19,26 +18,26 @@ namespace OpenRA.Mods.RA
 	{
 		Action<string> EmitError;
 
-		public void Run(Action<string> emitError, Action<string> emitWarning)
+		public void Run(Action<string> emitError, Action<string> emitWarning, Map map)
 		{
 			EmitError = emitError;
 
-			foreach (var actorInfo in Rules.Info)
+			foreach (var actorInfo in map.Rules.Actors)
 				foreach (var traitInfo in actorInfo.Value.Traits.WithInterface<ITraitInfo>())
-					CheckTrait(actorInfo.Value, traitInfo);
+					CheckTrait(actorInfo.Value, traitInfo, map);
 		}
 
-		void CheckTrait(ActorInfo actorInfo, ITraitInfo traitInfo)
+		void CheckTrait(ActorInfo actorInfo, ITraitInfo traitInfo, Map map)
 		{
 			var actualType = traitInfo.GetType();
 			foreach (var field in actualType.GetFields())
 			{
 				if (field.HasAttribute<ActorReferenceAttribute>())
-					CheckReference(actorInfo, traitInfo, field, Rules.Info, "actor");
+					CheckReference(actorInfo, traitInfo, field, map.Rules.Actors, "actor");
 				if (field.HasAttribute<WeaponReferenceAttribute>())
-					CheckReference(actorInfo, traitInfo, field, Rules.Weapons, "weapon");
+					CheckReference(actorInfo, traitInfo, field, map.Rules.Weapons, "weapon");
 				if (field.HasAttribute<VoiceReferenceAttribute>())
-					CheckReference(actorInfo, traitInfo, field, Rules.Voices, "voice");
+					CheckReference(actorInfo, traitInfo, field, map.Rules.Voices, "voice");
 			}
 		}
 
@@ -57,7 +56,7 @@ namespace OpenRA.Mods.RA
 		}
 
 		void CheckReference<T>(ActorInfo actorInfo, ITraitInfo traitInfo, FieldInfo fieldInfo,
-			Dictionary<string, T> dict, string type)
+			IReadOnlyDictionary<string, T> dict, string type)
 		{
 			var values = GetFieldValues(traitInfo, fieldInfo);
 			foreach (var v in values)

@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,29 +9,24 @@
 #endregion
 
 using System;
-using OpenRA.FileFormats;
-
 using SGraphics = System.Drawing.Graphics;
 
 namespace OpenRA.Editor
 {
 	class ResourceTool : ITool
 	{
-		ResourceTemplate Resource;
+		ResourceTemplate resourceTemplate;
 
-		public ResourceTool(ResourceTemplate resource) { Resource = resource; }
+		public ResourceTool(ResourceTemplate resource) { resourceTemplate = resource; }
 
 		public void Apply(Surface surface)
 		{
-			surface.Map.MapResources.Value[surface.GetBrushLocation().X, surface.GetBrushLocation().Y]
-				= new TileReference<byte, byte>
-				{
-					type = (byte)Resource.Info.ResourceType,
-					index = (byte)random.Next(Resource.Info.SpriteNames.Length)
-				};
+			var type = (byte)resourceTemplate.Info.ResourceType;
+			var index = (byte)random.Next(resourceTemplate.Info.MaxDensity);
+			surface.Map.MapResources.Value[surface.GetBrushLocation()] = new ResourceTile(type, index);
 
-			var ch = new int2((surface.GetBrushLocation().X) / Surface.ChunkSize,
-				(surface.GetBrushLocation().Y) / Surface.ChunkSize);
+			var ch = new int2(surface.GetBrushLocation().X / Surface.ChunkSize,
+				surface.GetBrushLocation().Y / Surface.ChunkSize);
 
 			if (surface.Chunks.ContainsKey(ch))
 			{
@@ -42,7 +37,7 @@ namespace OpenRA.Editor
 
 		public void Preview(Surface surface, SGraphics g)
 		{
-			surface.DrawImage(g, Resource.Bitmap, surface.GetBrushLocation(), false, null);
+			surface.DrawImage(g, resourceTemplate.Bitmap, surface.GetBrushLocation(), false, null);
 		}
 
 		Random random = new Random();

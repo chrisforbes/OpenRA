@@ -1,6 +1,6 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,76 +8,66 @@
  */
 #endregion
 
-using OpenRA.Mods.RA.Render;
-using OpenRA.Traits;
 using OpenRA.Mods.RA.Move;
+using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Activities
 {
 	/* non-turreted attack */
 	public class Attack : Activity
 	{
-		protected Target Target;
-		ITargetable targetable;
-		int Range;
-		bool AllowMovement;
+		protected readonly Target Target;
+		readonly AttackBase attack;
+		readonly IMove move;
+		readonly IFacing facing;
+		readonly WRange minRange;
+		readonly WRange maxRange;
 
-		int nextPathTime;
-
-		const int delayBetweenPathingAttempts = 20;
-		const int delaySpread = 5;
-
-		public Attack(Target target, int range, bool allowMovement)
+		public Attack(Actor self, Target target, WRange minRange, WRange maxRange, bool allowMovement)
 		{
 			Target = target;
-			if (target.IsActor)
-				targetable = target.Actor.TraitOrDefault<ITargetable>();
+			this.minRange = minRange;
+			this.maxRange = maxRange;
 
-			Range = range;
-			AllowMovement = allowMovement;
+			attack = self.Trait<AttackBase>();
+			facing = self.Trait<IFacing>();
+
+			move = allowMovement ? self.TraitOrDefault<IMove>() : null;
 		}
 
-		public Attack(Target target, int range) : this(target, range, true) {}
-
-		public override Activity Tick( Actor self )
+		public override Activity Tick(Actor self)
 		{
-			var attack = self.Trait<AttackBase>();
-
-			var ret = InnerTick( self, attack );
-			attack.IsAttacking = ( ret == this );
+			var ret = InnerTick(self, attack);
+			attack.IsAttacking = (ret == this);
 			return ret;
 		}
 
-		protected virtual Activity InnerTick( Actor self, AttackBase attack )
+		protected virtual Activity InnerTick(Actor self, AttackBase attack)
 		{
-			if (IsCanceled) return NextActivity;
-
-			if (!Target.IsValid)
-				return NextActivity;
-				
-			if (!self.Owner.HasFogVisibility() && Target.Actor != null && Target.Actor.HasTrait<Mobile>() && !self.Owner.Shroud.IsTargetable(Target.Actor))
+			if (IsCanceled)
 				return NextActivity;
 
-			if (targetable != null && !targetable.TargetableBy(Target.Actor, self))
+			var type = Target.Type;
+			if (!Target.IsValidFor(self) || type == TargetType.FrozenActor)
 				return NextActivity;
 
-			if (!Combat.IsInRange(self.CenterLocation, Range, Target))
-			{
-				if (--nextPathTime > 0)
-					return this;
+			// Drop the target if it moves under the shroud / fog.
+			// HACK: This would otherwise break targeting frozen actors
+			// The problem is that Shroud.IsTargetable returns false (as it should) for
+			// frozen actors, but we do want to explicitly target the underlying actor here.
+			if (type == TargetType.Actor && !Target.Actor.HasTrait<FrozenUnderFog>() && !self.Owner.Shroud.IsTargetable(Target.Actor))
+				return NextActivity;
 
-				nextPathTime = self.World.SharedRandom.Next(delayBetweenPathingAttempts - delaySpread,
-					delayBetweenPathingAttempts + delaySpread);
+			// Try to move within range
+			if (move != null && (!Target.IsInRange(self.CenterPosition, maxRange) || Target.IsInRange(self.CenterPosition, minRange)))
+				return Util.SequenceActivities(move.MoveWithinRange(Target, minRange, maxRange), this);
 
-				return (AllowMovement) ? Util.SequenceActivities(self.Trait<Mobile>().MoveWithinRange(Target, Range), this) : NextActivity;
-			}
-
-			var desiredFacing = Util.GetFacing(Target.CenterLocation - self.CenterLocation, 0);
-			var facing = self.Trait<IFacing>();
+			var desiredFacing = Util.GetFacing(Target.CenterPosition - self.CenterPosition, 0);
 			if (facing.Facing != desiredFacing)
-				return Util.SequenceActivities( new Turn( desiredFacing ), this );
+				return Util.SequenceActivities(new Turn(self, desiredFacing), this);
 
 			attack.DoAttack(self, Target);
+
 			return this;
 		}
 	}

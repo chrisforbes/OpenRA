@@ -13,51 +13,52 @@ C4:
 	Inherits: ^CivInfantry
 	Selectable:
 		Voice: CivilianFemaleVoice
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C2
 
 C5:
 	Inherits: ^CivInfantry
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C1
 
 C6:
 	Inherits: ^CivInfantry
 	Selectable:
 		Voice: CivilianFemaleVoice
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C2
 
 C7:
 	Inherits: ^CivInfantry
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C1
 
 C8:
 	Inherits: ^CivInfantry
 	Selectable:
 		Voice: CivilianFemaleVoice
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C2
 
 C9:
 	Inherits: ^CivInfantry
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C1
 
 C10:
 	Inherits: ^CivInfantry
 	Selectable:
 		Voice: CivilianFemaleVoice
-	RenderInfantryPanic:
+	RenderInfantry:
 		Image: C2
 
 FCOM:
 	Inherits: ^TechBuilding
 	Building:
-		Power: -200
 		Footprint: xx xx
 		Dimensions: 2,2
+	Valued:
+		Cost: 2000
 	Health:
 		HP: 400
 	Armor:
@@ -65,17 +66,30 @@ FCOM:
 	Tooltip:
 		Name: Forward Command
 	RevealsShroud:
-		Range: 10
+		Range: 10c0
 	Bib:
+	Power:
+		Amount: -200
 
 HOSP:
 	Inherits: ^TechBuilding
+	Selectable:
+		Priority: 0
 	Building:
 		Footprint: xx xx
 		Dimensions: 2,2
+	Health:
+		HP: 1000
+	ExternalCapturable:
+	ExternalCapturableBar:
+	EngineerRepairable:
 	Tooltip:
 		Name: Hospital
-	RepairsUnits:
+	RevealsShroud:
+		Range: 3c0
+	Bib:
+		HasMinibib: Yes
+	DeadBuildingState:
 
 V01:
 	Inherits: ^CivBuilding
@@ -85,38 +99,7 @@ V01:
 	Tooltip:
 		Name: Church
 	RevealsShroud:
-		Range: 10
-	TransformOnCapture:
-		IntoActor: v01.sniper
-		SkipMakeAnims: true
-	Capturable:
-		Type: civilianbuilding
-		CaptureCompleteTime: 0
-	EditorTilesetFilter:
-		ExcludeTilesets: DESERT
-
-V01.SNIPER:
-	Inherits: V01
-	RenderBuilding:
-		Image: V01
-	RenderRangeCircle:
-	AutoTarget:
-	Turreted:
-		ROT: 255
-	AttackTurreted:
-		PrimaryWeapon: Sniper
-		PrimaryLocalOffset: 0,-11,0,0,0
-	Cargo:
-		InitialUnits: sniper
-		Types: Infantry
-		MaxWeight: 1
-		PipCount: 1
-	TransformOnPassenger@Sniper:
-		PassengerTypes: sniper
-		OnExit: v01
-		SkipMakeAnims: true
-		BecomeNeutral: true
-	-Capturable:
+		Range: 10c0
 	EditorTilesetFilter:
 		ExcludeTilesets: DESERT
 
@@ -222,13 +205,28 @@ V18:
 	Inherits: ^CivField
 	EditorTilesetFilter:
 		ExcludeTilesets: DESERT
-		
+
 V19:
 	Inherits: ^CivBuilding
 	EditorTilesetFilter:
 		ExcludeTilesets: DESERT
 	Tooltip:
 		Name: Oil Pump
+	LeavesHusk:
+		HuskActor: V19.Husk
+	AutoTargetIgnore:
+
+V19.Husk:
+	Inherits: ^CivBuilding
+	EditorTilesetFilter:
+		ExcludeTilesets: DESERT
+	Tooltip:
+		Name: Husk (Oil Pump)
+	WithFire:
+	-Health:
+	-Selectable:
+	-TargetableBuilding:
+	-Demolishable:
 
 BARL:
 	Inherits: ^TechBuilding
@@ -242,8 +240,12 @@ BARL:
 		Name: Explosive Barrel
 	AutoTargetIgnore:
 	Armor:
-		Type: Light
-	-C4Demolishable:
+		Type: None
+	TargetableBuilding:
+		TargetTypes: Ground, DemoTruck
+	-ShakeOnDeath:
+	-SoundOnDamageTransition:
+	-Demolishable:
 
 BRL3:
 	Inherits: ^TechBuilding
@@ -257,8 +259,21 @@ BRL3:
 		Name: Explosive Barrel
 	AutoTargetIgnore:
 	Armor:
-		Type: Light
-	-C4Demolishable:
+		Type: None
+	TargetableBuilding:
+		TargetTypes: Ground, DemoTruck
+	-ShakeOnDeath:
+	-SoundOnDamageTransition:
+	-Demolishable:
+
+AMMOBOX1:
+	Inherits: ^AmmoBox
+
+AMMOBOX2:
+	Inherits: ^AmmoBox
+
+AMMOBOX3:
+	Inherits: ^AmmoBox
 
 MISS:
 	Inherits: ^TechBuilding
@@ -267,6 +282,8 @@ MISS:
 	Building:
 		Footprint: xxx xxx
 		Dimensions: 3,2
+	Valued:
+		Cost: 2000
 	Health:
 		HP: 400
 	Armor:
@@ -274,15 +291,19 @@ MISS:
 	Tooltip:
 		Name: Technology Center
 	Bib:
+	DeadBuildingState:
 
 BIO:
 	Inherits: ^TechBuilding
 	Building:
 		Footprint: xx xx
 		Dimensions: 2,2
+	ExternalCapturable:
+	ExternalCapturableBar:
+	EngineerRepairable:
 	Tooltip:
 		Name: Biological Lab
-
+	DeadBuildingState:
 
 OILB:
 	Inherits: ^TechBuilding
@@ -292,21 +313,20 @@ OILB:
 		Footprint: xx xx
 		Dimensions: 2,2
 	Health:
-		HP: 400
-	Armor:
-		Type: Wood
-	Bib:
+		HP: 1000
 	RevealsShroud:
-		Range: 3
-	Capturable:
-	CapturableBar:
+		Range: 3c0
+	ExternalCapturable:
+	ExternalCapturableBar:
 	EngineerRepairable:
-	-MustBeDestroyed:
 	CashTrickler:
-		Period: 250
-		Amount: 50
+		Period: 375
+		Amount: 100
+		CaptureAmount: 100
 	Tooltip:
 		Name: Oil Derrick
+	Explodes:
+		Weapon: BarrelExplode
 
 BR1:
 	Inherits: ^Bridge
@@ -315,6 +335,9 @@ BR1:
 		DamagedTemplate: 236
 		DestroyedTemplate: 237
 		SouthOffset: 0,2
+	FreeActor:
+		Actor: bridgehut
+		SpawnOffset: 2,0
 
 BR2:
 	Inherits: ^Bridge
@@ -323,6 +346,9 @@ BR2:
 		DamagedTemplate: 239
 		DestroyedTemplate: 240
 		NorthOffset: 3,0
+	FreeActor:
+		Actor: bridgehut
+		SpawnOffset: 1,1
 
 BR3:
 	Inherits: ^Bridge
@@ -347,6 +373,12 @@ BRIDGE1:
 	Building:
 		Footprint: _____ _____ _____
 		Dimensions: 5,3
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 2,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 0,1
 
 BRIDGE2:
 	Inherits: ^Bridge
@@ -357,9 +389,15 @@ BRIDGE2:
 	Building:
 		Footprint: _____ _____
 		Dimensions: 5,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 0,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 2,1
 
 SBRIDGE1:
-	Inherits: ^SVBridge
+	Inherits: ^Bridge
 	Bridge:
 		Template: 520
 		DamagedTemplate: 521
@@ -367,8 +405,15 @@ SBRIDGE1:
 	Building:
 		Footprint: ___ ___
 		Dimensions: 3,2
+	FreeActor@north:
+		Actor: bridgehut.small
+		SpawnOffset: 1,0
+	FreeActor@south:
+		Actor: bridgehut.small
+		SpawnOffset: 1,1
+
 SBRIDGE2:
-	Inherits: ^SHBridge
+	Inherits: ^Bridge
 	Bridge:
 		Template: 531
 		DamagedTemplate: 532
@@ -376,8 +421,15 @@ SBRIDGE2:
 	Building:
 		Footprint: __ __ __
 		Dimensions: 2,3
+	FreeActor@west:
+		Actor: bridgehut.small
+		SpawnOffset: 0,1
+	FreeActor@east:
+		Actor: bridgehut.small
+		SpawnOffset: 1,1
+
 SBRIDGE3:
-	Inherits: ^STDBridge
+	Inherits: ^Bridge
 	Bridge:
 		Template: 523
 		DamagedTemplate: 524
@@ -385,8 +437,15 @@ SBRIDGE3:
 	Building:
 		Footprint: ____ ____
 		Dimensions: 4,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 2,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 0,1
+
 SBRIDGE4:
-	Inherits: ^STDBridge
+	Inherits: ^Bridge
 	Bridge:
 		Template: 527
 		DamagedTemplate: 528
@@ -394,8 +453,37 @@ SBRIDGE4:
 	Building:
 		Footprint: ____ ____
 		Dimensions: 4,2
+	FreeActor@north:
+		Actor: bridgehut
+		SpawnOffset: 0,-1
+	FreeActor@south:
+		Actor: bridgehut
+		SpawnOffset: 2,1
 
-#Desert Terrain Expansion
+BRIDGEHUT:
+	Building:
+		Footprint: __ __
+		Dimensions: 2,2
+	Selectable:
+		Selectable: false
+		Bounds: 48,48
+		Priority: 2
+	BridgeHut:
+	TargetableBuilding:
+		TargetTypes: BridgeHut, C4
+
+BRIDGEHUT.small:
+	Building:
+		Footprint: _
+		Dimensions: 1,1
+	Selectable:
+		Selectable: false
+		Bounds: 24,24
+		Priority: 2
+	BridgeHut:
+	TargetableBuilding:
+		TargetTypes: BridgeHut, C4
+
 V20:
 	Inherits: ^DesertCivBuilding
 	Building:
@@ -430,6 +518,8 @@ V25:
 		Dimensions: 2,2
 	Tooltip:
 		Name: Church
+	RevealsShroud:
+		Range: 10c0
 
 V26:
 	Inherits: ^DesertCivBuilding
@@ -484,3 +574,32 @@ V37:
 	Building:
 		Footprint: __xx_ ___xx
 		Dimensions: 5,2
+
+RICE:
+	Inherits: ^CivField
+	EditorTilesetFilter:
+		RequireTilesets: TEMPERAT
+
+RUSHOUSE:
+	Inherits: ^CivBuilding
+	EditorTilesetFilter:
+		RequireTilesets: TEMPERAT
+	Building:
+		Footprint: x x
+		Dimensions: 1,2
+
+ASIANHUT:
+	Inherits: ^CivBuilding
+	EditorTilesetFilter:
+		ExcludeTilesets: DESERT
+
+SNOWHUT:
+	Inherits: ^CivBuilding
+	EditorTilesetFilter:
+		RequireTilesets: SNOW
+	Building:
+		Footprint: x x
+		Dimensions: 1,2
+	RenderBuilding:
+		Scale: 0.7
+

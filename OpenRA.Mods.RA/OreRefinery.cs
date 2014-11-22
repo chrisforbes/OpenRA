@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,7 +11,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.RA.Activities;
-using OpenRA.Mods.RA.Effects;
+using OpenRA.Mods.Common.Effects;
 using OpenRA.Mods.RA.Render;
 using OpenRA.Traits;
 
@@ -19,7 +19,7 @@ namespace OpenRA.Mods.RA
 {
 	public class OreRefineryInfo : ITraitInfo
 	{
-		public readonly int2 DockOffset = new int2(1, 2);
+		public readonly CVec DockOffset = new CVec(1, 2);
 
 		public readonly bool ShowTicks = true;
 		public readonly int TickLifetime = 30;
@@ -30,7 +30,7 @@ namespace OpenRA.Mods.RA
 		public virtual object Create(ActorInitializer init) { return new OreRefinery(init.self, this); }
 	}
 
-	public class OreRefinery : ITick, IAcceptOre, INotifyKilled, INotifySold, INotifyCapture, IExplodeModifier, ISync
+	public class OreRefinery : ITick, IAcceptOre, INotifyKilled, INotifySold, INotifyCapture, INotifyOwnerChanged, IExplodeModifier, ISync
 	{
 		readonly Actor self;
 		readonly OreRefineryInfo Info;
@@ -44,7 +44,7 @@ namespace OpenRA.Mods.RA
 		[Sync] bool preventDock = false;
 
 		public bool AllowDocking { get { return !preventDock; } }
-		public CVec DeliverOffset { get { return (CVec)Info.DockOffset; } }
+		public CVec DeliverOffset { get { return Info.DockOffset; } }
 
 		public virtual Activity DockSequence(Actor harv, Actor self) { return new RAHarvesterDockSequence(harv, self, Info.DockAngle); }
 
@@ -62,11 +62,11 @@ namespace OpenRA.Mods.RA
 				.Where(a => a.Trait.LinkedProc == self);
 		}
 
-		public bool CanGiveOre(int amount) { return PlayerResources.CanGiveOre(amount); }
+		public bool CanGiveOre(int amount) { return PlayerResources.CanGiveResources(amount); }
 
 		public void GiveOre(int amount)
 		{
-			PlayerResources.GiveOre(amount);
+			PlayerResources.GiveResources(amount);
 			if (Info.ShowTicks)
 				currentDisplayValue += amount;
 		}
@@ -92,8 +92,8 @@ namespace OpenRA.Mods.RA
 			if (Info.ShowTicks && currentDisplayValue > 0 && --currentDisplayTick <= 0)
 			{
 				var temp = currentDisplayValue;
-				if (self.World.LocalPlayer != null && self.Owner.Stances[self.World.LocalPlayer] == Stance.Ally)
-					self.World.AddFrameEndTask(w => w.Add(new CashTick(temp, Info.TickLifetime, Info.TickVelocity, self.CenterLocation, self.Owner.ColorRamp.GetColor(0))));
+				if (self.Owner.IsAlliedWith(self.World.RenderPlayer))
+					self.World.AddFrameEndTask(w => w.Add(new FloatingText(self.CenterPosition, self.Owner.Color.RGB, FloatingText.FormatCashTick(temp), 30)));
 				currentDisplayTick = Info.TickRate;
 				currentDisplayValue = 0;
 			}
@@ -110,25 +110,32 @@ namespace OpenRA.Mods.RA
 		{
 			if (!preventDock)
 			{
-				harv.QueueActivity( new CallFunc( () => dockedHarv = harv, false ) );
-				harv.QueueActivity( DockSequence(harv, self) );
-				harv.QueueActivity( new CallFunc( () => dockedHarv = null, false ) );
+				harv.QueueActivity(new CallFunc( () => dockedHarv = harv, false));
+				harv.QueueActivity(DockSequence(harv, self));
+				harv.QueueActivity(new CallFunc( () => dockedHarv = null, false));
 			}
-			harv.QueueActivity( new CallFunc( () => harv.Trait<Harvester>().ContinueHarvesting(harv) ) );
+			harv.QueueActivity(new CallFunc(() => harv.Trait<Harvester>().ContinueHarvesting(harv)));
+		}
+
+		public void OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
+		{
+			// Unlink any harvesters
+			foreach (var harv in GetLinkedHarvesters())
+				harv.Trait.UnlinkProc(harv.Actor, self);
+
+			PlayerResources = newOwner.PlayerActor.Trait<PlayerResources>();
 		}
 
 		public void OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner)
 		{
 			// Steal any docked harv too
 			if (dockedHarv != null)
+			{
 				dockedHarv.ChangeOwner(newOwner);
 
-			// Unlink any non-docked harvs
-			foreach (var harv in GetLinkedHarvesters())
-				if (harv.Actor.Owner == oldOwner)
-					harv.Trait.UnlinkProc(harv.Actor, self);
-
-			PlayerResources = newOwner.PlayerActor.Trait<PlayerResources>();
+				// Relink to this refinery
+				dockedHarv.Trait<Harvester>().LinkProc(dockedHarv, self);
+			}
 		}
 
 		public void Selling(Actor self) { CancelDock(self); }

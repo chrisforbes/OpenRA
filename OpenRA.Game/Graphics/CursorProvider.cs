@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,58 +10,89 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Xml;
-using OpenRA.FileFormats;
+using OpenRA.FileSystem;
+using OpenRA.Primitives;
 
 namespace OpenRA.Graphics
 {
-	public static class CursorProvider
+	public class CursorProvider
 	{
-		public static Dictionary<string, Palette> Palettes { get; private set; }
-		static Dictionary<string, CursorSequence> cursors;
+		HardwarePalette palette;
+		Dictionary<string, CursorSequence> cursors;
+		Cache<string, PaletteReference> palettes;
 
-		public static void Initialize(string[] sequenceFiles)
+		public static bool CursorViewportZoomed { get { return Game.Settings.Graphics.CursorDouble && Game.Settings.Graphics.PixelDouble; } }
+
+		public CursorProvider(ModData modData)
 		{
-			cursors = new Dictionary<string, CursorSequence>();
-			var sequences = new MiniYaml(null, sequenceFiles.Select(s => MiniYaml.FromFile(s)).Aggregate(MiniYaml.MergeLiberal));
-			int[] ShadowIndex = { };
+			var sequenceFiles = modData.Manifest.Cursors;
 
-			if (sequences.NodesDict.ContainsKey("ShadowIndex"))
+			cursors = new Dictionary<string, CursorSequence>();
+			palettes = new Cache<string, PaletteReference>(CreatePaletteReference);
+			var sequences = new MiniYaml(null, sequenceFiles.Select(s => MiniYaml.FromFile(s)).Aggregate(MiniYaml.MergeLiberal));
+			var shadowIndex = new int[] { };
+
+			var nodesDict = sequences.ToDictionary();
+			if (nodesDict.ContainsKey("ShadowIndex"))
 			{
-				Array.Resize(ref ShadowIndex, ShadowIndex.Length + 1);
-				ShadowIndex[ShadowIndex.Length - 1] = Convert.ToInt32(sequences.NodesDict["ShadowIndex"].Value);
+				Array.Resize(ref shadowIndex, shadowIndex.Length + 1);
+				Exts.TryParseIntegerInvariant(nodesDict["ShadowIndex"].Value,
+					out shadowIndex[shadowIndex.Length - 1]);
 			}
 
-			Palettes = new Dictionary<string, Palette>();
-			foreach (var s in sequences.NodesDict["Palettes"].Nodes)
-				Palettes.Add(s.Key, new Palette(FileSystem.Open(s.Value.Value), ShadowIndex));
+			palette = new HardwarePalette();
+			foreach (var p in nodesDict["Palettes"].Nodes)
+				palette.AddPalette(p.Key, new ImmutablePalette(GlobalFileSystem.Open(p.Value.Value), shadowIndex), false);
 
-			foreach (var s in sequences.NodesDict["Cursors"].Nodes)
-				LoadSequencesForCursor(s.Key, s.Value);
+			var spriteCache = new SpriteCache(modData.SpriteLoaders, new string[0], new SheetBuilder(SheetType.Indexed));
+			foreach (var s in nodesDict["Cursors"].Nodes)
+				LoadSequencesForCursor(spriteCache, s.Key, s.Value);
+			spriteCache.SheetBuilder.Current.ReleaseBuffer();
+
+			palette.Initialize();
 		}
 
-		static void LoadSequencesForCursor(string cursorSrc, MiniYaml cursor)
+		PaletteReference CreatePaletteReference(string name)
 		{
-			Game.modData.LoadScreen.Display();
-
-			foreach (var sequence in cursor.Nodes)
-				cursors.Add(sequence.Key, new CursorSequence(cursorSrc, cursor.Value, sequence.Value));
+			var pal = palette.GetPalette(name);
+			return new PaletteReference(name, palette.GetPaletteIndex(name), pal);
 		}
 
-		public static bool HasCursorSequence(string cursor)
+		void LoadSequencesForCursor(SpriteCache cache, string cursorSrc, MiniYaml cursor)
+		{
+			foreach (var sequence in cursor.Nodes)
+				cursors.Add(sequence.Key, new CursorSequence(cache, cursorSrc, cursor.Value, sequence.Value));
+		}
+
+		public bool HasCursorSequence(string cursor)
 		{
 			return cursors.ContainsKey(cursor);
 		}
 
-		public static CursorSequence GetCursorSequence(string cursor)
+		public void DrawCursor(Renderer renderer, string cursorName, int2 lastMousePos, int cursorFrame)
+		{
+			var cursorSequence = GetCursorSequence(cursorName);
+			var cursorSprite = cursorSequence.GetSprite(cursorFrame);
+			var cursorSize = CursorViewportZoomed ? 2.0f * cursorSprite.size : cursorSprite.size;
+
+			var cursorOffset = CursorViewportZoomed ?
+				(2 * cursorSequence.Hotspot) + cursorSprite.size.ToInt2() :
+				cursorSequence.Hotspot + (0.5f * cursorSprite.size).ToInt2();
+
+			renderer.SetPalette(palette);
+			renderer.SpriteRenderer.DrawSprite(cursorSprite,
+				lastMousePos - cursorOffset,
+				palettes[cursorSequence.Palette],
+				cursorSize);
+		}
+
+		public CursorSequence GetCursorSequence(string cursor)
 		{
 			try { return cursors[cursor]; }
 			catch (KeyNotFoundException)
 			{
-				throw new InvalidOperationException(
-					"Cursor does not have a sequence `{0}`".F(cursor));
+				throw new InvalidOperationException("Cursor does not have a sequence `{0}`".F(cursor));
 			}
 		}
 	}

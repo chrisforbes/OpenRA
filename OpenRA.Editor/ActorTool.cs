@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,20 +9,18 @@
 #endregion
 
 using System.Linq;
-using OpenRA.FileFormats;
-
 using SGraphics = System.Drawing.Graphics;
 
 namespace OpenRA.Editor
 {
 	class ActorTool : ITool
 	{
-		ActorTemplate Actor;
-		public ActorTool(ActorTemplate actor) { this.Actor = actor; }
+		ActorTemplate actorTemplate;
+		public ActorTool(ActorTemplate actor) { this.actorTemplate = actor; }
 
 		public void Preview(Surface surface, SGraphics g)
 		{
-			surface.DrawActor(g, surface.GetBrushLocation(), Actor,
+			surface.DrawActor(g, surface.GetBrushLocation(), actorTemplate,
 				surface.GetPaletteForPlayer(surface.NewActorOwner));
 		}
 
@@ -33,17 +31,17 @@ namespace OpenRA.Editor
 
 			var owner = surface.NewActorOwner;
 			var id = NextActorName(surface);
-			surface.Map.Actors.Value[id] = new ActorReference(Actor.Info.Name.ToLowerInvariant())
+			surface.Map.Actors.Value[id] = new ActorReference(actorTemplate.Info.Name.ToLowerInvariant())
 			{
-				new LocationInit( surface.GetBrushLocation() ),
-				new OwnerInit( owner)
+				new LocationInit(surface.GetBrushLocation()),
+				new OwnerInit(owner)
 			};
 		}
 
-		string NextActorName(Surface surface)
+		static string NextActorName(Surface surface)
 		{
 			var id = 0;
-			for (; ; )
+			for (;;)
 			{
 				var possible = "Actor{0}".F(id++);
 				if (!surface.Map.Actors.Value.ContainsKey(possible)) return possible;

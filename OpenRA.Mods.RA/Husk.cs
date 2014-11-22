@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,85 +9,123 @@
 #endregion
 
 using System.Collections.Generic;
-using OpenRA.FileFormats;
-using OpenRA.Traits;
+using System.Linq;
 using OpenRA.Mods.RA.Move;
+using OpenRA.Primitives;
+using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class HuskInfo : ITraitInfo, IFacingInfo
+	class HuskInfo : ITraitInfo, IOccupySpaceInfo, IFacingInfo
 	{
-		public object Create( ActorInitializer init ) { return new Husk( init ); }
+		public readonly string[] AllowedTerrain = { };
+
+		public object Create(ActorInitializer init) { return new Husk(init, this); }
+
+		public int GetInitialFacing() { return 128; }
 	}
 
-	class Husk : IOccupySpace, IFacing, ISync
+	class Husk : IPositionable, IFacing, ISync, INotifyCreated, INotifyAddedToWorld, INotifyRemovedFromWorld, IDisable
 	{
-		[Sync] CPos location;
+		readonly HuskInfo info;
+		readonly Actor self;
 
-		[Sync] public PPos PxPosition { get; set; }
+		readonly int dragSpeed;
+		readonly WPos finalPosition;
 
+		[Sync] public CPos TopLeft { get; private set; }
+		[Sync] public WPos CenterPosition { get; private set; }
 		[Sync] public int Facing { get; set; }
+
 		public int ROT { get { return 0; } }
-		public int InitialFacing { get { return 128; } }
 
-		public Husk(ActorInitializer init)
+		public Husk(ActorInitializer init, HuskInfo info)
 		{
-			var self = init.self;
-			location = init.Get<LocationInit, CPos>();
-			PxPosition = init.Contains<CenterLocationInit>() ? init.Get<CenterLocationInit, PPos>() : Util.CenterOfCell(location);
-			Facing = init.Contains<FacingInit>() ? init.Get<FacingInit,int>() : 128;
+			this.info = info;
+			this.self = init.self;
 
-			var speed = init.Contains<HuskSpeedInit>() ? init.Get<HuskSpeedInit,int>() : 0;
-			if (speed > 0)
-			{
-				var to = Util.CenterOfCell(location);
-				var length = (int)((to - PxPosition).Length * 3 / speed);
-				self.QueueActivity(new DragHusk(PxPosition, to, length, this));
-			}
+			TopLeft = init.Get<LocationInit, CPos>();
+			CenterPosition = init.Contains<CenterPositionInit>() ? init.Get<CenterPositionInit, WPos>() : init.world.Map.CenterOfCell(TopLeft);
+			Facing = init.Contains<FacingInit>() ? init.Get<FacingInit, int>() : 128;
+
+			dragSpeed = init.Contains<HuskSpeedInit>() ? init.Get<HuskSpeedInit, int>() : 0;
+			finalPosition = init.world.Map.CenterOfCell(TopLeft);
 		}
 
-		public CPos TopLeft { get { return location; } }
+		public void Created(Actor self)
+		{
+			var distance = (finalPosition - CenterPosition).Length;
+			if (dragSpeed > 0 && distance > 0)
+				self.QueueActivity(new Drag(self, CenterPosition, finalPosition, distance / dragSpeed));
+		}
 
 		public IEnumerable<Pair<CPos, SubCell>> OccupiedCells() { yield return Pair.New(TopLeft, SubCell.FullCell); }
-
-		class DragHusk : Activity
+		public bool IsLeavingCell(CPos location, SubCell subCell = SubCell.Any) { return false; }
+		public SubCell GetValidSubCell(SubCell preferred = SubCell.Any) { return SubCell.FullCell; }
+		public SubCell GetAvailableSubCell(CPos cell, SubCell preferredSubCell = SubCell.Any, Actor ignoreActor = null, bool checkTransientActors = true)
 		{
-			Husk husk;
-			PPos endLocation;
-			PPos startLocation;
-			int length;
+			if (!self.World.Map.Contains(cell))
+				return SubCell.Invalid;
 
-			public DragHusk(PPos start, PPos end, int length, Husk husk)
-			{
-				startLocation = start;
-				endLocation = end;
-				this.length = length;
-				this.husk = husk;
-			}
+			if (!info.AllowedTerrain.Contains(self.World.Map.GetTerrainInfo(cell).Type))
+				return SubCell.Invalid;
 
-			int ticks = 0;
-			public override Activity Tick( Actor self )
-			{
-				if (ticks >= length || length <= 1)
-				{
-					husk.PxPosition = endLocation;
-					return NextActivity;
-				}
+			if (!checkTransientActors)
+				return SubCell.FullCell;
 
-				husk.PxPosition = PPos.Lerp(startLocation, endLocation, ticks++, length - 1);
-				return this;
-			}
+			return !self.World.ActorMap.GetUnitsAt(cell)
+				.Where(x => x != ignoreActor)
+				.Any() ? SubCell.FullCell : SubCell.Invalid;
+		}
 
-			public override IEnumerable<Target> GetTargets( Actor self ) { yield break; }
-			public override void Cancel( Actor self ) { }
+		public bool CanEnterCell(CPos a, Actor ignoreActor = null, bool checkTransientActors = true)
+		{
+			return GetAvailableSubCell(a, SubCell.Any, ignoreActor, checkTransientActors) != SubCell.Invalid;
+		}
+
+		public void SetPosition(Actor self, CPos cell, SubCell subCell = SubCell.Any) { SetPosition(self, self.World.Map.CenterOfCell(cell)); }
+
+		public void SetVisualPosition(Actor self, WPos pos)
+		{
+			CenterPosition = pos;
+			self.World.ScreenMap.Update(self);
+		}
+
+		public void SetPosition(Actor self, WPos pos)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			CenterPosition = pos;
+			TopLeft = self.World.Map.CellContaining(pos);
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.UpdatePosition(self, this);
+			self.World.ScreenMap.Update(self);
+		}
+
+		public void AddedToWorld(Actor self)
+		{
+			self.World.ActorMap.AddInfluence(self, this);
+			self.World.ActorMap.AddPosition(self, this);
+			self.World.ScreenMap.Add(self);
+		}
+
+		public void RemovedFromWorld(Actor self)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			self.World.ActorMap.RemovePosition(self, this);
+			self.World.ScreenMap.Remove(self);
+		}
+
+		public bool Disabled
+		{
+			get { return true; }
 		}
 	}
 
 	public class HuskSpeedInit : IActorInit<int>
 	{
-		[FieldFromYamlKey] public readonly int value = 0;
+		[FieldFromYamlKey] readonly int value = 0;
 		public HuskSpeedInit() { }
-		public HuskSpeedInit( int init ) { value = init; }
-		public int Value( World world ) { return value; }
+		public HuskSpeedInit(int init) { value = init; }
+		public int Value(World world) { return value; }
 	}
 }

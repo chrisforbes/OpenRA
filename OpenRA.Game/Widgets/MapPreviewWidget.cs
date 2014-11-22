@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,31 +12,95 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
+using OpenRA.Network;
 
 namespace OpenRA.Widgets
 {
+	public class SpawnOccupant
+	{
+		public readonly HSLColor Color;
+		public readonly int ClientIndex;
+		public readonly string PlayerName;
+		public readonly int Team;
+		public readonly string Country;
+		public readonly int SpawnPoint;
+
+		public SpawnOccupant(Session.Client client)
+		{
+			Color = client.Color;
+			ClientIndex = client.Index;
+			PlayerName = client.Name;
+			Team = client.Team;
+			Country = client.Country;
+			SpawnPoint = client.SpawnPoint;
+		}
+
+		public SpawnOccupant(GameInformation.Player player)
+		{
+			Color = player.Color;
+			ClientIndex = player.ClientIndex;
+			PlayerName = player.Name;
+			Team = player.Team;
+			Country = player.FactionId;
+			SpawnPoint = player.SpawnPoint;
+		}
+	}
+
 	public class MapPreviewWidget : Widget
 	{
-		public Func<Map> Map = () => null;
-		public Func<Dictionary<int2, Color>> SpawnColors = () => new Dictionary<int2, Color>();
-		public Action<MouseInput> OnMouseDown = _ => {};
-		public Action<int, int2> OnTooltip = (_, __) => { };
-		public bool IgnoreMouseInput = false;
-		public bool ShowSpawnPoints = true;
+		public readonly bool IgnoreMouseInput = false;
+		public readonly bool ShowSpawnPoints = true;
 
-		static readonly Cache<Map,Bitmap> PreviewCache = new Cache<Map, Bitmap>(stub => Minimap.RenderMapPreview( new Map( stub.Path )));
+		public readonly string TooltipContainer;
+		public readonly string TooltipTemplate = "SPAWN_TOOLTIP";
+		readonly Lazy<TooltipContainerWidget> tooltipContainer;
 
-		public MapPreviewWidget() : base() { }
+		readonly Sprite spawnClaimed, spawnUnclaimed;
+		readonly SpriteFont spawnFont;
+		readonly Color spawnColor, spawnContrastColor;
+		readonly int2 spawnLabelOffset;
+
+		public Func<MapPreview> Preview = () => null;
+		public Func<Dictionary<CPos, SpawnOccupant>> SpawnOccupants = () => new Dictionary<CPos, SpawnOccupant>();
+		public Action<MouseInput> OnMouseDown = _ => { };
+		public int TooltipSpawnIndex = -1;
+
+		Rectangle mapRect;
+		float previewScale = 0;
+		Sprite minimap;
+
+		public MapPreviewWidget()
+		{
+			tooltipContainer = Exts.Lazy(() => Ui.Root.Get<TooltipContainerWidget>(TooltipContainer));
+
+			spawnClaimed = ChromeProvider.GetImage("lobby-bits", "spawn-claimed");
+			spawnUnclaimed = ChromeProvider.GetImage("lobby-bits", "spawn-unclaimed");
+			spawnFont = Game.Renderer.Fonts[ChromeMetrics.Get<string>("SpawnFont")];
+			spawnColor = ChromeMetrics.Get<Color>("SpawnColor");
+			spawnContrastColor = ChromeMetrics.Get<Color>("SpawnContrastColor");
+			spawnLabelOffset = ChromeMetrics.Get<int2>("SpawnLabelOffset");
+		}
 
 		protected MapPreviewWidget(MapPreviewWidget other)
 			: base(other)
 		{
-			lastMap = other.lastMap;
-			Map = other.Map;
-			SpawnColors = other.SpawnColors;
+			Preview = other.Preview;
+
+			IgnoreMouseInput = other.IgnoreMouseInput;
 			ShowSpawnPoints = other.ShowSpawnPoints;
+			TooltipTemplate = other.TooltipTemplate;
+			TooltipContainer = other.TooltipContainer;
+			SpawnOccupants = other.SpawnOccupants;
+
+			tooltipContainer = Exts.Lazy(() => Ui.Root.Get<TooltipContainerWidget>(TooltipContainer));
+
+			spawnClaimed = ChromeProvider.GetImage("lobby-bits", "spawn-claimed");
+			spawnUnclaimed = ChromeProvider.GetImage("lobby-bits", "spawn-unclaimed");
+			spawnFont = Game.Renderer.Fonts[ChromeMetrics.Get<string>("SpawnFont")];
+			spawnColor = ChromeMetrics.Get<Color>("SpawnColor");
+			spawnContrastColor = ChromeMetrics.Get<Color>("SpawnContrastColor");
+			spawnLabelOffset = ChromeMetrics.Get<int2>("SpawnLabelOffset");
 		}
 
 		public override Widget Clone() { return new MapPreviewWidget(this); }
@@ -53,81 +117,78 @@ namespace OpenRA.Widgets
 			return true;
 		}
 
-		public int2 ConvertToPreview(int2 point)
+		public override void MouseEntered()
 		{
-			var map = Map();
-			return new int2(MapRect.X + (int)(PreviewScale*(point.X - map.Bounds.Left)) , MapRect.Y + (int)(PreviewScale*(point.Y - map.Bounds.Top)));
+			if (TooltipContainer != null)
+				tooltipContainer.Value.SetTooltip(TooltipTemplate, new WidgetArgs() { { "preview", this } });
 		}
 
-		Sheet mapChooserSheet;
-		Sprite mapChooserSprite;
-		Map lastMap;
-		Rectangle MapRect;
-		float PreviewScale = 0;
+		public override void MouseExited()
+		{
+			if (TooltipContainer != null)
+				tooltipContainer.Value.RemoveTooltip();
+		}
+
+		public int2 ConvertToPreview(CPos cell)
+		{
+			var preview = Preview();
+			var tileShape = Game.modData.Manifest.TileShape;
+			var point = Map.CellToMap(tileShape, cell);
+			var dx = (int)(previewScale * (point.X - preview.Bounds.Left));
+			var dy = (int)(previewScale * (point.Y - preview.Bounds.Top));
+			return new int2(mapRect.X + dx, mapRect.Y + dy);
+		}
 
 		public override void Draw()
 		{
-			var map = Map();
-			if( map == null ) return;
+			var preview = Preview();
+			if (preview == null)
+				return;
 
-			if (lastMap != map)
-			{
-				lastMap = map;
-
-				// Update image data
-				var preview = PreviewCache[map];
-				if( mapChooserSheet == null || mapChooserSheet.Size.Width != preview.Width || mapChooserSheet.Size.Height != preview.Height )
-					mapChooserSheet = new Sheet(new Size( preview.Width, preview.Height ) );
-
-				mapChooserSheet.Texture.SetData( preview );
-				mapChooserSprite = new Sprite( mapChooserSheet, new Rectangle( 0, 0, map.Bounds.Width, map.Bounds.Height ), TextureChannel.Alpha );
-			}
+			// Stash a copy of the minimap to ensure consistency
+			// (it may be modified by another thread)
+			minimap = preview.GetMinimap();
+			if (minimap == null)
+				return;
 
 			// Update map rect
-			PreviewScale = Math.Min(RenderBounds.Width * 1.0f / map.Bounds.Width, RenderBounds.Height * 1.0f / map.Bounds.Height);
-			var size = Math.Max(map.Bounds.Width, map.Bounds.Height);
-			var dw = (int)(PreviewScale * (size - map.Bounds.Width)) / 2;
-			var dh = (int)(PreviewScale * (size - map.Bounds.Height)) / 2;
-			MapRect = new Rectangle(RenderBounds.X + dw, RenderBounds.Y + dh, (int)(map.Bounds.Width * PreviewScale), (int)(map.Bounds.Height * PreviewScale));
+			previewScale = Math.Min(RenderBounds.Width / minimap.size.X, RenderBounds.Height / minimap.size.Y);
+			var w = (int)(previewScale * minimap.size.X);
+			var h = (int)(previewScale * minimap.size.Y);
+			var x = RenderBounds.X + (RenderBounds.Width - w) / 2;
+			var y = RenderBounds.Y + (RenderBounds.Height - h) / 2;
+			mapRect = new Rectangle(x, y, w, h);
 
-			Game.Renderer.RgbaSpriteRenderer.DrawSprite( mapChooserSprite,
-				new float2(MapRect.Location),
-				new float2( MapRect.Size ) );
+			Game.Renderer.RgbaSpriteRenderer.DrawSprite(minimap, new float2(mapRect.Location), new float2(mapRect.Size));
 
+			TooltipSpawnIndex = -1;
 			if (ShowSpawnPoints)
 			{
-				var colors = SpawnColors();
+				var colors = SpawnOccupants().ToDictionary(c => c.Key, c => c.Value.Color.RGB);
 
-				var spawnPoints = map.GetSpawnPoints().ToList();
+				var spawnPoints = preview.SpawnPoints;
 				foreach (var p in spawnPoints)
 				{
 					var owned = colors.ContainsKey(p);
 					var pos = ConvertToPreview(p);
-					var sprite = ChromeProvider.GetImage("spawnpoints", owned ? "owned" : "unowned");
-					var offset = new int2(-sprite.bounds.Width/2, -sprite.bounds.Height/2);
+					var sprite = owned ? spawnClaimed : spawnUnclaimed;
+					var offset = new int2(sprite.bounds.Width, sprite.bounds.Height) / 2;
 
 					if (owned)
-						WidgetUtils.FillRectWithColor(new Rectangle(pos.X + offset.X + 2, pos.Y + offset.Y + 2, 12, 12), colors[p]);
+						WidgetUtils.FillEllipseWithColor(new Rectangle(pos.X - offset.X + 1, pos.Y - offset.Y + 1, sprite.bounds.Width - 2, sprite.bounds.Height - 2), colors[p]);
 
-					Game.Renderer.RgbaSpriteRenderer.DrawSprite(sprite, pos + offset);
+					Game.Renderer.RgbaSpriteRenderer.DrawSprite(sprite, pos - offset);
+					var number = Convert.ToChar('A' + spawnPoints.IndexOf(p)).ToString();
+					var textOffset = spawnFont.Measure(number) / 2 + spawnLabelOffset;
 
-					if ((pos - Viewport.LastMousePos).LengthSquared < 64)
-					{
-						OnTooltip(spawnPoints.IndexOf(p) + 1, pos);
-					}
+					spawnFont.DrawTextWithContrast(number, pos - textOffset, spawnColor, spawnContrastColor, 1);
+
+					if (((pos - Viewport.LastMousePos).ToFloat2() / offset.ToFloat2()).LengthSquared <= 1)
+						TooltipSpawnIndex = spawnPoints.IndexOf(p) + 1;
 				}
 			}
 		}
 
-		/// <summary>
-		/// Forces loading the preview into the map cache.
-		/// </summary>
-		public Bitmap LoadMapPreview()
-		{
-			var map = Map();
-			if( map == null ) return null;
-
-			return PreviewCache[map];
-		}
+		public bool Loaded { get { return minimap != null; } }
 	}
 }

@@ -5,22 +5,21 @@ E1:
 	Tooltip:
 		Name: Minigunner
 		Description: General-purpose infantry.\n  Strong vs Infantry\n  Weak vs Vehicles
-		Icon: e1icnh
 	Buildable:
 		BuildPaletteOrder: 10
-		Owner: gdi, nod
+		Queue: Infantry.GDI, Infantry.Nod
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
 		HP: 50
+	Armament:
+		Weapon: M16
 	AttackFrontal:
-		PrimaryWeapon: M16
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2,idle3,idle4
-	DetectCloaked:
-		Range: 2
+		StandAnimations: stand, stand2
 
 E2:
 	Inherits: ^Infantry
@@ -28,31 +27,30 @@ E2:
 		Cost: 160
 	Tooltip:
 		Name: Grenadier
-		Description: Infantry armed with grenades. \n  Strong vs Buildings, Infantry\n  Weak vs Vehicles
-		Icon: e2icnh
+		Description: Fast infantry armed with grenades. \n  Strong vs Buildings, slow-moving targets
 	Buildable:
 		BuildPaletteOrder: 40
-		Prerequisites: hq
-		Owner: gdi
+		Prerequisites: anyhq, ~techlevel.medium
+		Queue: Infantry.GDI
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 5
+		Speed: 71
 	Health:
 		HP: 50
-	AttackFrontal:
-		PrimaryWeapon: Grenade
-		PrimaryOffset: 0,0,0,-10
+	Armament:
+		Weapon: Grenade
+		LocalOffset: 0,0,427
 		FireDelay: 15
-	RenderInfantryProne:
+	AttackFrontal:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand, stand2
 	Explodes:
 		Weapon: GrenadierExplode
 		EmptyWeapon: GrenadierExplode
 		Chance: 50
-	DetectCloaked:
-		Range: 2
-	
+
 E3:
 	Inherits: ^Infantry
 	Valued:
@@ -60,24 +58,25 @@ E3:
 	Tooltip:
 		Name: Rocket Soldier
 		Description: Anti-tank/Anti-aircraft infantry. \n  Strong vs Tanks, Aircraft\n  Weak vs Infantry
-		Icon: e3icnh
 	Buildable:
 		BuildPaletteOrder: 20
-		Owner: nod, gdi
+		Queue: Infantry.GDI, Infantry.Nod
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 3
+		Speed: 42
 	Health:
 		HP: 45
-	AttackFrontal:
-		PrimaryWeapon: Rockets
-		PrimaryOffset: 1,-6,0,-8
+	AutoTarget:
+		ScanRadius: 6
+	Armament:
+		Weapon: Rockets
+		LocalOffset: 256,43,341
 		FireDelay: 5
-	RenderInfantryProne:
+	AttackFrontal:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
-	DetectCloaked:
-		Range: 2
+		StandAnimations: stand, stand2
 
 E4:
 	Inherits: ^Infantry
@@ -85,61 +84,65 @@ E4:
 		Cost: 200
 	Tooltip:
 		Name: Flamethrower
-		Description: Advanced Anti-infantry unit.\n  Strong vs Infantry, Buildings\n  Weak vs Vehicles
-		Icon: e4icnh
+		Description: Advanced Anti-infantry unit.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks
 	Buildable:
 		BuildPaletteOrder: 40
-		Owner: nod
-		Prerequisites: hq
+		Prerequisites: anyhq, ~techlevel.medium
+		Queue: Infantry.Nod
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 5
+		Speed: 56
 	Health:
 		HP: 90
-	AttackFrontal:
-		PrimaryWeapon: Flamethrower
-		PrimaryOffset: 0,-2,2,-4
+	Armament:
+		Weapon: Flamethrower
+		LocalOffset: 341,0,256
 		FireDelay: 3
+		MuzzleSequence: muzzle
+		MuzzleSplitFacings: 8
+	AttackFrontal:
 	WithMuzzleFlash:
-	RenderInfantryProne:
+		SplitFacings: true
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
-	DetectCloaked:
-		Range: 2
+		StandAnimations: stand, stand2
 
 E5:
 	Inherits: ^Infantry
 	Valued:
 		Cost: 300
 	Tooltip:
-		Name: Chem Warrior
-		Description: Advanced Anti-infantry unit.\n  Strong vs Infantry\n  Weak vs Vehicles
-		Icon: e5icnh
+		Name: Chemical Warrior
+		Description: Advanced general-purpose infantry.\n  Strong vs all Ground units
 	Buildable:
 		BuildPaletteOrder: 50
-		Owner: nod
-		Prerequisites: tmpl
+		Prerequisites: tmpl, ~techlevel.high
+		Queue: Infantry.Nod
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 4
+		Speed: 56
 		TerrainSpeeds:
-			Tiberium: 80
-				PathingCost: 80
-			BlueTiberium: 80
-				PathingCost: 80
+			Tiberium: 90
+				PathingCost: 90
+			BlueTiberium: 90
+				PathingCost: 90
 	Health:
 		HP: 90
-	AttackFrontal:
-		PrimaryWeapon: Chemspray
-		PrimaryOffset: 0,-2,2,-9
+	Armament:
+		Weapon: Chemspray
+		LocalOffset: 341,0,256
 		FireDelay: 3
+		MuzzleSequence: muzzle
+		MuzzleSplitFacings: 8
+	AttackFrontal:
 	WithMuzzleFlash:
+		SplitFacings: true
 	-PoisonedByTiberium:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
-	DetectCloaked:
-		Range: 2
+		StandAnimations: stand, stand2
 
 E6:
 	Inherits: ^Infantry
@@ -148,26 +151,25 @@ E6:
 	Tooltip:
 		Name: Engineer
 		Description: Infiltrates and captures enemy structures.\n  Strong vs Nothing\n  Weak vs Everything
-		Icon: e6icnh
 	Buildable:
 		BuildPaletteOrder: 30
-		Owner: gdi,nod
+		Queue: Infantry.GDI, Infantry.Nod
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
 		HP: 25
 	Passenger:
 		PipType: Yellow
 	EngineerRepair:
+	RepairsBridges:
 	Captures:
 		CaptureTypes: building, husk
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand, stand2
 	-GainsExperience:
 
 RMBO:
@@ -175,52 +177,82 @@ RMBO:
 	Valued:
 		Cost: 1000
 	Tooltip:
-		Icon: rmboicnh
 		Name: Commando
 		Description: Elite sniper infantry unit.\n  Strong vs Infantry, Buildings\n  Weak vs Vehicles
 	Buildable:
 		BuildPaletteOrder: 50
-		Owner: gdi
-		Prerequisites: eye
+		Prerequisites: eye, ~techlevel.high
+		Queue: Infantry.GDI
 	Selectable:
 		Bounds: 12,17,0,-6
 		Voice: CommandoVoice
 	Mobile:
-		Speed: 5
+		Speed: 71
 	Health:
-		HP: 200
+		HP: 150
 	Passenger:
 		PipType: Red
 	RevealsShroud:
-		Range: 6
+		Range: 6c0
 	AutoTarget:
-		ScanRadius: 5
+		ScanRadius: 6
 	C4Demolition:
 		C4Delay: 45
+	Armament:
+		Weapon: Sniper
 	AttackFrontal:
-		PrimaryWeapon: Sniper
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2,idle3
+		StandAnimations: stand, stand2
 	AnnounceOnBuild:
 	AnnounceOnKill:
-	DetectCloaked:
-		Range: 2
 
 PVICE:
-	Inherits:VICE
-	-AttackWander
+	Inherits: VICE
+	-AttackWander:
 	Mobile:
 		Crushes: crate
 	Buildable:
 		Queue: Biolab
 		BuildPaletteOrder: 40
-		Owner: gdi, nod
-#		Prerequisites: bio
 	Tooltip:
 		Description: Mutated abomination that spits liquid tiberium.\n  Strong vs Infantry, Buildings\n  Weak vs Aircraft
-		Icon: viceicnh
 	DrawLineToTarget:
-	Selectable:
-		Voice: DinoVoice
+	SelectionDecorations:
 	ActorLostNotification:
-		Notification: unitlost.aud
+
+STEG:
+	Inherits: ^DINO
+	Tooltip:
+		Name: Stegosaurus
+		Description: A large, heavily built, herbivorous quadruped
+	Armament:
+		Weapon: tail
+	WithDeathAnimation:
+		DeathSequencePalette: terrain
+		DeathPaletteIsPlayerPalette: false
+
+TREX:
+	Inherits: ^DINO
+	Tooltip:
+		Name: Tyrannosaurus rex
+		Description: Bipedal carnivore with a massive skull
+	Armament:
+		Weapon: teeth
+
+TRIC:
+	Inherits: ^DINO
+	Tooltip:
+		Name: Triceratops
+		Description: Quadruped with large bony frill and three horns
+	Armament:
+		Weapon: horn
+
+RAPT:
+	Inherits: ^DINO
+	Tooltip:
+		Name: Velociraptor
+		Description: Bipedal with enlarged sickle-shaped claw on each hindfoot
+	Armament:
+		Weapon: claw
+

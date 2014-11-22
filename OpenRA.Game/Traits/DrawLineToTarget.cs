@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,10 +8,9 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using System.Drawing;
 using OpenRA.Graphics;
-using OpenRA.Effects;
-using System.Collections.Generic;
 
 namespace OpenRA.Traits
 {
@@ -22,7 +21,7 @@ namespace OpenRA.Traits
 		public virtual object Create(ActorInitializer init) { return new DrawLineToTarget(init.self, this); }
 	}
 
-	public class DrawLineToTarget : IPostRenderSelection
+	public class DrawLineToTarget : IPostRenderSelection, INotifySelected, INotifyBecomingIdle
 	{
 		Actor self;
 		DrawLineToTargetInfo Info;
@@ -50,39 +49,37 @@ namespace OpenRA.Traits
 				lifetime = Info.Ticks;
 		}
 
-		public void RenderAfterWorld(WorldRenderer wr)
+		public void Selected(Actor a)
 		{
-			//if (self.IsIdle) return;
+			if (a.IsIdle)
+				return;
 
+			// Reset the order line timeout.
+			lifetime = Info.Ticks;
+		}
+
+		public IEnumerable<IRenderable> RenderAfterWorld(WorldRenderer wr)
+		{
 			var force = Game.GetModifierKeys().HasModifier(Modifiers.Alt);
 			if ((lifetime <= 0 || --lifetime <= 0) && !force)
-				return;
+				yield break;
 
 			if (targets == null || targets.Count == 0)
-				return;
-
-			var move = self.TraitOrDefault<IMove>();
-			var origin = (move != null ? self.CenterLocation - new PVecInt(0, move.Altitude) : self.CenterLocation).ToFloat2();
-
-			var wlr = Game.Renderer.WorldLineRenderer;
+				yield break;
 
 			foreach (var target in targets)
 			{
-				if (!target.IsValid)
+				if (target.Type == TargetType.Invalid)
 					continue;
 
-				wlr.DrawLine(origin, target.CenterLocation.ToFloat2(), c, c);
-				DrawTargetMarker(wlr, target.CenterLocation.ToFloat2());
-				DrawTargetMarker(wlr, origin);
+				yield return new TargetLineRenderable(new [] { self.CenterPosition, target.CenterPosition }, c);
 			}
 		}
 
-		void DrawTargetMarker(LineRenderer wlr, float2 p)
+		public void OnBecomingIdle(Actor a)
 		{
-			wlr.DrawLine(p + new float2(-1, -1), p + new float2(-1, 1), c, c);
-			wlr.DrawLine(p + new float2(-1, 1), p + new float2(1, 1), c, c);
-			wlr.DrawLine(p + new float2(1, 1), p + new float2(1, -1), c, c);
-			wlr.DrawLine(p + new float2(1, -1), p + new float2(-1, -1), c, c);
+			if (a.IsIdle)
+				targets = null;
 		}
 	}
 
@@ -92,12 +89,7 @@ namespace OpenRA.Traits
 		{
 			var line = self.TraitOrDefault<DrawLineToTarget>();
 			if (line != null)
-			{
-				self.World.AddFrameEndTask(w =>
-				{
-					line.SetTargets(self, targets, color, false);
-				});
-			}
+				self.World.AddFrameEndTask(w => line.SetTargets(self, targets, color, false));
 		}
 
 		public static void SetTargetLine(this Actor self, Target target, Color color)
@@ -112,13 +104,30 @@ namespace OpenRA.Traits
 
 			self.World.AddFrameEndTask(w =>
 			{
-				if (self.Destroyed) return;
-				if (target.IsActor && display)
-					w.Add(new FlashTarget(target.Actor));
+				if (self.Destroyed)
+					return;
 
 				var line = self.TraitOrDefault<DrawLineToTarget>();
 				if (line != null)
 					line.SetTarget(self, target, color, display);
+			});
+		}
+
+		public static void SetTargetLine(this Actor self, FrozenActor target, Color color, bool display)
+		{
+			if (self.Owner != self.World.LocalPlayer)
+				return;
+
+			self.World.AddFrameEndTask(w =>
+			{
+				if (self.Destroyed)
+					return;
+
+				target.Flash();
+
+				var line = self.TraitOrDefault<DrawLineToTarget>();
+				if (line != null)
+					line.SetTarget(self, Target.FromPos(target.CenterPosition), color, display);
 			});
 		}
 	}

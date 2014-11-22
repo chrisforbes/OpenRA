@@ -1,6 +1,6 @@
-#region Copyright & License Information
+﻿#region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,33 +8,33 @@
  */
 #endregion
 
-using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
+using OpenRA.Mods.Common.Orders;
 using OpenRA.Mods.RA.Activities;
-using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This actor can capture other actors which have the Capturable: trait.")]
 	class CapturesInfo : ITraitInfo
 	{
-		public string[] CaptureTypes = {"building"};
-		public bool WastedAfterwards = true;
-		public bool Sabotage = false;
+		[Desc("Types of actors that it can capture, as long as the type also exists in the Capturable Type: trait.")]
+		public readonly string[] CaptureTypes = { "building" };
+		[Desc("Unit will do damage to the actor instead of capturing it. Unit is destroyed when sabotaging.")]
+		public readonly bool Sabotage = true;
+		[Desc("Only used if Sabotage=true. Sabotage damage expressed as a percentage of enemy health removed.")]
+		public readonly float SabotageHPRemoval = 0.5f;
+
 		public object Create(ActorInitializer init) { return new Captures(init.self, this); }
 	}
 
 	class Captures : IIssueOrder, IResolveOrder, IOrderVoice
 	{
 		public readonly CapturesInfo Info;
-		readonly Actor self;
 
 		public Captures(Actor self, CapturesInfo info)
 		{
-			this.self = self;
 			Info = info;
 		}
 
@@ -42,78 +42,86 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new CaptureOrderTargeter(Info.CaptureTypes, target => CanCapture(target));
+				yield return new CaptureOrderTargeter(Info.Sabotage);
 			}
 		}
 
-		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
+		public Order IssueOrder(Actor self, IOrderTargeter order, Target target, bool queued)
 		{
-			if( order.OrderID == "CaptureActor" )
-				return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
+			if (order.OrderID != "CaptureActor")
+				return null;
 
-			return null;
+			if (target.Type == TargetType.FrozenActor)
+				return new Order(order.OrderID, self, queued) { ExtraData = target.FrozenActor.ID };
+
+			return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
 		}
 
 		public string VoicePhraseForOrder(Actor self, Order order)
 		{
-			return (order.OrderString == "CaptureActor"
-					&& CanCapture(order.TargetActor)) ? "Attack" : null;
+			return order.OrderString == "CaptureActor" ? "Attack" : null;
 		}
 
 		public void ResolveOrder(Actor self, Order order)
 		{
-			if (order.OrderString == "CaptureActor")
-			{
-				if (!CanCapture(order.TargetActor)) return;
+			if (order.OrderString != "CaptureActor")
+				return;
 
-				self.SetTargetLine(Target.FromOrder(order), Color.Red);
+			var target = self.ResolveFrozenActorOrder(order, Color.Red);
+			if (target.Type != TargetType.Actor)
+				return;
 
+			if (!order.Queued)
 				self.CancelActivity();
-				self.QueueActivity(new CaptureActor(order.TargetActor));
-			}
+
+			self.SetTargetLine(target, Color.Red);
+			self.QueueActivity(new CaptureActor(self, target.Actor));
 		}
 
-		bool CanCapture(Actor target)
+		class CaptureOrderTargeter : UnitOrderTargeter
 		{
-			var c = target.TraitOrDefault<Capturable>();
-			return c != null && ( !c.CaptureInProgress || c.Captor.Owner.Stances[self.Owner] != Stance.Ally );
-		}
-	}
+			readonly bool sabotage;
 
-	class CaptureOrderTargeter : UnitTraitOrderTargeter<Capturable>
-	{
-		readonly string[] captureTypes;
-		readonly Func<Actor, bool> useEnterCursor;
-
-		public CaptureOrderTargeter(string[] captureTypes, Func<Actor, bool> useEnterCursor)
-			: base( "CaptureActor", 6, "enter", true, true)
-		{
-			this.captureTypes = captureTypes;
-			this.useEnterCursor = useEnterCursor;
-		}
-
-		public override bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
-		{
-			if( !base.CanTargetActor( self, target, forceAttack, forceQueued, ref cursor ) ) return false;
-
-			var ci = target.Info.Traits.Get<CapturableInfo>();
-			var playerRelationship = self.Owner.Stances[ target.Owner ];
-
-			if( playerRelationship == Stance.Ally && !ci.AllowAllies ) return false;
-			if( playerRelationship == Stance.Enemy && !ci.AllowEnemies ) return false;
-			if( playerRelationship == Stance.Neutral && !ci.AllowNeutral ) return false;
-
-			IsQueued = forceQueued;
-
-			var Info = self.Info.Traits.Get<CapturesInfo>();
-
-			if (captureTypes.Contains(ci.Type))
+			public CaptureOrderTargeter(bool sabotage)
+				: base("CaptureActor", 6, "enter", true, true)
 			{
-				cursor = (Info.WastedAfterwards) ? (useEnterCursor(target) ? "enter" : "enter-blocked") : "attack";
+				this.sabotage = sabotage;
+			}
+
+			public override bool CanTargetActor(Actor self, Actor target, TargetModifiers modifiers, ref string cursor)
+			{
+				var c = target.Info.Traits.GetOrDefault<CapturableInfo>();
+				if (c == null || !c.CanBeTargetedBy(self, target.Owner))
+				{
+					cursor = "enter-blocked";
+					return false;
+				}
+
+				var health = target.Trait<Health>();
+				var lowEnoughHealth = health.HP <= c.CaptureThreshold * health.MaxHP;
+
+				cursor = !sabotage || lowEnoughHealth || target.Owner.NonCombatant
+					? "enter" : "capture";
 				return true;
 			}
 
-			return false;
+			public override bool CanTargetFrozenActor(Actor self, FrozenActor target, TargetModifiers modifiers, ref string cursor)
+			{
+				var c = target.Info.Traits.GetOrDefault<CapturableInfo>();
+				if (c == null || !c.CanBeTargetedBy(self, target.Owner))
+				{
+					cursor = "enter-blocked";
+					return false;
+				}
+
+				var health = target.Info.Traits.GetOrDefault<HealthInfo>();
+				var lowEnoughHealth = target.HP <= c.CaptureThreshold * health.HP;
+
+				cursor = !sabotage || lowEnoughHealth || target.Owner.NonCombatant
+					? "enter" : "capture";
+
+				return true;
+			}
 		}
 	}
 }

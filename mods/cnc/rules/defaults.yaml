@@ -11,26 +11,44 @@
 			Beach: 50
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
-		TargetTypes: Ground
-	Buildable:
-		Queue: Vehicle
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+		TargetTypes: Ground, Vehicle
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
-	IronCurtainable: 
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
-	AcceptsCloakCrate:
 	WithSmoke:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	Tooltip:
+		GenericName: Vehicle
+	UpdatesPlayerStatistics:
+	Cloak:
+		RequiresUpgrade: cloak
+		InitialDelay: 15
+		CloakDelay: 90
+		CloakSound: trans1.aud
+		UncloakSound: trans1.aud
+	Huntable:
+	ScriptTriggers:
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^Tank:
 	AppearsOnRadar:
@@ -45,29 +63,47 @@
 			Beach: 70
 		ROT: 5
 	SelectionDecorations:
-	Selectable: 
+	Selectable:
 		Voice: VehicleVoice
 	TargetableUnit:
-		TargetTypes: Ground
-	Buildable:
-		Queue: Vehicle
-	Repairable: 
-	Chronoshiftable: 
-	Passenger: 
+		TargetTypes: Ground, Vehicle
+	Repairable:
+	Chronoshiftable:
+	Passenger:
 		CargoType: Vehicle
-	IronCurtainable: 
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
-	AcceptsCloakCrate:
 	WithSmoke:
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	Tooltip:
+		GenericName: Tank
+	UpdatesPlayerStatistics:
+	Cloak:
+		RequiresUpgrade: cloak
+		InitialDelay: 15
+		CloakDelay: 90
+		CloakSound: trans1.aud
+		UncloakSound: trans1.aud
+	Huntable:
+	ScriptTriggers:
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^Helicopter:
 	AppearsOnRadar:
@@ -82,23 +118,41 @@
 		RepairBuildings: hpad
 		RearmBuildings:
 		LandWhenIdle: false
-	Buildable:
-		Queue: Aircraft
 	HiddenUnderFog:
 	GainsExperience:
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	Explodes:
+		Weapon: HeliExplode
+		EmptyWeapon: HeliExplode
+	CombatDebugOverlay:
+	AttackMove:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Huntable:
+	ScriptTriggers:
+	Tooltip:
+		GenericName: Helicopter
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^Infantry:
 	AppearsOnRadar:
 	Health:
-		Radius: 3
+		Radius: 128
 	Armor:
 		Type: None
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	AutoTarget:
 		ScanRadius: 4
 	Mobile:
@@ -109,20 +163,19 @@
 			Rough: 80
 			Road: 100
 			Tiberium: 70
-				PathingCost: 1000
+				PathingCost: 300
 			BlueTiberium: 70
-				PathingCost: 1000
+				PathingCost: 300
 			Beach: 80
 	SelectionDecorations:
 	Selectable:
 		Voice: GenericVoice
 	TargetableUnit:
-		TargetTypes: Ground
-	Buildable:
-		Queue: Infantry
+		TargetTypes: Ground, Infantry
 	TakeCover:
-		BarrelOffset: 0,-2,0,4
-	RenderInfantryProne:
+		SpeedModifier: 60
+	RenderInfantry:
+	WithDeathAnimation:
 	AttackMove:
 	Passenger:
 		CargoType: Infantry
@@ -132,20 +185,52 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	SpawnViceroid:
-		Probability: 2
-	CrushableInfantry:
-	RepairableNear:
-		Buildings: hosp
-		CloseEnough: 1
+		Probability: 10
+	Crushable:
+		WarnProbability: 67
+		CrushSound: squish2.aud
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	Tooltip:
+		GenericName: Soldier
+	SelfHealing@HOSPITAL:
+		Step: 5
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: hospitalheal
+	GlobalUpgradable:
+		Upgrades: hospitalheal
+		Prerequisites: hosp
+	UpdatesPlayerStatistics:
+	Huntable:
+	DetectCloaked:
+		Range: 1
+	ScriptTriggers:
+	DeathSounds@NORMAL:
+		DeathTypes: 1, 2, 3, 4
+	DeathSounds@BURNED:
+		DeathSound: Burned
+		DeathTypes: 5
+	DeathSounds@POISONED:
+		DeathSound: Poisoned
+		DeathTypes: 6
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^CivInfantry:
 	Inherits: ^Infantry
-	-Buildable:
 	-AutoTarget:
 	-TakeCover:
-	-RenderInfantryProne:
 	AppearsOnRadar:
 	SelectionDecorations:
 	Selectable:
@@ -155,22 +240,71 @@
 		Cost: 70
 	Tooltip:
 		Name: Civilian
+		GenericVisibility: None
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
 		HP: 25
 	RevealsShroud:
-		Range: 2
+		Range: 2c0
+	Armament:
+		Weapon: Pistol
 	AttackFrontal:
-		PrimaryWeapon: Pistol
 	ActorLostNotification:
-		Notification: civdead1.aud
+		Notification: CivilianKilled
 		NotifyAll: true
 	ScaredyCat:
-	RenderInfantryPanic:	
+	Crushable:
+		CrushSound: squish2.aud
+
+^DINO:
+	AppearsOnRadar:
+	Health:
+		Radius: 128
+		HP: 1000
+	Armor:
+		Type: Wood
+	Buildable:
+		Queue: Biolab
+		BuildPaletteOrder: 50
+	Valued:
+		Cost: 1000
+	Tooltip:
+		Name: Dinosaur
+	RevealsShroud:
+		Range: 6c0
+	Mobile:
+		Crushes: crate
+		Speed: 113
+		TerrainSpeeds:
+			Clear: 90
+			Rough: 80
+			Road: 100
+			Tiberium: 70
+			BlueTiberium: 70
+			Beach: 80
+	Selectable:
+		Voice: DinoVoice
+	TargetableUnit:
+		TargetTypes: Ground, Infantry
+	HiddenUnderFog:
+	GivesExperience:
+	RenderInfantry:
+		Palette: terrain
+	WithDeathAnimation:
+		UseDeathTypeSuffix: false
+	EditorAppearance:
+		UseTerrainPalette: true
+	BodyOrientation:
+	DrawLineToTarget:
+	AutoTarget:
+		ScanRadius: 4
 	AttackMove:
-		JustMove: yes
-	CrushableInfantry:
+	AttackFrontal:
+	UpdatesPlayerStatistics:
+	Huntable:
+	ScriptTriggers:
+	DeathSounds:
 
 ^Plane:
 	AppearsOnRadar:
@@ -185,7 +319,19 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
+	CombatDebugOverlay:
+	BodyOrientation:
+	Huntable:
+	AttackMove:
+	ScriptTriggers:
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^Ship:
 	AppearsOnRadar:
@@ -195,7 +341,7 @@
 			Water: 100
 	SelectionDecorations:
 	Selectable:
-		Voice: GenericVoice
+		Voice: VehicleVoice
 	TargetableUnit:
 		TargetTypes: Ground, Water
 	HiddenUnderFog:
@@ -203,8 +349,22 @@
 	GivesExperience:
 	DrawLineToTarget:
 	ActorLostNotification:
-		Notification: unitlost.aud
 	AttackMove:
+	CombatDebugOverlay:
+	Guard:
+	Guardable:
+	BodyOrientation:
+	UpdatesPlayerStatistics:
+	Huntable:
+	ScriptTriggers:
+	GainsStatUpgrades:
+	SelfHealing@ELITE:
+		Step: 2
+		Ticks: 100
+		HealIfBelow: 1
+		DamageCooldown: 125
+		RequiresUpgrade: selfheal
+	UpgradeManager:
 
 ^Building:
 	AppearsOnRadar:
@@ -212,66 +372,70 @@
 	Selectable:
 		Priority: 3
 	TargetableBuilding:
-		TargetTypes: Ground
+		TargetTypes: Ground, C4, Structure
 	Armor:
 		Type: Wood
-	RepairableBuilding:
-		RepairPercent: 40
-		RepairStep: 14
 	Building:
+		Adjacent: 4
+		RequiresBaseProvider: true
 		Dimensions: 1,1
 		Footprint: x
 		BuildSounds: constru2.aud, hvydoor1.aud
-		SellSounds: cashturn.aud
 		TerrainTypes: Clear,Road
 	SoundOnDamageTransition:
 		DamagedSound: xplos.aud
 		DestroyedSound: crumble.aud
-	Buildable:
-		Queue: Building
-	GivesBuildableArea:
 	RenderBuilding:
 	WithBuildingExplosion:
-	DeadBuildingState:
 	EmitInfantryOnSell:
 		ActorTypes: e6,e1
-	MustBeDestroyed:
 	GivesExperience:
-	CaptureNotification@GDI:
-		Race: gdi
-		Notification: gdicapt1.aud
-	CaptureNotification@NOD:
-		Race: nod
-		Notification: nodcapt1.aud
+	CaptureNotification:
+		Notification: BuildingCaptured
+		NewOwnerVoice: no
 	ActorLostNotification:
-		Notification: strclost.aud
+		Notification: BuildingLost
 	EditorAppearance:
 		RelativeToTopLeft: yes
-	AutoTargetIgnore:
 	ShakeOnDeath:
+	CombatDebugOverlay:
+	Guardable:
+		Range: 3
+	BodyOrientation:
+	Tooltip:
+		GenericName: Structure
+	FrozenUnderFog:
+	UpdatesPlayerStatistics:
+	Huntable:
+	Demolishable:
+	ScriptTriggers:
+	WithMakeAnimation:
+
+^BaseBuilding:
+	Inherits: ^Building
+	MustBeDestroyed:
+	RepairableBuilding:
+		RepairPercent: 40
+		RepairStep: 14
+	DeadBuildingState:
+	GivesBuildableArea:
+	EngineerRepairable:
 	Sellable:
+		SellSounds: cashturn.aud
 	Capturable:
-	CapturableBar:
-	C4Demolishable:
 
 ^CivBuilding:
 	Inherits: ^Building
-	-DeadBuildingState:
-	-Buildable:
-	-GivesBuildableArea:
 	Health:
 		HP: 400
-	Armor: 
+	Armor:
 		Type: Wood
 	Building:
-	RenderBuilding:
-	WithBuildingExplosion:
-	-RepairableBuilding:
-	-Capturable:
-	-CapturableBar:
-	-Sellable:
 	Tooltip:
 		Name: Civilian Building
+		GenericVisibility: None
+	FrozenUnderFog:
+		StartsRevealed: true
 
 ^CivBuildingHusk:
 	AppearsOnRadar:
@@ -283,14 +447,24 @@
 		RelativeToTopLeft: yes
 	Tooltip:
 		Name: Civilian Building (Destroyed)
+		GenericVisibility: None
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	ScriptTriggers:
+	WithMakeAnimation:
 
 ^TechBuilding:
 	Inherits: ^CivBuilding
 	Capturable:
-	CapturableBar:
+	CaptureNotification:
+		Notification: CivilianBuildingCaptured
 	RepairableBuilding:
+		RepairPercent: 40
+		RepairStep: 14
+	EngineerRepairable:
 	RevealsShroud:
-		Range: 3
+		Range: 3c0
 
 ^CivField:
 	Inherits: ^CivBuilding
@@ -298,10 +472,13 @@
 	Tooltip:
 		Name: Field
 	-WithBuildingExplosion:
+	-TargetableBuilding:
+	-Demolishable:
 	RenderBuilding:
 		Palette: terrain
 	EditorAppearance:
 		UseTerrainPalette: true
+	WithMakeAnimation:
 
 ^CivFieldHusk:
 	AppearsOnRadar:
@@ -312,7 +489,14 @@
 		RelativeToTopLeft: yes
 	Tooltip:
 		Name: Field (Destroyed)
-	BelowUnits:
+		GenericVisibility: None
+	BodyOrientation:
+	RenderBuilding:
+		Palette: terrain
+	FrozenUnderFog:
+		StartsRevealed: true
+	ScriptTriggers:
+	WithMakeAnimation:
 
 ^Wall:
 	AppearsOnRadar:
@@ -323,24 +507,28 @@
 		Adjacent: 7
 		TerrainTypes: Clear,Road
 	TargetableBuilding:
-		TargetTypes: Ground
-	Wall:
+		TargetTypes: Ground, Wall
+	Crushable:
 		CrushClasses: wall
 		CrushSound: sandbag2.aud
+	BlocksBullets:
 	LineBuild:
 		Range: 8
-	SelectionDecorations:
-	Selectable:
-		Priority: 1
+		NodeTypes: wall
+	LineBuildNode:
+		Types: wall
 	RenderBuildingWall:
-		HasMakeAnimation: false
 		Palette: staticterrain
 	GivesExperience:
 	EditorAppearance:
 		RelativeToTopLeft: yes
 	AutoTargetIgnore:
 	Sellable:
-	C4Demolishable:
+		SellSounds: cashturn.aud
+	Guardable:
+	BodyOrientation:
+	FrozenUnderFog:
+	ScriptTriggers:
 
 ^Tree:
 	Tooltip:
@@ -360,9 +548,29 @@
 	DeadBuildingState:
 	Armor:
 		Type: Wood
-	TargetableBuilding:
-		TargetTypes: Ground
 	AutoTargetIgnore:
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	ScriptTriggers:
+	WithMakeAnimation:
+
+^TibTree:
+	Tooltip:
+		Name: Blossom Tree
+	RenderBuilding:
+		Palette: staticterrain
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	AppearsOnRadar:
+	RadarColorFromTerrain:
+		Terrain: Tiberium
+	EditorAppearance:
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	WithMakeAnimation:
 
 ^Rock:
 	Tooltip:
@@ -377,37 +585,75 @@
 		Terrain: Tree
 	EditorAppearance:
 		RelativeToTopLeft: yes
+	BodyOrientation:
+	FrozenUnderFog:
+		StartsRevealed: true
+	ScriptTriggers:
+	WithMakeAnimation:
 
 ^Husk:
 	Health:
 		HP: 140
-	Armor: 
+	Armor:
 		Type: Light
 	Husk:
+		AllowedTerrain: Clear, Rough, Road, Tiberium, BlueTiberium, Beach
 	HiddenUnderFog:
-	AppearsOnRadar:
 	Burns:
 		Interval: 2
 	TargetableUnit:
+		RequiresForceFire: yes
+		TargetTypes: Ground
+	AutoTargetIgnore:
+	Capturable:
+		Type: husk
+		AllowAllies: yes
+		CaptureThreshold: 1.0
 	TransformOnCapture:
 		ForceHealthPercentage: 25
-#	Capturable:
-#		Type: husk
-#		AllowAllies: true
-#		AllowNeutral: true
-#		AllowEnemies: true
+	BodyOrientation:
+	Tooltip:
+		GenericName: Destroyed Vehicle
+	DisabledOverlay:
+	ScriptTriggers:
+
+^HelicopterHusk:
+	Inherits: ^Husk
+	-Husk:
+	-Burns:
+	FallsToEarth:
+		Spins: True
+		Moves: False
+		Explosion: HeliCrash
+	-Capturable:
+	-TransformOnCapture:
+	-TargetableUnit:
 
 ^Bridge:
 	Tooltip:
 		Name: Bridge
 	TargetableBuilding:
+		RequiresForceFire: yes
 		TargetTypes: Ground, Water
-	BelowUnits:
 	Health:
 		HP: 500
 	SoundOnDamageTransition:
 		DamagedSound: xplos.aud
 		DestroyedSound: xplobig4.aud
-	Building:
-		Footprint: ______ ______ ______ ______
-		Dimensions: 6,4
+	BodyOrientation:
+	ScriptTriggers:
+^Crate:
+	Tooltip:
+		Name: Crate
+		GenericName: Crate
+	Crate:
+		TerrainTypes: Clear, Rough, Road, Tiberium, BlueTiberium, Beach
+	RenderSprites:
+		Palette: effect
+	WithCrateBody:
+		XmasImages: xcratea, xcrateb, xcratec, xcrated
+	Selectable:
+		Selectable: false
+		Bounds: 15,15,-1,-1
+	BodyOrientation:
+

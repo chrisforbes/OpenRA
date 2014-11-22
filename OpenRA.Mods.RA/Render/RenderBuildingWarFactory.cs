@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,31 +11,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common.Traits.Render;
+using OpenRA.Mods.RA.Buildings;
+using OpenRA.Mods.Common.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Render
 {
 	class RenderBuildingWarFactoryInfo : RenderBuildingInfo
 	{
-		public override object Create(ActorInitializer init) { return new RenderBuildingWarFactory( init, this ); }
+		public override object Create(ActorInitializer init) { return new RenderBuildingWarFactory(init, this); }
 
-		/* get around unverifiability */
-		IEnumerable<Renderable> BaseBuildingPreview(ActorInfo building, PaletteReference pr)
+		public override IEnumerable<IActorPreview> RenderPreviewSprites(ActorPreviewInitializer init, RenderSpritesInfo rs, string image, int facings, PaletteReference p)
 		{
-			return base.RenderPreview(building, pr);
-		}
+			foreach (var orig in base.RenderPreviewSprites(init, rs, image, facings, p))
+				yield return orig;
 
-		public override IEnumerable<Renderable> RenderPreview(ActorInfo building, PaletteReference pr)
-		{
-			var p = BaseBuildingPreview(building, pr);
-			foreach (var r in p)
-				yield return r;
-
-			var anim = new Animation(RenderSimple.GetImage(building), () => 0);
+			// Show additional roof overlay
+			var anim = new Animation(init.World, image, () => 0);
 			anim.PlayRepeating("idle-top");
-			var rb = building.Traits.Get<RenderBuildingInfo>();
-			yield return new Renderable(anim.Image, rb.Origin + 0.5f*anim.Image.size*(1 - Scale),
-				pr, 0, Scale);
+
+			var bi = init.Actor.Traits.Get<BuildingInfo>();
+			var offset = FootprintUtils.CenterOffset(init.World, bi).Y + 512;
+			yield return new SpriteActorPreview(anim, WVec.Zero, offset, p, rs.Scale);
 		}
 	}
 
@@ -49,13 +47,16 @@ namespace OpenRA.Mods.RA.Render
 		public RenderBuildingWarFactory(ActorInitializer init, RenderBuildingInfo info)
 			: base(init, info)
 		{
-			roof = new Animation(GetImage(init.self));
-			var offset = new AnimationWithOffset( roof ) { ZOffset = 24 };
-			offset.DisableFunc = () => !buildComplete;
-			anims.Add("roof", offset);
+			roof = new Animation(init.world, GetImage(init.self));
+			var bi = init.self.Info.Traits.Get<BuildingInfo>();
+
+			// Additional 512 units move from center -> top of cell
+			var offset = FootprintUtils.CenterOffset(init.world, bi).Y + 512;
+			Add("roof", new AnimationWithOffset(roof, null,
+				() => !buildComplete, offset));
 		}
 
-		public void BuildingComplete( Actor self )
+		public override void BuildingComplete(Actor self)
 		{
 			roof.Play(NormalizeSequence(self,
 				self.GetDamageState() > DamageState.Heavy ? "damaged-idle-top" : "idle-top"));
@@ -91,7 +92,7 @@ namespace OpenRA.Mods.RA.Render
 			roof.PlayThen(NormalizeSequence(self, "build-top"), () => { isOpen = true; openExit = exit; });
 		}
 
-		public void Selling(Actor self) { anims.Remove("roof"); }
+		public void Selling(Actor self) { Remove("roof"); }
 		public void Sold(Actor self) { }
 	}
 }

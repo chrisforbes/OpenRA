@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,11 +8,11 @@
  */
 #endregion
 
-using System.Collections.Generic;
 using OpenRA.Network;
 
 namespace OpenRA.Traits
 {
+	[Desc("Used to detect exploits. Attach this to the world actor.")]
 	public class ValidateOrderInfo : TraitInfo<ValidateOrder> { }
 
 	public class ValidateOrder : IValidateOrder
@@ -31,8 +31,7 @@ namespace OpenRA.Traits
 				return false;
 			}
 
-			// Hack: Assumes bots always run on clientId 0.
-			var isBotOrder = subjectClient.Bot != null && clientId == 0;
+			var isBotOrder = subjectClient.Bot != null && clientId == subjectClient.BotControllerClientIndex;
 
 			// Drop exploiting orders
 			if (subjectClientId != clientId && !isBotOrder)
@@ -41,7 +40,7 @@ namespace OpenRA.Traits
 				return false;
 			}
 
-			return true;
+			return order.Subject.AcceptsOrder(order.OrderString);
 		}
 	}
 }

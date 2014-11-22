@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,76 +8,109 @@
  */
 #endregion
 
-using OpenRA.Traits;
 using System.Drawing;
 using System.Linq;
+using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("The actor will automatically engage the enemy when it is in range.")]
 	public class AutoTargetInfo : ITraitInfo, Requires<AttackBaseInfo>
 	{
+		[Desc("It will try to hunt down the enemy if it is not set to defend.")]
 		public readonly bool AllowMovement = true;
+		[Desc("Set to a value >1 to override weapons maximum range for this.")]
 		public readonly int ScanRadius = -1;
+
+		[Desc("Possible values are HoldFire, ReturnFire, Defend and AttackAnything.")]
 		public readonly UnitStance InitialStance = UnitStance.AttackAnything;
+		[Desc("Allow the player to change the unit stance.")]
+		public readonly bool EnableStances = true;
+
+		[Desc("Ticks to wait until next AutoTarget: attempt.")]
+		public readonly int MinimumScanTimeInterval = 3;
+		[Desc("Ticks to wait until next AutoTarget: attempt.")]
+		public readonly int MaximumScanTimeInterval = 8;
+
+		public readonly bool TargetWhenIdle = true;
+		public readonly bool TargetWhenDamaged = true;
 
 		public object Create(ActorInitializer init) { return new AutoTarget(init.self, this); }
 	}
 
-	public enum UnitStance { HoldFire, ReturnFire, Defend, AttackAnything };
+	public enum UnitStance { HoldFire, ReturnFire, Defend, AttackAnything }
 
 	public class AutoTarget : INotifyIdle, INotifyDamage, ITick, IResolveOrder, ISync
 	{
-		readonly AutoTargetInfo Info;
+		readonly AutoTargetInfo info;
 		readonly AttackBase attack;
-
+		readonly AttackFollow at;
 		[Sync] int nextScanTime = 0;
-		public UnitStance stance;
-		[Sync] public int stanceNumber { get { return (int)stance; } }
-		public UnitStance predictedStance;		/* NOT SYNCED: do not refer to this anywhere other than UI code */
+
+		public UnitStance Stance;
+		[Sync] public Actor Aggressor;
+		[Sync] public Actor TargetedActor;
+
+		// NOT SYNCED: do not refer to this anywhere other than UI code
+		public UnitStance PredictedStance;
 
 		public AutoTarget(Actor self, AutoTargetInfo info)
 		{
-			Info = info;
+			this.info = info;
 			attack = self.Trait<AttackBase>();
-			stance = Info.InitialStance;
-			predictedStance = stance;
+			Stance = info.InitialStance;
+			PredictedStance = Stance;
+			at = self.TraitOrDefault<AttackFollow>();
 		}
 
 		public void ResolveOrder(Actor self, Order order)
 		{
-			if (order.OrderString == "SetUnitStance")
-				stance = (UnitStance)order.TargetLocation.X;
+			if (order.OrderString == "SetUnitStance" && info.EnableStances)
+				Stance = (UnitStance)order.ExtraData;
 		}
 
 		public void Damaged(Actor self, AttackInfo e)
 		{
-			if (!self.IsIdle) return;
-			if (e.Attacker.Destroyed) return;
+			if (!self.IsIdle || !info.TargetWhenDamaged)
+				return;
 
-			if (stance < UnitStance.ReturnFire) return;
+			var attacker = e.Attacker;
+			if (attacker.Destroyed || Stance < UnitStance.ReturnFire)
+				return;
+
+			if (!attacker.IsInWorld && !attacker.Destroyed)
+			{
+				// If the aggressor is in a transport, then attack the transport instead
+				var passenger = attacker.TraitOrDefault<Passenger>();
+				if (passenger != null && passenger.Transport != null)
+					attacker = passenger.Transport;
+			}
 
 			// not a lot we can do about things we can't hurt... although maybe we should automatically run away?
-			var attack = self.Trait<AttackBase>();
-			if (!attack.HasAnyValidWeapons(Target.FromActor(e.Attacker))) return;
+			if (!attack.HasAnyValidWeapons(Target.FromActor(attacker)))
+				return;
 
-			// don't retaliate against own units force-firing on us. it's usually not what the player wanted.
-			if (e.Attacker.AppearsFriendlyTo(self)) return;
+			// don't retaliate against own units force-firing on us. It's usually not what the player wanted.
+			if (attacker.AppearsFriendlyTo(self))
+				return;
 
-			if (e.Damage < 0) return;	// don't retaliate against healers
+			// don't retaliate against healers
+			if (e.Damage < 0)
+				return;
 
-			attack.AttackTarget(Target.FromActor(e.Attacker), false, Info.AllowMovement && stance != UnitStance.Defend);
+			Aggressor = attacker;
+			if (at == null || !at.IsReachableTarget(at.Target, info.AllowMovement && Stance != UnitStance.Defend))
+				Attack(self, Aggressor);
 		}
 
 		public void TickIdle(Actor self)
 		{
-			if (stance < UnitStance.Defend) return;
+			if (Stance < UnitStance.Defend || !info.TargetWhenIdle)
+				return;
 
-			var target = ScanForTarget(self, null);
-			if (target != null)
-			{
-				self.SetTargetLine(Target.FromActor(target), Color.Red, false);
-				attack.AttackTarget(Target.FromActor(target), false, Info.AllowMovement && stance != UnitStance.Defend);
-			}
+			var allowMovement = info.AllowMovement && Stance != UnitStance.Defend;
+			if (at == null || !at.IsReachableTarget(at.Target, allowMovement))
+				ScanAndAttack(self);
 		}
 
 		public void Tick(Actor self)
@@ -88,11 +121,12 @@ namespace OpenRA.Mods.RA
 
 		public Actor ScanForTarget(Actor self, Actor currentTarget)
 		{
-			var range = Info.ScanRadius > 0 ? Info.ScanRadius : attack.GetMaximumRange();
-
-			if (self.IsIdle || currentTarget == null || !Combat.IsInRange(self.CenterLocation, range, currentTarget))
-				if(nextScanTime <= 0)
+			if (nextScanTime <= 0)
+			{
+				var range = info.ScanRadius > 0 ? WRange.FromCells(info.ScanRadius) : attack.GetMaximumRange();
+				if (self.IsIdle || currentTarget == null || !Target.FromActor(currentTarget).IsInRange(self.CenterPosition, range))
 					return ChooseTarget(self, range);
+			}
 
 			return currentTarget;
 		}
@@ -101,34 +135,33 @@ namespace OpenRA.Mods.RA
 		{
 			var targetActor = ScanForTarget(self, null);
 			if (targetActor != null)
-				attack.AttackTarget(Target.FromActor(targetActor), false, Info.AllowMovement && stance != UnitStance.Defend);
+				Attack(self, targetActor);
 		}
 
-		Actor ChooseTarget(Actor self, float range)
+		void Attack(Actor self, Actor targetActor)
 		{
-			var info = self.Info.Traits.Get<AttackBaseInfo>();
+			TargetedActor = targetActor;
+			var target = Target.FromActor(targetActor);
+			self.SetTargetLine(target, Color.Red, false);
+			attack.AttackTarget(target, false, info.AllowMovement && Stance != UnitStance.Defend);
+		}
+
+		Actor ChooseTarget(Actor self, WRange range)
+		{
 			nextScanTime = self.World.SharedRandom.Next(info.MinimumScanTimeInterval, info.MaximumScanTimeInterval);
+			var inRange = self.World.FindActorsInCircle(self.CenterPosition, range);
 
-			var inRange = self.World.FindUnitsInCircle(self.CenterLocation, (int)(Game.CellSize * range));
-
-			if (self.Owner.HasFogVisibility()) {
-				return inRange
-					.Where(a => a.AppearsHostileTo(self))
-					.Where(a => !a.HasTrait<AutoTargetIgnore>())
-					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-					.ClosestTo( self.CenterLocation );
-			}
-			else {
-				return inRange
-					.Where(a => a.AppearsHostileTo(self))
-					.Where(a => !a.HasTrait<AutoTargetIgnore>())
-					.Where(a => attack.HasAnyValidWeapons(Target.FromActor(a)))
-					.Where(a => self.Owner.Shroud.IsTargetable(a))
-					.ClosestTo( self.CenterLocation );
-			}
+			return inRange
+				.Where(a =>
+					a.AppearsHostileTo(self) &&
+					!a.HasTrait<AutoTargetIgnore>() &&
+					attack.HasAnyValidWeapons(Target.FromActor(a)) &&
+					self.Owner.Shroud.IsTargetable(a))
+				.ClosestTo(self);
 		}
 	}
 
+	[Desc("Will not get automatically targeted by enemy (like walls)")]
 	class AutoTargetIgnoreInfo : TraitInfo<AutoTargetIgnore> { }
 	class AutoTargetIgnore { }
 }

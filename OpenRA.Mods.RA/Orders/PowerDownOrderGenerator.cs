@@ -1,6 +1,6 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,8 +11,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
-using OpenRA.Mods.RA.Buildings;
-using OpenRA.Traits;
+using OpenRA.Mods.Common.Power;
 
 namespace OpenRA.Mods.RA.Orders
 {
@@ -32,16 +31,15 @@ namespace OpenRA.Mods.RA.Orders
 			if (mi.Button == MouseButton.Right)
 				world.CancelInputMode();
 
-			return OrderInner(world, xy, mi);
+			return OrderInner(world, mi);
 		}
 
-		IEnumerable<Order> OrderInner(World world, CPos xy, MouseInput mi)
+		IEnumerable<Order> OrderInner(World world, MouseInput mi)
 		{
 			if (mi.Button == MouseButton.Left)
 			{
-				var underCursor = world.FindUnitsAtMouse(mi.Location)
-					.Where(a => a.Owner == world.LocalPlayer
-						&& a.HasTrait<T>()).FirstOrDefault();
+				var underCursor = world.ScreenMap.ActorsAt(mi)
+					.FirstOrDefault(a => a.Owner == world.LocalPlayer && a.HasTrait<T>());
 
 				if (underCursor != null)
 					yield return new Order(order, underCursor, false);
@@ -55,13 +53,13 @@ namespace OpenRA.Mods.RA.Orders
 				world.CancelInputMode();
 		}
 
-		public void RenderAfterWorld(WorldRenderer wr, World world) { }
-		public void RenderBeforeWorld(WorldRenderer wr, World world) { }
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
+		public IEnumerable<IRenderable> RenderAfterWorld(WorldRenderer wr, World world) { yield break; }
 
 		public string GetCursor(World world, CPos xy, MouseInput mi)
 		{
 			mi.Button = MouseButton.Left;
-			return cursor + (OrderInner(world, xy, mi).Any()	? "" : "-blocked");
+			return cursor + (OrderInner(world, mi).Any()	? "" : "-blocked");
 		}
 	}
 

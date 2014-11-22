@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -13,29 +13,34 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using OpenRA.FileFormats;
+using OpenRA.Primitives;
 
 namespace OpenRA
 {
 	public class ObjectCreator
 	{
-		Pair<Assembly, string>[] ModAssemblies;
+		readonly Cache<string, Type> typeCache;
+		readonly Cache<Type, ConstructorInfo> ctorCache;
+		readonly Pair<Assembly, string>[] assemblies;
 
-		public ObjectCreator( Manifest manifest )
+		public ObjectCreator(Manifest manifest)
 		{
+			typeCache = new Cache<string, Type>(FindType);
+			ctorCache = new Cache<Type, ConstructorInfo>(GetCtor);
+
 			// All the core namespaces
-			var asms = typeof(Game).Assembly.GetNamespaces()
+			var asms = typeof(Game).Assembly.GetNamespaces() // Game
 				.Select(c => Pair.New(typeof(Game).Assembly, c))
 				.ToList();
 
 			// Namespaces from each mod assembly
 			foreach (var a in manifest.Assemblies)
 			{
-				var asm = Assembly.LoadFile(Path.GetFullPath(a));
+				var asm = Assembly.LoadFile(Platform.ResolvePath(a));
 				asms.AddRange(asm.GetNamespaces().Select(ns => Pair.New(asm, ns)));
 			}
 
-			ModAssemblies = asms.ToArray();
+			assemblies = asms.ToArray();
 		}
 
 		public static Action<string> MissingTypeAction =
@@ -43,57 +48,73 @@ namespace OpenRA
 
 		public T CreateObject<T>(string className)
 		{
-			return CreateObject<T>( className, new Dictionary<string, object>() );
+			return CreateObject<T>(className, new Dictionary<string, object>());
 		}
 
-		public T CreateObject<T>( string className, Dictionary<string, object> args )
+		public T CreateObject<T>(string className, Dictionary<string, object> args)
 		{
-			foreach( var mod in ModAssemblies )
+			var type = typeCache[className];
+			if (type == null)
 			{
-				var type = mod.First.GetType( mod.Second + "." + className, false );
-				if( type == null ) continue;
-				var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
-				var ctors = type.GetConstructors( flags )
-					.Where( x => x.HasAttribute<UseCtorAttribute>() ).ToList();
-
-				if( ctors.Count == 0 )
-					return (T)CreateBasic( type );
-				else if( ctors.Count == 1 )
-					return (T)CreateUsingArgs( ctors[ 0 ], args );
-				else
-					throw new InvalidOperationException( "ObjectCreator: UseCtor on multiple constructors; invalid." );
+				MissingTypeAction(className);
+				return default(T);
 			}
-			MissingTypeAction(className);
-			return default(T);
+
+			var ctor = ctorCache[type];
+			if (ctor == null)
+				return (T)CreateBasic(type);
+			else
+				return (T)CreateUsingArgs(ctor, args);
 		}
 
-		public object CreateBasic( Type type )
+		public Type FindType(string className)
 		{
-			return type.GetConstructor( new Type[ 0 ] ).Invoke( new object[ 0 ] );
+			return assemblies
+				.Select(pair => pair.First.GetType(pair.Second + "." + className, false))
+				.FirstOrDefault(t => t != null);
 		}
 
-		public object CreateUsingArgs( ConstructorInfo ctor, Dictionary<string, object> args )
+		public ConstructorInfo GetCtor(Type type)
+		{
+			var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+			var ctors = type.GetConstructors(flags).Where(x => x.HasAttribute<UseCtorAttribute>());
+			if (ctors.Count() > 1)
+				throw new InvalidOperationException("ObjectCreator: UseCtor on multiple constructors; invalid.");
+			return ctors.FirstOrDefault();
+		}
+
+		public object CreateBasic(Type type)
+		{
+			return type.GetConstructor(new Type[0]).Invoke(new object[0]);
+		}
+
+		public object CreateUsingArgs(ConstructorInfo ctor, Dictionary<string, object> args)
 		{
 			var p = ctor.GetParameters();
-			var a = new object[ p.Length ];
-			for( int i = 0 ; i < p.Length ; i++ )
+			var a = new object[p.Length];
+			for (var i = 0; i < p.Length; i++)
 			{
 				var key = p[i].Name;
-				if ( !args.ContainsKey(key) ) throw new InvalidOperationException("ObjectCreator: key `{0}' not found".F(key));
-				a[ i ] = args[ key ];
+				if (!args.ContainsKey(key)) throw new InvalidOperationException("ObjectCreator: key `{0}' not found".F(key));
+				a[i] = args[key];
 			}
-			return ctor.Invoke( a );
+
+			return ctor.Invoke(a);
 		}
 
 		public IEnumerable<Type> GetTypesImplementing<T>()
 		{
 			var it = typeof(T);
-			return ModAssemblies.Select( ma => ma.First ).Distinct()
-				.SelectMany(ma => ma.GetTypes()
-				.Where(t => t != it && it.IsAssignableFrom(t)));
+			return GetTypes().Where(t => t != it && it.IsAssignableFrom(t));
+		}
+		
+		public IEnumerable<Type> GetTypes()
+		{
+			return assemblies.Select(ma => ma.First).Distinct()
+				.SelectMany(ma => ma.GetTypes());
 		}
 
-		[AttributeUsage( AttributeTargets.Constructor )]
-		public class UseCtorAttribute : Attribute {}
+		[AttributeUsage(AttributeTargets.Constructor)]
+		public sealed class UseCtorAttribute : Attribute { }
 	}
 }

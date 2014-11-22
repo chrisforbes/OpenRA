@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,14 +11,15 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using OpenRA.Mods.Common.Orders;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Move;
-using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
+using OpenRA.Mods.Common;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This actor can be sent to a structure for repairs.")]
 	class RepairableInfo : ITraitInfo, Requires<HealthInfo>
 	{
 		public readonly string[] RepairBuildings = { "fix" };
@@ -38,7 +39,8 @@ namespace OpenRA.Mods.RA
 
 		public IEnumerable<IOrderTargeter> Orders
 		{
-			get { yield return new EnterOrderTargeter<Building>( "Repair", 5, false, true, target => CanRepairAt( target ), _ => CanRepair() ); }
+			get { yield return new EnterAlliedActorTargeter<Building>("Repair", 5,
+				target => CanRepairAt(target), _ => CanRepair()); }
 		}
 
 		public Order IssueOrder( Actor self, IOrderTargeter order, Target target, bool queued )
@@ -69,16 +71,16 @@ namespace OpenRA.Mods.RA
 		{
 			if (order.OrderString == "Repair")
 			{
-				if( !CanRepairAt( order.TargetActor ) || !CanRepair() )
+				if (!CanRepairAt(order.TargetActor) || !CanRepair())
 					return;
 
-				var mobile = self.Trait<Mobile>();
-				var target = Target.FromOrder(order);
+				var movement = self.Trait<IMove>();
+				var target = Target.FromOrder(self.World, order);
 				self.SetTargetLine(target, Color.Green);
 
 				self.CancelActivity();
-				self.QueueActivity(new MoveAdjacentTo(target));
-				self.QueueActivity(mobile.MoveTo(order.TargetActor.CenterLocation.ToCPos(), order.TargetActor));
+				self.QueueActivity(new MoveAdjacentTo(self, target));
+				self.QueueActivity(movement.MoveTo(self.World.Map.CellContaining(order.TargetActor.CenterPosition), order.TargetActor));
 				self.QueueActivity(new Rearm(self));
 				self.QueueActivity(new Repair(order.TargetActor));
 
@@ -86,8 +88,8 @@ namespace OpenRA.Mods.RA
 				if (rp != null)
 					self.QueueActivity(new CallFunc(() =>
 					{
-						self.SetTargetLine(Target.FromCell(rp.rallyPoint), Color.Green);
-						self.QueueActivity(mobile.MoveTo(rp.rallyPoint, order.TargetActor));
+						self.SetTargetLine(Target.FromCell(self.World, rp.Location), Color.Green);
+						self.QueueActivity(movement.MoveTo(rp.Location, order.TargetActor));
 					}));
 			}
 		}

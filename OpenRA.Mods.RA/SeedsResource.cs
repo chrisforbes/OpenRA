@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,61 +12,66 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.RA.Render;
+using OpenRA.Support;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class SeedsResourceInfo : TraitInfo<SeedsResource>
+	[Desc("Lets the actor spread resources around it in a circle.")]
+	class SeedsResourceInfo : ITraitInfo
 	{
 		public readonly int Interval = 75;
 		public readonly string ResourceType = "Ore";
 		public readonly int MaxRange = 100;
-		public readonly int AnimationInterval = 750;
+
+		public object Create(ActorInitializer init) { return new SeedsResource(init.self, this); }
 	}
 
-	class SeedsResource : ITick
+	class SeedsResource : ITick, ISeedableResource
 	{
+		readonly SeedsResourceInfo info;
+
+		readonly ResourceType resourceType;
+		readonly ResourceLayer resLayer;
+
+		public SeedsResource(Actor self, SeedsResourceInfo info)
+		{
+			this.info = info;
+
+			resourceType = self.World.WorldActor.TraitsImplementing<ResourceType>()
+				.FirstOrDefault(t => t.Info.Name == info.ResourceType);
+
+			if (resourceType == null)
+				throw new InvalidOperationException("No such resource type `{0}`".F(info.ResourceType));
+
+			resLayer = self.World.WorldActor.Trait<ResourceLayer>();
+		}
+
 		int ticks;
-		int animationTicks;
 
 		public void Tick(Actor self)
 		{
 			if (--ticks <= 0)
 			{
-				var info = self.Info.Traits.Get<SeedsResourceInfo>();
-				var resourceType = self.World.WorldActor
-					.TraitsImplementing<ResourceType>()
-					.FirstOrDefault(t => t.info.Name == info.ResourceType);
-
-				if (resourceType == null)
-					throw new InvalidOperationException("No such resource type `{0}`".F(info.ResourceType));
-
-				var resLayer = self.World.WorldActor.Trait<ResourceLayer>();
-
-				var cell = RandomWalk(self.Location, self.World.SharedRandom)
-					.Take(info.MaxRange)
-					.SkipWhile(p => resLayer.GetResource(p) == resourceType && resLayer.IsFull(p.X, p.Y))
-					.Cast<CPos?>().FirstOrDefault();
-
-				if (cell != null && self.World.Map.IsInMap(cell.Value) &&
-					(resLayer.GetResource(cell.Value) == resourceType
-					|| (resLayer.GetResource(cell.Value) == null && resLayer.AllowResourceAt(resourceType, cell.Value))))
-					resLayer.AddResource(resourceType, cell.Value.X, cell.Value.Y, 1);
-
+				Seed(self);
 				ticks = info.Interval;
-			}
-
-			if (--animationTicks <= 0)
-			{
-				var info = self.Info.Traits.Get<SeedsResourceInfo>();
-				self.Trait<RenderBuilding>().PlayCustomAnim(self, "active");
-				animationTicks = info.AnimationInterval;
 			}
 		}
 
-		static IEnumerable<CPos> RandomWalk(CPos p, Thirdparty.Random r)
+		public void Seed(Actor self)
 		{
-			for (; ; )
+			var cell = RandomWalk(self.Location, self.World.SharedRandom)
+				.Take(info.MaxRange)
+				.SkipWhile(p => resLayer.GetResource(p) == resourceType && resLayer.IsFull(p))
+				.Cast<CPos?>().FirstOrDefault();
+
+			if (cell != null && resLayer.CanSpawnResourceAt(resourceType, cell.Value))
+				resLayer.AddResource(resourceType, cell.Value, 1);
+		}
+
+		static IEnumerable<CPos> RandomWalk(CPos p, MersenneTwister r)
+		{
+			for (;;)
 			{
 				var dx = r.Next(-1, 2);
 				var dy = r.Next(-1, 2);

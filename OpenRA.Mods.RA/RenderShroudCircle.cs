@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,37 +8,53 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using System.Drawing;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common.Graphics;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	class RenderShroudCircleInfo : TraitInfo<RenderShroudCircle>, IPlaceBuildingDecoration
+	class RenderShroudCircleInfo : ITraitInfo, IPlaceBuildingDecoration
 	{
-		public void Render(WorldRenderer wr, World w, ActorInfo ai, PPos centerLocation)
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World w, ActorInfo ai, WPos centerPosition)
 		{
-			wr.DrawRangeCircle(
+			yield return new RangeCircleRenderable(
+				centerPosition,
+				ai.Traits.Get<CreatesShroudInfo>().Range,
+				0,
 				Color.FromArgb(128, Color.Cyan),
-				centerLocation.ToFloat2(),
-				ai.Traits.Get<CreatesShroudInfo>().Range);
+				Color.FromArgb(96, Color.Black)
+			);
 
 			foreach (var a in w.ActorsWithTrait<RenderShroudCircle>())
 				if (a.Actor.Owner == a.Actor.World.LocalPlayer)
-					a.Trait.RenderBeforeWorld(wr, a.Actor);
+					foreach (var r in a.Trait.RenderAfterWorld(wr))
+						yield return r;
 		}
+
+		public object Create(ActorInitializer init) { return new RenderShroudCircle(init.self); }
 	}
 
-	class RenderShroudCircle : IPreRenderSelection
+	class RenderShroudCircle : IPostRenderSelection
 	{
-		public void RenderBeforeWorld(WorldRenderer wr, Actor self)
+		Actor self;
+
+		public RenderShroudCircle(Actor self) { this.self = self; }
+
+		public IEnumerable<IRenderable> RenderAfterWorld(WorldRenderer wr)
 		{
 			if (self.Owner != self.World.LocalPlayer)
-				return;
+				yield break;
 
-			wr.DrawRangeCircle(
+			yield return new RangeCircleRenderable(
+				self.CenterPosition,
+				self.Info.Traits.Get<CreatesShroudInfo>().Range,
+				0,
 				Color.FromArgb(128, Color.Cyan),
-				self.CenterLocation.ToFloat2(), self.Info.Traits.Get<CreatesShroudInfo>().Range);
+				Color.FromArgb(96, Color.Black)
+			);
 		}
 	}
 }

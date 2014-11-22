@@ -1,0 +1,347 @@
+MINP:
+	Mine:
+		CrushClasses: mine
+		DetonateClasses: mine
+		AvoidFriendly: no
+	Explodes:
+		Weapon: APMine
+	Health:
+		HP: 100
+		NotifyAppliedDamage: false
+	Armor:
+		Type: Light
+	RenderSimple:
+	Cloak:
+		CloakSound:
+		UncloakSound:
+		Palette:
+		CloakTypes: Mine
+	Tooltip:
+		Name: Mine
+	ProximityCaptor:
+		Types: Mine
+	TargetableUnit:
+		TargetTypes: Ground
+	BodyOrientation:
+	Immobile:
+		OccupiesSpace: true
+
+MINV:
+	Mine:
+		CrushClasses: mine
+		DetonateClasses: mine
+		AvoidFriendly: no
+	Explodes:
+		Weapon: ATMine
+	Health:
+		HP: 100
+		NotifyAppliedDamage: false
+	Armor:
+		Type: Light
+	RenderSimple:
+	Cloak:
+		CloakSound:
+		UncloakSound:
+		Palette:
+		CloakTypes: Mine
+	Tooltip:
+		Name: Mine
+	ProximityCaptor:
+		Types: Mine
+	TargetableUnit:
+		TargetTypes: Ground
+	BodyOrientation:
+	Immobile:
+		OccupiesSpace: true
+
+CRATE:
+	Inherits: ^Crate
+	GiveCashCrateAction:
+		Amount: 1000
+		SelectionShares: 50
+		UseCashTick: yes
+	LevelUpCrateAction:
+		SelectionShares: 40
+	ExplodeCrateAction@fire:
+		Weapon: CrateNapalm
+		SelectionShares: 5
+	ExplodeCrateAction@boom:
+		Weapon: CrateExplosion
+		SelectionShares: 5
+	HideMapCrateAction:
+		SelectionShares: 5
+		Effect: hide-map
+	HealUnitsCrateAction:
+		Notification: heal2.aud
+		SelectionShares: 2
+		Effect: heal
+	RevealMapCrateAction:
+		SelectionShares: 1
+		Effect: reveal-map
+	SupportPowerCrateAction@parabombs:
+		SelectionShares: 5
+		Proxy: powerproxy.parabombs
+		Effect: parabombs
+	DuplicateUnitCrateAction:
+		SelectionShares: 10
+		MaxAmount: 5
+		MinAmount: 1
+		MaxDuplicateValue: 1500
+	GiveMcvCrateAction:
+		SelectionShares: 2
+		NoBaseSelectionShares: 100
+		Units: mcv
+	GiveUnitCrateAction@jeep:
+		SelectionShares: 7
+		Units: jeep
+		ValidRaces: allies
+		Prerequisites: techlevel.low
+	GiveUnitCrateAction@arty:
+		SelectionShares: 6
+		Units: arty
+		ValidRaces: allies
+		Prerequisites: techlevel.medium, dome
+	GiveUnitCrateAction@v2rl:
+		SelectionShares: 6
+		Units: v2rl
+		ValidRaces: soviet
+		Prerequisites: techlevel.medium, dome
+	GiveUnitCrateAction@1tnk:
+		SelectionShares: 5
+		Units: 1tnk
+		ValidRaces: allies
+		Prerequisites: techlevel.low
+	GiveUnitCrateAction@2tnk:
+		SelectionShares: 4
+		Units: 2tnk
+		ValidRaces: allies
+		Prerequisites: techlevel.medium, fix
+	GiveUnitCrateAction@3tnk:
+		SelectionShares: 4
+		Units: 3tnk
+		ValidRaces: soviet
+		Prerequisites: techlevel.medium, fix
+	GiveUnitCrateAction@4tnk:
+		SelectionShares: 3
+		Units: 4tnk
+		ValidRaces: soviet
+		Prerequisites: techlevel.unrestricted, fix, techcenter
+	GiveUnitCrateAction@squadlight:
+		SelectionShares: 7
+		Units: e1,e1,e1,e3,e3
+		ValidRaces: allies, soviet
+	GiveUnitCrateAction@squadheavyallies:
+		SelectionShares: 7
+		Units: e1,e1,e1,e1,e3,e3,e3,e6,medi
+		ValidRaces: allies
+		TimeDelay: 4500
+	GiveUnitCrateAction@squadheavysoviet:
+		SelectionShares: 7
+		Units: e1,e1,e4,e4,e3,e3,e3
+		ValidRaces: soviet
+		TimeDelay: 4500
+	GrantUpgradeCrateAction@invuln:
+		SelectionShares: 5
+		Effect: invuln
+		Notification: ironcur9.aud
+		Upgrades: invulnerability
+		Duration: 600
+
+MONEYCRATE:
+	Inherits: ^Crate
+	Tooltip:
+		Name: Money Crate
+	GiveCashCrateAction:
+		Amount: 500
+		SelectionShares: 1
+		UseCashTick: true
+	WithCrateBody:
+		Images: wcrate
+
+HEALCRATE:
+	Inherits: ^Crate
+	Tooltip:
+		Name: Heal Crate
+	HealUnitsCrateAction:
+		Notification: heal2.aud
+		SelectionShares: 1
+		Effect: heal
+
+CAMERA:
+	Immobile:
+		OccupiesSpace: false
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 10c0
+	ProximityCaptor:
+		Types: Camera
+	BodyOrientation:
+	DetectCloaked:
+		Range: 10
+
+camera.paradrop:
+	Immobile:
+		OccupiesSpace: false
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 6c0
+	ProximityCaptor:
+		Types: Camera
+	BodyOrientation:
+
+SONAR:
+	Immobile:
+		OccupiesSpace: false
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 10c0
+	ProximityCaptor:
+		Types: Sonar
+	BodyOrientation:
+	DetectCloaked:
+		Range: 10
+		CloakTypes: Underwater
+
+FLARE:
+	Immobile:
+		OccupiesSpace: false
+	Health:
+		HP: 1000
+	RevealsShroud:
+		Range: 3c0
+	RenderFlare:
+		Image: smokland
+	HiddenUnderFog:
+	Tooltip:
+		Name: Flare
+	ProximityCaptor:
+		Types: Flare
+	BodyOrientation:
+
+MINE:
+	Tooltip:
+		Name: Ore Mine
+	RenderBuilding:
+		Palette: terrain
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	AppearsOnRadar:
+	RadarColorFromTerrain:
+		Terrain: Ore
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: yes
+	AutoTargetIgnore:
+	BodyOrientation:
+	SeedsResource:
+
+RAILMINE:
+	Tooltip:
+		Name: Gem Mine
+	RenderBuilding:
+		Palette: player
+	Building:
+		Footprint: xx
+		Dimensions: 2,1
+	AppearsOnRadar:
+	RadarColorFromTerrain:
+		Terrain: Gems
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: no
+	AutoTargetIgnore:
+	BodyOrientation:
+	SeedsResource:
+		ResourceType: Gems
+
+QUEE:
+	Tooltip:
+		Name: Queen Ant
+	Building:
+		Footprint: xx
+		Dimensions: 2,1
+	RenderBuilding:
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+
+LAR1:
+	Tooltip:
+		Name: Ant Larva
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	RenderBuilding:
+		Palette: terrain
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+
+LAR2:
+	Tooltip:
+		Name: Ant Larvae
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	RenderBuilding:
+		Palette: terrain
+	AppearsOnRadar:
+	BodyOrientation:
+	EditorTilesetFilter:
+		RequireTilesets: INTERIOR
+	EditorAppearance:
+		RelativeToTopLeft: yes
+		UseTerrainPalette: true
+
+powerproxy.parabombs:
+	AirstrikePower:
+		Icon: parabombs
+		Description: Parabombs (Single Use)
+		LongDesc: A Badger drops a load of parachuted\nbombs on your target.
+		OneShot: yes
+		AllowMultiple: yes
+		UnitType: badr.bomber
+		SelectTargetSound: slcttgt1.aud
+		QuantizedFacings: 8
+		DisplayBeacon: True
+		BeaconPoster: pbmbicon
+		CameraActor: camera
+
+powerproxy.sonarpulse:
+	SpawnActorPower:
+		Icon: sonar
+		Description: Sonar Pulse
+		LongDesc: Reveals all submarines in the vicinity for a \nshort time.
+		ChargeTime: 30
+		EndChargeSound: pulse1.aud
+		SelectTargetSound: slcttgt1.aud
+		Actor: sonar
+		LifeTime: 250
+		DeploySound: sonpulse.aud
+		EffectSequence: moveflsh
+		EffectPalette: moveflash
+
+mpspawn:
+	Immobile:
+		OccupiesSpace: false
+	RenderEditorOnly:
+	BodyOrientation:
+
+waypoint:
+	Immobile:
+		OccupiesSpace: false
+	RenderEditorOnly:
+	BodyOrientation:
+

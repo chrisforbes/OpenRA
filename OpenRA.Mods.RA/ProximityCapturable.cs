@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -15,6 +15,7 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Actor can be captured by units in a specified proximity.")]
 	public class ProximityCapturableInfo : ITraitInfo
 	{
 		public readonly bool Permanent = false;
@@ -80,7 +81,7 @@ namespace OpenRA.Mods.RA
 			}
 		}
 
-		void ChangeOwnership(Actor self, Actor captor)
+		static void ChangeOwnership(Actor self, Actor captor)
 		{
 			self.World.AddFrameEndTask(w =>
 			{
@@ -109,45 +110,39 @@ namespace OpenRA.Mods.RA
 
 		IEnumerable<Actor> UnitsInRange()
 		{
-			return Self.World.FindUnitsInCircle(Self.CenterLocation, Game.CellSize * Info.Range)
-				.Where(a => a.IsInWorld && a != Self && !a.Destroyed)
-				.Where(a => !a.Owner.NonCombatant);
+			return Self.World.FindActorsInCircle(Self.CenterPosition, WRange.FromCells(Info.Range))
+				.Where(a => a.IsInWorld && a != Self && !a.Destroyed && !a.Owner.NonCombatant);
 		}
 
 		bool IsClear(Actor self, Player currentOwner, Player originalOwner)
 		{
-			return UnitsInRange().Where(a => a.Owner != originalOwner)
-				.Where(a => a.Owner != currentOwner)
-				.Where(a => CanBeCapturedBy(a))
-				.All(a => WorldUtils.AreMutualAllies(a.Owner, currentOwner));
+			return UnitsInRange()
+				.All(a => a.Owner == originalOwner || a.Owner == currentOwner ||
+					WorldUtils.AreMutualAllies(a.Owner, currentOwner) || !CanBeCapturedBy(a));
 		}
 
 		// TODO exclude other NeutralActor that arent permanent
 		bool IsStillInRange(Actor self)
 		{
-			return UnitsInRange()
-				.Where(a => a.Owner == self.Owner)
-				.Where(a => CanBeCapturedBy(a))
-				.Any();
+			return UnitsInRange().Any(a => a.Owner == self.Owner && CanBeCapturedBy(a));
 		}
 
 		IEnumerable<Actor> CaptorsInRange(Actor self)
 		{
 			return UnitsInRange()
-				.Where(a => a.Owner != OriginalOwner)
-				.Where(a => CanBeCapturedBy(a));
+				.Where(a => a.Owner != OriginalOwner && CanBeCapturedBy(a));
 		}
 
 		// TODO exclude other NeutralActor that arent permanent
 		Actor GetInRange(Actor self)
 		{
-			return CaptorsInRange(self).ClosestTo( self.CenterLocation );
+			return CaptorsInRange(self).ClosestTo(self);
 		}
 
 		int CountPlayersNear(Actor self, Player ignoreMe)
 		{
-			return CaptorsInRange(self).Select(a => a.Owner)
-				.Distinct().Count(p => p != ignoreMe);
+			return CaptorsInRange(self).Select(a => a.Owner).Where(p => p != ignoreMe)
+				.Distinct().Count();
 		}
 	}
 }

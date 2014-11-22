@@ -2,38 +2,36 @@ V2RL:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 40
-		Prerequisites: dome
-		Owner: soviet
-		Hotkey: v
+		BuildPaletteOrder: 80
+		Prerequisites: dome, ~vehicles.soviet, ~techlevel.medium
 	Valued:
-		Cost: 700
+		Cost: 900
 	Tooltip:
 		Name: V2 Rocket
 		Description: Long-range rocket artillery.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks, Aircraft
 	Health:
-		HP: 150
+		HP: 200
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 7
+		Speed: 85
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
+	Armament:
+		Weapon: SCUD
 	AttackFrontal:
-		PrimaryWeapon: SCUD
 	RenderUnitReload:
 	AutoTarget:
 	Explodes:
 		Weapon: SCUD
-		EmptyWeapon:
+		EmptyWeapon: UnitExplodeSmall
 
 1TNK:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 40
-		Owner: allies
-		Hotkey: g
+		BuildPaletteOrder: 50
+		Prerequisites: ~vehicles.allies, ~techlevel.low
 	Valued:
 		Cost: 700
 	Tooltip:
@@ -44,16 +42,22 @@ V2RL:
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 9
+		Speed: 128
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 4
+		Range: 4c0
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 25mm
+		Recoil: 85
+		RecoilRecovery: 25
+		LocalOffset: 768,0,90
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: 25mm
-		PrimaryRecoil: 2
-		PrimaryRecoilRecovery: 0.5
-	RenderUnitTurreted:
+	WithMuzzleFlash:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -65,10 +69,8 @@ V2RL:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 60
-		Prerequisites: fix
-		Owner: allies
-		Hotkey: f
+		BuildPaletteOrder: 120
+		Prerequisites: fix, ~vehicles.allies, ~techlevel.medium
 	Valued:
 		Cost: 850
 	Tooltip:
@@ -79,17 +81,22 @@ V2RL:
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 6
-		Crushes: wall, atmine, crate, infantry
+		Speed: 85
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 90mm
+		Recoil: 128
+		RecoilRecovery: 38
+		LocalOffset: 720,0,80
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: 90mm
-		PrimaryRecoil: 3
-		PrimaryRecoilRecovery: 0.9
-	RenderUnitTurreted:
+	WithMuzzleFlash:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -103,10 +110,8 @@ V2RL:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 40
-		Prerequisites: fix
-		Owner: soviet
-		Hotkey: h
+		BuildPaletteOrder: 130
+		Prerequisites: fix, ~vehicles.soviet, ~techlevel.medium
 	Valued:
 		Cost: 1150
 	Tooltip:
@@ -117,18 +122,22 @@ V2RL:
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 5
-		Crushes: wall, atmine, crate, infantry
+		Speed: 71
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	Turreted:
 		ROT: 5
+	Armament:
+		Weapon: 105mm
+		Recoil: 128
+		RecoilRecovery: 38
+		LocalOffset: 768,85,90, 768,-85,90
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: 105mm
-		PrimaryRecoil: 3
-		PrimaryRecoilRecovery: 0.9
-		PrimaryLocalOffset: 2,0,0,0,0, -2,0,0,0,0
-	RenderUnitTurreted:
+	WithMuzzleFlash:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -142,12 +151,12 @@ V2RL:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 100
-		Prerequisites: fix,stek
-		Owner: soviet
-		Hotkey: m
+		BuildPaletteOrder: 190
+		Prerequisites: fix, stek, ~vehicles.soviet, ~techlevel.unrestricted
 	Valued:
-		Cost: 1800
+		Cost: 2000
+	CustomBuildTimeValue:
+		Value: 2500
 	Tooltip:
 		Name: Mammoth Tank
 		Description: Big and slow tank, with anti-air capability.\n  Strong vs Tanks, Aircraft\n  Weak vs Infantry
@@ -156,21 +165,29 @@ V2RL:
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 3
-		Crushes: wall, atmine, crate, infantry
+		Speed: 42
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 6
+		Range: 6c0
 	Turreted:
-		ROT: 1
+		ROT: 2
+	Armament@PRIMARY:
+		Weapon: 120mm
+		LocalOffset: 900,180,340, 900,-180,340
+		Recoil: 171
+		RecoilRecovery: 30
+		MuzzleSequence: muzzle
+	Armament@SECONDARY:
+		Name: secondary
+		Weapon: MammothTusk
+		LocalOffset: -85,384,340, -85,-384,340
+		LocalYaw: -100,100
+		Recoil: 43
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: 120mm
-		SecondaryWeapon: MammothTusk
-		PrimaryLocalOffset: -4,-5,0,0,0, 4,-5,0,0,0
-		SecondaryLocalOffset: -7,2,0,0,25, 7,2,0,0,-25
-		PrimaryRecoil: 4
-		PrimaryRecoilRecovery: 0.7
-		SecondaryRecoil: 1
-	RenderUnitTurreted:
+	WithMuzzleFlash:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -179,8 +196,8 @@ V2RL:
 		HuskActor: 4TNK.Husk
 	SelfHealing:
 		Step: 1
-		Ticks: 1
-		HealIfBelow: 80%
+		Ticks: 3
+		HealIfBelow: 50%
 		DamageCooldown: 150
 	Selectable:
 		Bounds: 44,38,0,-4
@@ -189,30 +206,32 @@ ARTY:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 80
-		Prerequisites: dome
-		Owner: allies
-		Hotkey: r
+		BuildPaletteOrder: 70
+		Prerequisites: dome, ~vehicles.allies, ~techlevel.medium
 	Valued:
-		Cost: 600
+		Cost: 800
 	Tooltip:
 		Name: Artillery
 		Description: Long-range artillery.\n  Strong vs Infantry, Buildings\n  Weak vs Tanks, Aircraft
 	Health:
-		HP: 75
+		HP: 100
 	Armor:
 		Type: Light
 	Mobile:
 		ROT: 2
-		Speed: 6
+		Speed: 85
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
+	Armament:
+		Weapon: 155mm
+		LocalOffset: 624,0,208
+		MuzzleSequence: muzzle
 	AttackFrontal:
-		PrimaryWeapon: 155mm
+	WithMuzzleFlash:
 	RenderUnit:
 	Explodes:
 		Weapon: UnitExplode
-		Chance: 75  
+		Chance: 75
 	AutoTarget:
 
 HARV:
@@ -220,13 +239,13 @@ HARV:
 	Buildable:
 		Queue: Vehicle
 		BuildPaletteOrder: 10
-		Prerequisites: proc
-		Owner: allies,soviet
-		Hotkey: e
+		Prerequisites: proc, ~techlevel.infonly
+		InitialActivity: FindResources
 	Valued:
 		Cost: 1100
 	Tooltip:
 		Name: Ore Truck
+		GenericName: Harvester
 		Description: Collects Ore and Gems for processing.\n  Unarmed
 	Selectable:
 		Priority: 7
@@ -235,74 +254,76 @@ HARV:
 		Capacity: 20
 		Resources: Ore,Gems
 		UnloadTicksPerBale: 1
-		# How far away from our linked proc (refinery) to find resources (in cells):
 		SearchFromProcRadius: 24
-		# How far away from last harvest order location to find more resources (in cells):
 		SearchFromOrderRadius: 12
 	Health:
 		HP: 600
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 6
-		Crushes: wall, atmine, crate, infantry
+		Speed: 85
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 4
+		Range: 4c0
 	RenderHarvester:
-	-AttackMove:
+		ImagesByFullness: harvempty, harvhalf, harv
 	GpsDot:
-		String:Harvester
+		String: Harvester
 	LeavesHusk:
 		HuskActor: HARV.EmptyHusk
 	HarvesterHuskModifier:
 		FullHuskActor: HARV.FullHusk
 		FullnessThreshold: 50
+	Explodes:
+		Weapon: OreExplosion
+		EmptyWeapon: UnitExplodeSmall
 
 MCV:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 110
-		Prerequisites: fix
-		Owner: allies,soviet
-		Hotkey: b
+		BuildPaletteOrder: 90
+		Prerequisites: fix, ~techlevel.medium
+	CustomBuildTimeValue:
+		Value: 2000
 	Valued:
 		Cost: 2000
 	Tooltip:
 		Name: Mobile Construction Vehicle
 		Description: Deploys into another Construction Yard.\n  Unarmed
 	Selectable:
-		Priority: 3
+		Priority: 4
 		Bounds: 42,42
 	Health:
 		HP: 600
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 6
-		Crushes: wall, atmine, crate, infantry
+		Speed: 85
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 4
+		Range: 4c0
 	Transforms:
 		IntoActor: fact
-		Offset:-1,-1
+		Offset: -1,-1
 		Facing: 96
 		TransformSounds: placbldg.aud, build5.aud
 		NoTransformSounds: nodeply1.aud
 	RenderUnit:
 	MustBeDestroyed:
 	BaseBuilding:
-	-AttackMove:
 	LeavesHusk:
 		HuskActor: MCV.Husk
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
 
 JEEP:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
 		BuildPaletteOrder: 30
-		Owner: allies
-		Hotkey: n
+		Prerequisites: ~vehicles.allies, ~techlevel.low
 	Valued:
 		Cost: 500
 	Tooltip:
@@ -314,30 +335,34 @@ JEEP:
 		Type: Light
 	Mobile:
 		ROT: 10
-		Speed: 12
+		Speed: 170
 	RevealsShroud:
-		Range: 8
+		Range: 8c0
 	Turreted:
 		ROT: 10
+		Offset: 0,0,85
+	Armament:
+		Weapon: M60mg
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: M60mg
-		PrimaryOffset: 0,0,0,-2
 	WithMuzzleFlash:
-	RenderUnitTurreted:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Cargo:
 		Types: Infantry
 		MaxWeight: 1
 		PipCount: 1
-		UnloadFacing: 220
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
 
 APC:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 50
-		Owner: soviet
-		Hotkey: c
+		BuildPaletteOrder: 40
+		Prerequisites: ~vehicles.soviet, ~techlevel.low
 	Valued:
 		Cost: 850
 	Tooltip:
@@ -348,12 +373,15 @@ APC:
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 10
+		Speed: 142
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
+	Armament:
+		Weapon: M60mg
+		LocalOffset: 0,0,171
+		MuzzleSequence: muzzle
 	AttackFrontal:
-		PrimaryWeapon: M60mg
-		PrimaryOffset: 0,0,0,-4
 	RenderUnit:
 	WithMuzzleFlash:
 	AutoTarget:
@@ -361,62 +389,64 @@ APC:
 		Types: Infantry
 		MaxWeight: 5
 		PipCount: 5
-		UnloadFacing: 220
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
 
 MNLY.AP:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 30
-		Prerequisites: fix
-		Owner: soviet
-		Hotkey: p
+		BuildPaletteOrder: 110
+		Prerequisites: fix, ~vehicles.soviet, ~techlevel.medium
 	Valued:
 		Cost: 800
 	Tooltip:
-		Name: Minelayer (Anti-Personnel)
-		Icon: MNLYICON
-		Description: Lays mines to destroy unwary enemy units.\n  Unarmed
+		Name: Minelayer
+		Description: Lays mines to destroy unwary enemy units.\nCan detect mines.\n  Unarmed
 	Health:
 		HP: 100
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 9
+		Speed: 128
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	RenderUnit:
 		Image: MNLY
 	Minelayer:
 		Mine: MINP
 	MineImmune:
 	LimitedAmmo:
-		Ammo: 5
-	AttackMove:
-		JustMove: true
+		Ammo: 3
+	DetectCloaked:
+		Range: 5
+		CloakTypes: Mine
+	RenderDetectionCircle:
+	Explodes:
+		Weapon: APMine
 
 MNLY.AT:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 30
-		Prerequisites: fix
-		Owner: allies
-		Hotkey: i
+		BuildPaletteOrder: 100
+		Prerequisites: fix, ~vehicles.allies, ~techlevel.medium
 	Valued:
 		Cost: 800
 	Tooltip:
-		Name: Minelayer (Anti-Tank)
-		Icon: MNLYICON
-		Description: Lays mines to destroy unwary enemy units.\n  Unarmed
+		Name: Minelayer
+		Description: Lays mines to destroy unwary enemy units.\nCan detect mines.\n  Unarmed
 	Health:
 		HP: 100
 	Armor:
 		Type: Heavy
 	Mobile:
-		Speed: 9
+		Speed: 128
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	RenderUnit:
 		Image: MNLY
 	Minelayer:
@@ -424,17 +454,19 @@ MNLY.AT:
 	MineImmune:
 	LimitedAmmo:
 		Ammo: 3
-	AttackMove:
-		JustMove: true
+	DetectCloaked:
+		Range: 5
+		CloakTypes: Mine
+	RenderDetectionCircle:
+	Explodes:
+		Weapon: ATMine
 
 TRUK:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 120
-		Prerequisites: weap
-		Owner: allies, soviet
-		Hotkey: u
+		BuildPaletteOrder: 20
+		Prerequisites: weap, ~techlevel.low
 	Valued:
 		Cost: 500
 	Tooltip:
@@ -445,42 +477,43 @@ TRUK:
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 9
+		Speed: 128
 	RevealsShroud:
-		Range: 3
+		Range: 3c0
 	RenderUnit:
 	SupplyTruck:
 		Payload: 500
-	AttackMove:
-		JustMove: yes
-		
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
+	LeavesHusk:
+		HuskActor: moneycrate
+
 MGG:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 150
-		Prerequisites: atek
-		Owner: allies
-		Hotkey: s
+		BuildPaletteOrder: 160
+		Prerequisites: atek, ~vehicles.allies, ~techlevel.unrestricted
 	Valued:
-		Cost: 1500
+		Cost: 1200
 	Tooltip:
 		Name: Mobile Gap Generator
 		Description: Regenerates the shroud nearby, \nobscuring the area.\n  Unarmed
 	Health:
-		HP: 200
+		HP: 220
 	Armor:
-		Type: Light
+		Type: Heavy
 	Mobile:
-		Speed: 6
+		Speed: 85
+	RenderUnit:
+	WithIdleOverlay@SPINNER:
+		Offset: -299,0,171
+		Sequence: spinner
 	RevealsShroud:
-		Range: 6
-	RenderUnitSpinner:
-		Offset: 0,6
-	AttackMove:
-		JustMove: yes
+		Range: 6c0
 	CreatesShroud:
-		Range: 4
+		Range: 6c0
 	RenderShroudCircle:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -488,168 +521,107 @@ MGG:
 	LeavesHusk:
 		HuskActor: MGG.Husk
 
-MGG.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Mobile Gap Generator)
-	RenderUnit:
-		Image: mgg
-	ThrowsParticle@spinner:
-		Anim: spinner-idle
-		Spread: 3,3
-		Speed: 6
-		AnimKey: spinner-idle
-		Offset: 0,6
-
 MRJ:
 	Inherits: ^Vehicle
 	Valued:
-		Cost: 1000
+		Cost: 800
 	Tooltip:
 		Name: Mobile Radar Jammer
+		Description: Jams nearby enemy radar domes\nand deflects incoming missiles.\nCan detect cloaked units.\n  Unarmed
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 150
+		Prerequisites: atek, ~vehicles.allies, ~techlevel.unrestricted
 	Health:
-		HP: 200
+		HP: 220
 	Armor:
-		Type: Light
+		Type: Heavy
 	Mobile:
-		Speed: 6
+		Speed: 85
 	RevealsShroud:
-		Range: 6
-	RenderUnitSpinner:
-		Offset: 0,6
-	AttackMove:
-		JustMove: yes
+		Range: 6c0
+	RenderUnit:
+	WithIdleOverlay@SPINNER:
+		Sequence: spinner
+		Offset: -256,0,256
 	Explodes:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
-
-1TNK.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Light Tank)
-	RenderUnit:
-		Image: 1tnk
-	ThrowsParticle@turret:
-		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
-
-2TNK.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Medium Tank)
-	RenderUnit:
-		Image: 2tnk
-	ThrowsParticle@turret:
-		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
-
-3TNK.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Heavy Tank)
-	RenderUnit:
-		Image: 3tnk
-	ThrowsParticle@turret:
-		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
-
-4TNK.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Mammoth Tank)
-	RenderUnit:
-		Image: 4tnk
-	ThrowsParticle@turret:
-		Anim: turret
-		Spread: 3,3
-		Speed: 6
-		AnimKey: turret
-
-HARV.FullHusk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Harvester)
-	RenderUnit:
-		Image: hhusk
-
-HARV.EmptyHusk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (Harvester)
-	RenderUnit:
-		Image: hhusk2
-
-MCV.Husk:
-	Inherits: ^Husk
-	Tooltip:
-		Name: Husk (MCV)
-	RenderUnit:
-		Image: mcvhusk
+	JamsRadar:
+		Range: 15
+	JamsMissiles:
+		Range: 4
+		AlliedMissiles: False
+	RenderJammerCircle:
+	DetectCloaked:
+		Range: 6
 
 TTNK:
 	Inherits: ^Tank
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 130
-		Prerequisites: stek,tsla
-		Owner: soviet
-		Hotkey: l
+		BuildPaletteOrder: 180
+		Prerequisites: tsla, stek, ~vehicles.soviet, ~techlevel.unrestricted
 	Valued:
 		Cost: 1350
 	Tooltip:
 		Name: Tesla Tank
-		Description: Tank with mounted tesla coil.\n  Strong vs Infantry, Light Vehicles\n  and Buildings  \n  Weak vs Tanks, Aircraft
+		Description: Tank with mounted tesla coil.\n  Strong vs Infantry, Vehicles\n  and Buildings  \n  Weak vs Aircraft
 	Health:
-		HP: 150
+		HP: 400
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 8
-		Crushes: wall, atmine, crate, infantry
+		Speed: 113
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 7
+		Range: 7c0
+	Armament:
+		Weapon: TTankZap
+		LocalOffset: 0,0,213
 	AttackFrontal:
-		PrimaryWeapon: TTankZap
-		PrimaryOffset: 0,0,0,-5
-	RenderUnitSpinner:
+	RenderUnit:
+	WithIdleOverlay@SPINNER:
+		Sequence: spinner
 	Selectable:
 		Bounds: 28,28,0,0
 	AutoTarget:
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
 
 FTRK:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 30
-		Owner: soviet
-		Hotkey: k
+		BuildPaletteOrder: 60
+		Prerequisites: ~vehicles.soviet, ~techlevel.low
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: Flak Truck
-		Description: Flak Truck, good for scouting.\n  Strong vs Light Vehicles, Aircraft  \n  Weak vs Tanks
+		Name: Mobile Flak
+		Description: Mobile unit with mounted Flak Cannon.\n  Strong vs Light Vehicles, Aircraft  \n  Weak vs Tanks
 	Health:
-		HP: 120
-	Armor: 
+		HP: 150
+	Armor:
 		Type: Light
 	Mobile:
 		ROT: 10
-		Speed: 9
+		Speed: 128
 	RevealsShroud:
-		Range: 4
+		Range: 6c0
 	Turreted:
-		ROT: 5
+		ROT: 10
+		Offset: -298,0,298
+	Armament:
+		Weapon: FLAK-23
+		Recoil: 85
+		LocalOffset: 512,0,192
+		MuzzleSequence: muzzle
 	AttackTurreted:
-		PrimaryWeapon: FLAK-23
-		PrimaryOffset: 0,5,0,-4
-		PrimaryRecoil: 2
-	RenderUnitTurreted:
+	WithMuzzleFlash:
+	RenderUnit:
+	WithTurret:
 	AutoTarget:
 	Explodes:
 		Weapon: UnitExplodeSmall
@@ -661,10 +633,8 @@ DTRK:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 140
-		Prerequisites: stek
-		Owner: soviet
-		Hotkey: o
+		BuildPaletteOrder: 170
+		Prerequisites: stek, ~vehicles.soviet, ~techlevel.unrestricted
 	Valued:
 		Cost: 2500
 	Tooltip:
@@ -675,17 +645,17 @@ DTRK:
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 6
+		Speed: 85
 	RevealsShroud:
-		Range: 3
+		Range: 3c0
 	RenderUnit:
-	AttackMove:
-		JustMove: yes
 	Explodes:
 		Weapon: MiniNuke
 		EmptyWeapon: MiniNuke
 	DemoTruck:
-	-IronCurtainable:
+	-InvulnerabilityUpgrade@IRONCURTAIN:
+	KillsSelf:
+		RequiresUpgrade: invulnerability
 	Chronoshiftable:
 		ExplodeInstead: yes
 
@@ -693,30 +663,112 @@ CTNK:
 	Inherits: ^Vehicle
 	Buildable:
 		Queue: Vehicle
-		BuildPaletteOrder: 140
-		Prerequisites: atek
-		Owner: allies
-		Hotkey: j
+		BuildPaletteOrder: 210
+		Prerequisites: atek, pdox, ~vehicles.allies, ~techlevel.unrestricted
 	Valued:
-		Cost: 1200
+		Cost: 1350
 	Tooltip:
 		Name: Chrono Tank
-		Description: Chrono Tank, teleports to areas within range.\n  Strong vs Vehicles, Buildings\n  Weak vs Tanks
+		Description: Chrono Tank, teleports to areas within range.\n  Strong vs Vehicles, Buildings\n  Weak vs Aircraft
 	Selectable:
 		Bounds: 28,28
 	Health:
-		HP: 260
+		HP: 400
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 8
+		Speed: 113
+		Crushes: wall, mine, crate, infantry
 	RevealsShroud:
-		Range: 6
+		Range: 6c0
 	RenderUnit:
 	AutoTarget:
+	Armament@PRIMARY:
+		Weapon: APTusk
+		LocalOffset: 0,-171,0
+		LocalYaw: 100
+	Armament@SECONDARY:
+		Weapon: APTusk
+		LocalOffset: 0,171,0
+		LocalYaw: -100
 	AttackFrontal:
-		PrimaryWeapon: ChronoTusk
-		SecondaryWeapon: ChronoTusk
-		PrimaryLocalOffset: -4,0,0,0,0, -4,0,0,0,0
-		SecondaryLocalOffset: 4,0,0,0,25, 4,0,0,0,-25
-	ChronoshiftDeploy:
+	PortableChrono:
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
+
+QTNK:
+	Inherits: ^Tank
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 200
+		Prerequisites: fix, stek, ~vehicles.soviet, ~techlevel.unrestricted
+	Valued:
+		Cost: 2500
+	Tooltip:
+		Name: MAD Tank
+		Description: Deals seismic damage to nearby vehicles\nand structures.\n  Strong vs Vehicles, Buildings\n  Weak vs Infantry
+	Health:
+		HP: 900
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 56
+		Crushes: wall, mine, crate, infantry
+	RevealsShroud:
+		Range: 6c0
+	Selectable:
+		Bounds: 44,38,0,-4
+	RenderUnit:
+	Explodes:
+		Weapon: UnitExplodeSmall
+	MadTank:
+	-EjectOnDeath:
+	TargetableUnit:
+		TargetTypes: Ground, MADTank, Repair
+
+STNK:
+	Inherits: ^Vehicle
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 140
+		Prerequisites: atek, ~vehicles.allies, ~techlevel.unrestricted
+	Valued:
+		Cost: 1350
+	Tooltip:
+		Name: Phase Transport
+		Description: Lightly armored infantry transport\nwhich can cloak. Can detect cloaked units.\n  Strong vs Light Vehicles\n  Weak vs Aircraft
+	Selectable:
+		Bounds: 28,28
+	Health:
+		HP: 300
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 113
+		Crushes: wall, mine, crate, infantry
+	RevealsShroud:
+		Range: 6c0
+	RenderUnit:
+	AutoTarget:
+		InitialStance: ReturnFire
+	Armament:
+		Weapon: APTusk
+		LocalOffset: 400,0,0
+	Turreted:
+		ROT: 5
+	AttackTurreted:
+	WithTurret:
+	Cargo:
+		Types: Infantry
+		MaxWeight: 3
+		PipCount: 3
+	Cloak:
+		InitialDelay: 125
+		CloakDelay: 250
+	DetectCloaked:
+		Range: 6
+	Explodes:
+		Weapon: UnitExplodeSmall
+		EmptyWeapon: UnitExplodeSmall
+

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,8 +12,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
-using OpenRA.Mods.RA.Buildings;
+using OpenRA.Graphics;
+using OpenRA.Mods.Common;
+using OpenRA.Mods.Common.Power;
 using OpenRA.Network;
 using OpenRA.Traits;
 using OpenRA.Widgets;
@@ -37,11 +38,13 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		DropDownButtonWidget statsDropDown;
 		IEnumerable<Player> players;
 		World world;
+		WorldRenderer worldRenderer;
 
 		[ObjectCreator.UseCtor]
-		public ObserverStatsLogic(World world, Widget widget)
+		public ObserverStatsLogic(World world, WorldRenderer worldRenderer, Widget widget, Action onExit)
 		{
 			this.world = world;
+			this.worldRenderer = worldRenderer;
 			players = world.Players.Where(p => !p.NonCombatant);
 
 			basicStatsHeaders = widget.Get<ContainerWidget>("BASIC_STATS_HEADERS");
@@ -134,6 +137,15 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 
 			ClearStats();
 			DisplayStats(BasicStats);
+
+			var close = widget.GetOrNull<ButtonWidget>("CLOSE");
+			if (close != null)
+				close.OnClick = () =>
+				{
+					Ui.CloseWindow();
+					Ui.Root.RemoveChild(widget);
+					onExit();
+				};
 		}
 
 		void ClearStats()
@@ -155,7 +167,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			graph.GetSeries = () =>
 				players.Select(p => new LineGraphSeries(
 					p.PlayerName,
-					p.ColorRamp.GetColor(0),
+					p.Color.RGB,
 					(p.PlayerActor.TraitOrDefault<PlayerStatistics>() ?? new PlayerStatistics(p.PlayerActor)).EarnedSamples.Select(s => (float)s)
 					));
 
@@ -170,7 +182,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				var team = t;
 				var tt = ScrollItemWidget.Setup(teamTemplate, () => false, () => { });
 				tt.IgnoreMouseOver = true;
-				tt.Get<LabelWidget>("TEAM").GetText = () => team.Key == 0 ? "No team" : "Team " + team.Key;
+				tt.Get<LabelWidget>("TEAM").GetText = () => team.Key == 0 ? "No Team" : "Team " + team.Key;
 				playerStatsPanel.AddChild(tt);
 				foreach (var p in team)
 				{
@@ -185,7 +197,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			combatStatsHeaders.Visible = true;
 			var template = SetupPlayerScrollItemWidget(combatPlayerTemplate, player);
 
-			AddPlayerFlagAndName(template, player);
+			LobbyUtils.AddPlayerFlagAndName(template, player);
 
 			var stats = player.PlayerActor.TraitOrDefault<PlayerStatistics>();
 			if (stats == null) return template;
@@ -205,7 +217,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			productionStatsHeaders.Visible = true;
 			var template = SetupPlayerScrollItemWidget(productionPlayerTemplate, player);
 
-			AddPlayerFlagAndName(template, player);
+			LobbyUtils.AddPlayerFlagAndName(template, player);
 
 			template.Get<ObserverProductionIconsWidget>("PRODUCTION_ICONS").GetPlayer = () => player;
 			template.Get<ObserverSupportPowerIconsWidget>("SUPPORT_POWER_ICONS").GetPlayer = () => player;
@@ -218,13 +230,13 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			economyStatsHeaders.Visible = true;
 			var template = SetupPlayerScrollItemWidget(economyPlayerTemplate, player);
 
-			AddPlayerFlagAndName(template, player);
+			LobbyUtils.AddPlayerFlagAndName(template, player);
 
 			var res = player.PlayerActor.Trait<PlayerResources>();
 			var stats = player.PlayerActor.TraitOrDefault<PlayerStatistics>();
 			if (stats == null) return template;
 
-			template.Get<LabelWidget>("CASH").GetText = () => "$" + (res.DisplayCash + res.DisplayOre);
+			template.Get<LabelWidget>("CASH").GetText = () => "$" + (res.DisplayCash + res.DisplayResources);
 			template.Get<LabelWidget>("EARNED_MIN").GetText = () => AverageEarnedPerMinute(res.Earned);
 			template.Get<LabelWidget>("EARNED_THIS_MIN").GetText = () => "$" + stats.EarnedThisMinute;
 			template.Get<LabelWidget>("EARNED").GetText = () => "$" + res.Earned;
@@ -246,10 +258,10 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			basicStatsHeaders.Visible = true;
 			var template = SetupPlayerScrollItemWidget(basicPlayerTemplate, player);
 
-			AddPlayerFlagAndName(template, player);
+			LobbyUtils.AddPlayerFlagAndName(template, player);
 
 			var res = player.PlayerActor.Trait<PlayerResources>();
-			template.Get<LabelWidget>("CASH").GetText = () => "$" + (res.DisplayCash + res.DisplayOre);
+			template.Get<LabelWidget>("CASH").GetText = () => "$" + (res.DisplayCash + res.DisplayResources);
 			template.Get<LabelWidget>("EARNED_MIN").GetText = () => AverageEarnedPerMinute(res.Earned);
 
 			var powerRes = player.PlayerActor.Trait<PowerManager>();
@@ -257,11 +269,10 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			power.GetText = () => powerRes.PowerDrained + "/" + powerRes.PowerProvided;
 			power.GetColor = () => GetPowerColor(powerRes.PowerState);
 
-			template.Get<LabelWidget>("KILLS").GetText = () => player.Kills.ToString();
-			template.Get<LabelWidget>("DEATHS").GetText = () => player.Deaths.ToString();
-
 			var stats = player.PlayerActor.TraitOrDefault<PlayerStatistics>();
 			if (stats == null) return template;
+			template.Get<LabelWidget>("KILLS").GetText = () => (stats.UnitsKilled + stats.BuildingsKilled).ToString();
+			template.Get<LabelWidget>("DEATHS").GetText = () => (stats.UnitsDead + stats.BuildingsDead).ToString();
 			template.Get<LabelWidget>("ACTIONS_MIN").GetText = () => AverageOrdersPerMinute(stats.OrderCount);
 
 			return template;
@@ -273,36 +284,23 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			{
 				var playerBase = world.Actors.FirstOrDefault(a => !a.IsDead() && a.HasTrait<BaseBuilding>() && a.Owner == player);
 				if (playerBase != null)
-				{
-					Game.MoveViewport(playerBase.Location.ToFloat2());
-				}
+					worldRenderer.Viewport.Center(playerBase.CenterPosition);
 			});
 		}
 
-		string MapControl(double control)
+		static string MapControl(double control)
 		{
 			return (control * 100).ToString("F1") + "%";
 		}
 
 		string AverageOrdersPerMinute(double orders)
 		{
-			return (world.FrameNumber == 0 ? 0 : orders / (world.FrameNumber / 1500.0)).ToString("F1");
+			return (world.WorldTick == 0 ? 0 : orders / (world.WorldTick / 1500.0)).ToString("F1");
 		}
 
 		string AverageEarnedPerMinute(double earned)
 		{
-			return "$" + (world.FrameNumber == 0 ? 0 : earned / (world.FrameNumber / 1500.0)).ToString("F2");
-		}
-
-		static void AddPlayerFlagAndName(ScrollItemWidget template, Player player)
-		{
-			var flag = template.Get<ImageWidget>("FLAG");
-			flag.GetImageName = () => player.Country.Race;
-			flag.GetImageCollection = () => "flags";
-
-			var playerName = template.Get<LabelWidget>("PLAYER");
-			playerName.GetText = () => player.PlayerName + (player.WinState == WinState.Undefined ? "" : " (" + player.WinState + ")");
-			playerName.GetColor = () => player.ColorRamp.GetColor(0);
+			return "$" + (world.WorldTick == 0 ? 0 : earned / (world.WorldTick / 1500.0)).ToString("F2");
 		}
 
 		static Color GetPowerColor(PowerState state)

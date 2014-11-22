@@ -1,6 +1,6 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
- * Copyright 2007-2013 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,99 +11,110 @@
 using System;
 using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
-using OpenRA.Network;
+using OpenRA.Mods.Common;
 using OpenRA.Orders;
+using OpenRA.Primitives;
 using OpenRA.Widgets;
-using OpenRA.Mods.RA.Orders;
 
 namespace OpenRA.Mods.RA.Widgets
 {
 	public class WorldCommandWidget : Widget
 	{
-		public World World { get { return OrderManager.world; } }
-
-		public readonly OrderManager OrderManager;
+		readonly World world;
+		readonly WorldRenderer worldRenderer;
+		readonly RadarPings radarPings;
 
 		[ObjectCreator.UseCtor]
-		public WorldCommandWidget(OrderManager orderManager) { OrderManager = orderManager; }
+		public WorldCommandWidget(World world, WorldRenderer worldRenderer)
+		{
+			this.world = world;
+			this.worldRenderer = worldRenderer;
+			radarPings = world.WorldActor.TraitOrDefault<RadarPings>();
+		}
 
 		public override string GetCursor(int2 pos) { return null; }
 		public override Rectangle GetEventBounds() { return Rectangle.Empty; }
 
 		public override bool HandleKeyPress(KeyInput e)
 		{
-			if (World == null) return false;
-			if (World.LocalPlayer == null) return false;
+			if (world == null || world.LocalPlayer == null)
+				return false;
 
 			return ProcessInput(e);
 		}
 
 		bool ProcessInput(KeyInput e)
 		{
-			if (e.Modifiers == Modifiers.None && e.Event == KeyInputEvent.Down)
+			if (e.Event == KeyInputEvent.Down)
 			{
-				if (e.KeyName == Game.Settings.Keys.CycleBaseKey)
+				var key = Hotkey.FromKeyInput(e);
+				var ks = Game.Settings.Keys;
+
+				if (key == ks.CycleBaseKey)
 					return CycleBases();
 
-				if (e.KeyName == Game.Settings.Keys.ToLastEventKey)
+				if (key == ks.CycleProductionBuildingsKey)
+					return CycleProductionBuildings();
+
+				if (key == ks.ToLastEventKey)
 					return ToLastEvent();
 
-				if (e.KeyName == Game.Settings.Keys.ToSelectionKey)
+				if (key == ks.ToSelectionKey)
 					return ToSelection();
 
-				if (e.KeyName == Game.Settings.Keys.SellKey)
-					return PerformSwitchToSellMode();
 
-				if (e.KeyName == Game.Settings.Keys.PowerDownKey)
-					return PerformSwitchToPowerDownMode();
-
-				if (e.KeyName == Game.Settings.Keys.RepairKey)
-					return PerformSwitchToRepairMode();
-
-				if (!World.Selection.Actors.Any()) // Put all functions, that are no unit-functions, before this line!
+				// Put all functions that aren't unit-specific before this line!
+				if (!world.Selection.Actors.Any())
 					return false;
 
-				if (e.KeyName == Game.Settings.Keys.AttackMoveKey)
+				if (key == ks.AttackMoveKey)
 					return PerformAttackMove();
 
-				if (e.KeyName == Game.Settings.Keys.StopKey)
+				if (key == ks.StopKey)
 					return PerformStop();
 
-				if (e.KeyName == Game.Settings.Keys.ScatterKey)
+				if (key == ks.ScatterKey)
 					return PerformScatter();
 
-				if (e.KeyName == Game.Settings.Keys.DeployKey)
+				if (key == ks.DeployKey)
 					return PerformDeploy();
 
-				if (e.KeyName == Game.Settings.Keys.StanceCycleKey)
+				if (key == ks.StanceCycleKey)
 					return PerformStanceCycle();
+
+				if (key == ks.GuardKey)
+					return PerformGuard();
 			}
 
 			return false;
 		}
 
-		// todo: take ALL this garbage and route it through the OrderTargeter stuff.
-
+		// TODO: take ALL this garbage and route it through the OrderTargeter stuff.
 		bool PerformAttackMove()
 		{
-			var actors = World.Selection.Actors
-				.Where(a => a.Owner == World.LocalPlayer).ToArray();
+			var actors = world.Selection.Actors
+				.Where(a => a.Owner == world.LocalPlayer)
+				.ToArray();
 
-			if (actors.Length > 0)
-				World.OrderGenerator = new GenericSelectTarget(actors, "AttackMove",
-				                                               "attackmove", Game.mouseButtonPreference.Action);
+			if (actors.Any())
+				world.OrderGenerator = new GenericSelectTarget(actors,
+					"AttackMove", "attackmove", MouseButton.Right);
 
 			return true;
 		}
 
 		void PerformKeyboardOrderOnSelection(Func<Actor, Order> f)
 		{
-			var orders = World.Selection.Actors
-				.Where(a => a.Owner == World.LocalPlayer).Select(f).ToArray();
-			foreach (var o in orders) World.IssueOrder(o);
-			World.PlayVoiceForOrders(orders);
+			var orders = world.Selection.Actors
+				.Where(a => a.Owner == world.LocalPlayer && !a.Destroyed)
+				.Select(f)
+				.ToArray();
+
+			foreach (var o in orders)
+				world.IssueOrder(o);
+
+			world.PlayVoiceForOrders(orders);
 		}
 
 		bool PerformStop()
@@ -120,98 +131,120 @@ namespace OpenRA.Mods.RA.Widgets
 
 		bool PerformDeploy()
 		{
-			/* hack: multiple orders here */
+			// HACK: multiple orders here
 			PerformKeyboardOrderOnSelection(a => new Order("ReturnToBase", a, false));
 			PerformKeyboardOrderOnSelection(a => new Order("DeployTransform", a, false));
 			PerformKeyboardOrderOnSelection(a => new Order("Unload", a, false));
-			PerformKeyboardOrderOnSelection(a => new Order("DemoDeploy", a, false));
+			PerformKeyboardOrderOnSelection(a => new Order("Detonate", a, false));
 			return true;
 		}
 
 		bool PerformStanceCycle()
 		{
-			var actor = World.Selection.Actors
-				.Where(a => a.Owner == World.LocalPlayer && !a.Destroyed)
-				.Select(a => Pair.New( a, a.TraitOrDefault<AutoTarget>() ))
-				.Where(a => a.Second != null).FirstOrDefault();
+			var actor = world.Selection.Actors
+				.Where(a => a.Owner == world.LocalPlayer && !a.Destroyed)
+				.Select(a => Pair.New(a, a.TraitOrDefault<AutoTarget>()))
+				.FirstOrDefault(a => a.Second != null);
 
 			if (actor.First == null)
 				return true;
 
-			var stances = Enum<UnitStance>.GetValues();
+			var ati = actor.First.Info.Traits.GetOrDefault<AutoTargetInfo>();
+			if (ati == null || !ati.EnableStances)
+				return false;
 
-			var nextStance = stances.Concat(stances).SkipWhile(s => s != actor.Second.predictedStance).Skip(1).First();
+			var stances = Enum<UnitStance>.GetValues();
+			var nextStance = stances.Concat(stances)
+				.SkipWhile(s => s != actor.Second.PredictedStance)
+				.Skip(1)
+				.First();
 
 			PerformKeyboardOrderOnSelection(a =>
 			{
 				var at = a.TraitOrDefault<AutoTarget>();
-				if (at != null) at.predictedStance = nextStance;
-				// NOTE(jsd): Abuse of the type system here with `CPos`
-				return new Order("SetUnitStance", a, false) { TargetLocation = new CPos((int)nextStance, 0) };
+				if (at != null)
+					at.PredictedStance = nextStance;
+
+				return new Order("SetUnitStance", a, false) { ExtraData = (uint)nextStance };
 			});
 
-			Game.Debug( "Unit stance set to: {0}".F(nextStance) );
+			Game.Debug("Unit stance set to: {0}".F(nextStance));
+
+			return true;
+		}
+
+		bool PerformGuard()
+		{
+			var actors = world.Selection.Actors
+				.Where(a => !a.Destroyed && a.Owner == world.LocalPlayer && a.HasTrait<Guard>());
+
+			if (actors.Any())
+				world.OrderGenerator = new GuardOrderGenerator(actors);
 
 			return true;
 		}
 
 		bool CycleBases()
 		{
-			var bases = World.ActorsWithTrait<BaseBuilding>()
-				.Where( a => a.Actor.Owner == World.LocalPlayer ).ToArray();
-			if (!bases.Any()) return true;
+			var bases = world.ActorsWithTrait<BaseBuilding>()
+				.Where(a => a.Actor.Owner == world.LocalPlayer)
+				.ToArray();
+
+			if (!bases.Any())
+				return true;
 
 			var next = bases
 				.Select(b => b.Actor)
-				.SkipWhile(b => !World.Selection.Actors.Contains(b))
+				.SkipWhile(b => !world.Selection.Actors.Contains(b))
 				.Skip(1)
 				.FirstOrDefault();
 
 			if (next == null)
 				next = bases.Select(b => b.Actor).First();
 
-			World.Selection.Combine(World, new Actor[] { next }, false, true);
+			world.Selection.Combine(world, new Actor[] { next }, false, true);
+
+			return ToSelection();
+		}
+
+		bool CycleProductionBuildings()
+		{
+			var facilities = world.ActorsWithTrait<Production>()
+				.Where(a => a.Actor.Owner == world.LocalPlayer && !a.Actor.HasTrait<BaseBuilding>())
+				.OrderBy(f => f.Actor.Info.Traits.Get<ProductionInfo>().Produces.First())
+				.ToArray();
+
+			if (!facilities.Any())
+				return true;
+
+			var next = facilities
+				.Select(b => b.Actor)
+				.SkipWhile(b => !world.Selection.Actors.Contains(b))
+				.Skip(1)
+				.FirstOrDefault();
+
+			if (next == null)
+				next = facilities.Select(b => b.Actor).First();
+
+			world.Selection.Combine(world, new Actor[] { next }, false, true);
+
+			Sound.PlayNotification(world.Map.Rules, null, "Sounds", "ClickSound", null);
 
 			return ToSelection();
 		}
 
 		bool ToLastEvent()
 		{
-			if (World.LocalPlayer == null)
+			if (radarPings == null || radarPings.LastPingPosition == null)
 				return true;
 
-			var eventNotifier = World.LocalPlayer.PlayerActor.TraitOrDefault<BaseAttackNotifier>();
-			if (eventNotifier == null)
-				return true;
-
-			if (eventNotifier.lastAttackTime < 0)
-				return true;
-
-			Game.viewport.Center(eventNotifier.lastAttackLocation.ToFloat2());
+			worldRenderer.Viewport.Center(radarPings.LastPingPosition.Value);
 			return true;
 		}
 
 		bool ToSelection()
 		{
-			Game.viewport.Center(World.Selection.Actors);
-			return true;
-		}
-
-		bool PerformSwitchToSellMode()
-		{
-			World.ToggleInputMode<SellOrderGenerator>();
-			return true;
-		}
-
-		bool PerformSwitchToPowerDownMode()
-		{
-			World.ToggleInputMode<PowerDownOrderGenerator>();
-			return true;
-		}
-
-		bool PerformSwitchToRepairMode()
-		{
-			World.ToggleInputMode<RepairOrderGenerator>();
+			worldRenderer.Viewport.Center(world.Selection.Actors);
 			return true;
 		}
 	}

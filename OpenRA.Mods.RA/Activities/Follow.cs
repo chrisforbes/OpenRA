@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,41 +8,43 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using OpenRA.Traits;
-using OpenRA.Mods.RA.Move;
 
 namespace OpenRA.Mods.RA.Activities
 {
 	public class Follow : Activity
 	{
-		Target Target;
-		int Range;
-		int nextPathTime;
+		readonly Target target;
+		readonly WRange minRange;
+		readonly WRange maxRange;
+		readonly IMove move;
 
-		const int delayBetweenPathingAttempts = 20;
-		const int delaySpread = 5;
-
-		public Follow(Target target, int range)
+		public Follow(Actor self, Target target, WRange minRange, WRange maxRange)
 		{
-			Target = target;
-			Range = range;
+			this.target = target;
+			this.minRange = minRange;
+			this.maxRange = maxRange;
+
+			move = self.Trait<IMove>();
 		}
 
-		public override Activity Tick( Actor self )
+		public override Activity Tick(Actor self)
 		{
-			if (IsCanceled) return NextActivity;
-			if (!Target.IsValid) return NextActivity;
+			if (IsCanceled || !target.IsValidFor(self))
+				return NextActivity;
 
-			var inRange = ( Target.CenterLocation.ToCPos() - self.Location ).LengthSquared < Range * Range;
+			var cachedPosition = target.CenterPosition;
+			var path = move.MoveWithinRange(target, minRange, maxRange);
 
-			if( inRange ) return this;
-			if (--nextPathTime > 0) return this;
+			// We are already in range, so wait until the target moves before doing anything
+			if (target.IsInRange(self.CenterPosition, maxRange) && !target.IsInRange(self.CenterPosition, minRange))
+			{
+				var wait = new WaitFor(() => !target.IsValidFor(self) || target.CenterPosition != cachedPosition);
+				return Util.SequenceActivities(wait, path, this);
+			}
 
-			nextPathTime = self.World.SharedRandom.Next(delayBetweenPathingAttempts - delaySpread,
-				delayBetweenPathingAttempts + delaySpread);
-
-			var mobile = self.Trait<Mobile>();
-			return Util.SequenceActivities( mobile.MoveWithinRange( Target, Range ), this );
+			return Util.SequenceActivities(path, this);
 		}
 	}
 }

@@ -54,7 +54,7 @@ button-pressed: chrome.png
 	corner-bl: 64,254,2,2
 	corner-br: 126,254,2,2
 
-button-toggled: chrome.png
+button-highlighted: chrome.png
 	background: 257,129,30,30
 	border-r: 287,129,1,30
 	border-l: 256,129,1,30
@@ -65,7 +65,7 @@ button-toggled: chrome.png
 	corner-bl: 256,159,1,1
 	corner-br: 287,159,1,1
 
-button-toggled-hover: chrome.png
+button-highlighted-hover: chrome.png
 	background: 289,129,30,30
 	border-r: 319,129,1,30
 	border-l: 288,129,1,30
@@ -76,7 +76,7 @@ button-toggled-hover: chrome.png
 	corner-bl: 288,159,1,1
 	corner-br: 319,159,1,1
 
-button-toggled-pressed: chrome.png
+button-highlighted-pressed: chrome.png
 	background: 257,161,30,30
 	border-r: 287,161,1,30
 	border-l: 256,161,1,30
@@ -87,7 +87,7 @@ button-toggled-pressed: chrome.png
 	corner-bl: 256,191,1,1
 	corner-br: 287,191,1,1
 
-button-toggled-disabled: chrome.png
+button-highlighted-disabled: chrome.png
 	background: 289,161,30,30
 	border-r: 319,161,1,30
 	border-l: 288,161,1,30
@@ -97,50 +97,6 @@ button-toggled-disabled: chrome.png
 	corner-tr: 319,160,1,1
 	corner-bl: 288,191,1,1
 	corner-br: 319,191,1,1
-
-scrollthumb: chrome.png
-	background: 2,194,60,60
-	border-r: 62,194,2,60
-	border-l: 0,194,2,60
-	border-b: 2,254,60,2
-	border-t: 2,192,60,2
-	corner-tl: 0,192,2,2
-	corner-tr: 62,192,2,2
-	corner-bl: 0,254,2,2
-	corner-br: 62,254,2,2
-
-scrollthumb-hover: chrome.png
-	background: 2,130,60,60
-	border-r: 62,130,2,60
-	border-l: 0,130,2,60
-	border-b: 2,190,60,2
-	border-t: 2,128,60,2
-	corner-tl: 0,128,2,2
-	corner-tr: 62,128,2,2
-	corner-bl: 0,190,2,2
-	corner-br: 62,190,2,2
-
-scrollthumb-disabled: chrome.png
-	background: 66,130,60,60
-	border-r: 126,130,2,60
-	border-l: 64,130,2,60
-	border-b: 66,190,60,2
-	border-t: 66,128,60,2
-	corner-tl: 64,128,2,2
-	corner-tr: 126,128,2,2
-	corner-bl: 64,190,2,2
-	corner-br: 126,190,2,2
-
-scrollthumb-pressed: chrome.png
-	background: 66,194,60,60
-	border-r: 126,194,2,60
-	border-l: 64,194,2,60
-	border-b: 66,254,60,2
-	border-t: 66,192,60,2
-	corner-tl: 64,192,2,2
-	corner-tr: 126,192,2,2
-	corner-bl: 64,254,2,2
-	corner-br: 126,254,2,2
 
 # A copy of button
 textfield: chrome.png
@@ -227,6 +183,50 @@ scrollpanel-bg: chrome.png
 	corner-bl: 64,126,2,2
 	corner-br: 126,126,2,2
 
+scrollpanel-button: chrome.png
+	background: 2,194,60,60
+	border-r: 62,194,2,60
+	border-l: 0,194,2,60
+	border-b: 2,254,60,2
+	border-t: 2,192,60,2
+	corner-tl: 0,192,2,2
+	corner-tr: 62,192,2,2
+	corner-bl: 0,254,2,2
+	corner-br: 62,254,2,2
+
+scrollpanel-button-hover: chrome.png
+	background: 2,130,60,60
+	border-r: 62,130,2,60
+	border-l: 0,130,2,60
+	border-b: 2,190,60,2
+	border-t: 2,128,60,2
+	corner-tl: 0,128,2,2
+	corner-tr: 62,128,2,2
+	corner-bl: 0,190,2,2
+	corner-br: 62,190,2,2
+
+scrollpanel-button-disabled: chrome.png
+	background: 66,130,60,60
+	border-r: 126,130,2,60
+	border-l: 64,130,2,60
+	border-b: 66,190,60,2
+	border-t: 66,128,60,2
+	corner-tl: 64,128,2,2
+	corner-tr: 126,128,2,2
+	corner-bl: 64,190,2,2
+	corner-br: 126,190,2,2
+
+scrollpanel-button-pressed: chrome.png
+	background: 66,194,60,60
+	border-r: 126,194,2,60
+	border-l: 64,194,2,60
+	border-b: 66,254,60,2
+	border-t: 66,192,60,2
+	corner-tl: 64,192,2,2
+	corner-tr: 126,192,2,2
+	corner-bl: 64,254,2,2
+	corner-br: 126,254,2,2
+
 # A copy of button-hover
 scrollitem-hover: chrome.png
 	background: 2,130,60,60
@@ -251,17 +251,8 @@ scrollitem-selected: chrome.png
 	corner-bl: 64,254,2,2
 	corner-br: 126,254,2,2
 
-# A copy of panel-gray
-slider-tick: chrome.png
-	background: 66,66,60,60
-	border-r: 126,66,2,60
-	border-l: 64,66,2,60
-	border-b: 66,126,60,2
-	border-t: 66,64,60,2
-	corner-tl: 64,64,2,2
-	corner-tr: 126,64,2,2
-	corner-bl: 64,126,2,2
-	corner-br: 126,126,2,2
+slider: chrome.png
+	tick: 64,64,1,4
 
 # A copy of panel-gray
 slider-track: chrome.png
@@ -275,7 +266,50 @@ slider-track: chrome.png
 	corner-bl: 64,126,2,2
 	corner-br: 126,126,2,2
 
+slider-thumb: chrome.png
+	background: 2,194,60,60
+	border-r: 62,194,2,60
+	border-l: 0,194,2,60
+	border-b: 2,254,60,2
+	border-t: 2,192,60,2
+	corner-tl: 0,192,2,2
+	corner-tr: 62,192,2,2
+	corner-bl: 0,254,2,2
+	corner-br: 62,254,2,2
 
+slider-thumb-hover: chrome.png
+	background: 2,130,60,60
+	border-r: 62,130,2,60
+	border-l: 0,130,2,60
+	border-b: 2,190,60,2
+	border-t: 2,128,60,2
+	corner-tl: 0,128,2,2
+	corner-tr: 62,128,2,2
+	corner-bl: 0,190,2,2
+	corner-br: 62,190,2,2
+
+slider-thumb-disabled: chrome.png
+	background: 66,130,60,60
+	border-r: 126,130,2,60
+	border-l: 64,130,2,60
+	border-b: 66,190,60,2
+	border-t: 66,128,60,2
+	corner-tl: 64,128,2,2
+	corner-tr: 126,128,2,2
+	corner-bl: 64,190,2,2
+	corner-br: 126,190,2,2
+
+slider-thumb-pressed: chrome.png
+	background: 66,194,60,60
+	border-r: 126,194,2,60
+	border-l: 64,194,2,60
+	border-b: 66,254,60,2
+	border-t: 66,192,60,2
+	corner-tl: 64,192,2,2
+	corner-tr: 126,192,2,2
+	corner-bl: 64,254,2,2
+	corner-br: 126,254,2,2
+	
 # A copy of button
 checkbox: chrome.png
 	background: 2,194,60,60
@@ -324,6 +358,18 @@ checkbox-pressed: chrome.png
 	corner-bl: 64,254,2,2
 	corner-br: 126,254,2,2
 
+# A copy of button-highlighted-pressed
+checkbox-highlighted: chrome.png
+	background: 257,161,30,30
+	border-r: 287,161,1,30
+	border-l: 256,161,1,30
+	border-b: 257,191,30,1
+	border-t: 257,160,30,1
+	corner-tl: 256,160,1,1
+	corner-tr: 287,160,1,1
+	corner-bl: 256,191,1,1
+	corner-br: 287,191,1,1
+
 panel-black: chrome.png
 	background: 66,2,60,60
 	border-r: 126,2,2,60
@@ -357,7 +403,7 @@ panel-gray: chrome.png
 	corner-bl: 64,126,2,2
 	corner-br: 126,126,2,2
 
-panel-scanline: chrome.png
+panel-allblack: chrome.png
 	background: 2,2,60,60
 	border-r: 62,2,2,60
 	border-l: 0,2,2,60
@@ -385,10 +431,16 @@ music: chrome.png
 	play: 288,0,16,16
 	next: 256,16,16,16
 	prev: 272,16,16,16
+	fastforward: 416,64,16,16
+	slowmo: 416,80,16,16
 
-spawnpoints: chrome.png
-	owned: 256,32,16,16
-	unowned: 256,48,16,16
+lobby-bits: chrome.png
+	spawn-claimed: 458,55,19,19
+	spawn-unclaimed: 435,55,19,19
+	admin: 340,39,7,5
+	colorpicker: 257,33,14,14
+	huepicker: 388,96,7,15
+	kick: 386,115,11,11
 
 checkbox-bits: chrome.png
 	checked: 272,32,16,16
@@ -418,16 +470,19 @@ strategic: strategic.png
 	player_owned: 96,0,32,32
 
 sidebar-bits: chrome.png
-	left-indicator: 320,40,11,8
-	right-indicator: 325,40,11,8
+	indicator-left: 416,48,16,8
+	indicator-right: 416,56,16,8
+	production-tooltip-time: 432, 80, 16, 16
+	production-tooltip-power: 448, 80, 16, 16
+	production-tooltip-cost: 464, 80, 16, 16
 
 production-icons: chrome.png
 	building: 384,0,16,16
 	building-disabled: 384,16,16,16
 	building-alert: 384,32,16,16
-	defense: 400,0,16,16
-	defense-disabled: 400,16,16,16
-	defense-alert: 400,32,16,16
+	defence: 400,0,16,16
+	defence-disabled: 400,16,16,16
+	defence-alert: 400,32,16,16
 	infantry: 416,0,16,16
 	infantry-disabled: 416,16,16,16
 	infantry-alert: 416,32,16,16
@@ -451,3 +506,9 @@ order-icons: chrome.png
 	repair: 384,48,16,16
 	repair-disabled: 384,64,16,16
 	repair-active: 384,80,16,16
+	beacon: 400,48,16,16
+	beacon-disabled: 400,64,16,16
+	beacon-active: 400,80,16,16
+	stats: 480,96,16,16
+	stats-disabled: 480,112,16,16
+	stats-active: 480,128,16,16

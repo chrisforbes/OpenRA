@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -27,8 +27,7 @@ namespace OpenRA.Editor
 
 		public MapSelect(string currentMod)
 		{
-			MapFolderPath = new string[] { Platform.SupportDir, "maps", currentMod }
-				.Aggregate(Path.Combine);
+			MapFolderPath = Platform.ResolvePath("^", "maps", currentMod);
 
 			if (!Directory.Exists(MapFolderPath))
 				Directory.CreateDirectory(MapFolderPath);
@@ -40,14 +39,14 @@ namespace OpenRA.Editor
 		void MapSelect_Load(object sender, EventArgs e)
 		{
 			MapList.Items.Clear();
-			txtPathOut.Text = MapFolderPath;
+			PathOutText.Text = MapFolderPath;
 
 			if (DirectoryIsEmpty(MapFolderPath))
 				return;
 
-			foreach (var map in ModData.FindMapsIn(MapFolderPath))
+			foreach (var map in MapCache.FindMapsIn(MapFolderPath))
 			{
-				ListViewItem map1 = new ListViewItem();
+				var map1 = new ListViewItem();
 				map1.Tag = map;
 				map1.Text = Path.GetFileNameWithoutExtension(map);
 				map1.ImageIndex = 0;
@@ -55,7 +54,7 @@ namespace OpenRA.Editor
 			}
 
 			// hack
-			if (txtNew.Text != "unnamed")
+			if (NewText.Text != "unnamed")
 				MapList.Items[0].Selected = true;
 		}
 
@@ -63,31 +62,31 @@ namespace OpenRA.Editor
 		{
 			if (MapList.SelectedItems.Count == 1)
 			{
-				txtNew.Text = MapList.SelectedItems[0].Text;
-				txtNew.Tag = MapList.SelectedItems[0].Tag;
+				NewText.Text = MapList.SelectedItems[0].Text;
+				NewText.Tag = MapList.SelectedItems[0].Tag;
 
-				var map = new Map(txtNew.Tag as string);
-				txtTitle.Text = map.Title;
-				txtAuthor.Text = map.Author;
-				txtTheater.Text = map.Tileset;
-				txtDesc.Text = map.Description;
-				pbMinimap.Image = null;
+				var map = new Map((string)NewText.Tag);
+				TitleText.Text = map.Title;
+				AuthorText.Text = map.Author;
+				TheaterText.Text = map.Tileset;
+				DescTxt.Text = map.Description;
+				MiniMapBox.Image = null;
 
 				try
 				{
-					pbMinimap.Image = Minimap.AddStaticResources(map, Minimap.TerrainBitmap(map, true));
+					var tileset = Program.Rules.TileSets[map.Tileset];
+					MiniMapBox.Image = Minimap.RenderMapPreview(tileset, map, true);
 				}
 				catch (Exception ed)
 				{
-					Console.WriteLine("No map preview image found: {0}", ed.ToString());
+					Console.WriteLine("No map preview image found: {0}", ed);
 				}
-				finally { }
 			}
 		}
 
-		void txtPathOut_TextChanged(object sender, EventArgs e)
+		void PathOutTextChanged(object sender, EventArgs e)
 		{
-			MapFolderPath = txtPathOut.Text;
+			MapFolderPath = PathOutText.Text;
 		}
 	}
 }

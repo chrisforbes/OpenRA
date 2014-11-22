@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,27 +12,48 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.RA.Activities;
+using OpenRA.Mods.RA.Traits;
 using OpenRA.Traits;
-using OpenRA.Mods.RA.Air;
-using OpenRA.Mods.RA.Move;
 
 namespace OpenRA.Mods.RA.Render
 {
-	class WithShadowInfo : TraitInfo<WithShadow> {}
+	[Desc("Clones the aircraft sprite with another palette below it.")]
+	class WithShadowInfo : ITraitInfo
+	{
+		public readonly string Palette = "shadow";
+
+		public object Create(ActorInitializer init) { return new WithShadow(this); }
+	}
 
 	class WithShadow : IRenderModifier
 	{
-		public IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
+		WithShadowInfo info;
+
+		public WithShadow(WithShadowInfo info)
 		{
-			var move = self.Trait<IMove>();
+			this.info = info;
+		}
+
+		public IEnumerable<IRenderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<IRenderable> r)
+		{
+			var ios = self.Trait<IOccupySpace>();
 
 			/* rude hack */
-			var visualOffset = ((move is Helicopter || move is Mobile) && move.Altitude > 0)
-				? Math.Abs((self.ActorID + Game.LocalTick) / 5 % 4 - 1) - 1 : 0;
+			var flying = ios.CenterPosition.Z > 0;
+			var visualOffset = (ios is Helicopter && flying)
+				? (int)Math.Abs((self.ActorID + Game.LocalTick) / 5 % 4 - 1) - 1 : 0;
 
-			var shadowSprites = r.Select(a => a.WithPalette(wr.Palette("shadow")));
-			var flyingSprites = (move.Altitude <= 0) ? r
-				: r.Select(a => a.WithPos(a.Pos - new float2(0, move.Altitude + visualOffset)).WithZOffset(move.Altitude + a.ZOffset));
+			// Contrails shouldn't cast shadows
+			var shadowSprites = r.Where(s => !s.IsDecoration)
+				.Select(a => a.WithPalette(wr.Palette(info.Palette))
+				.OffsetBy(new WVec(0, 0, -a.Pos.Z))
+				.WithZOffset(a.ZOffset + a.Pos.Z)
+				.AsDecoration());
+
+			var worldVisualOffset = new WVec(0,0,-43*visualOffset);
+			var flyingSprites = !flying ? r :
+				r.Select(a => a.OffsetBy(worldVisualOffset));
 
 			return shadowSprites.Concat(flyingSprites);
 		}

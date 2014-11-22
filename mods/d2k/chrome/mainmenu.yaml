@@ -1,233 +1,194 @@
-Background@MAINMENU_BG:
-	X:(WINDOW_RIGHT - WIDTH)/2
-	Y:(WINDOW_BOTTOM - HEIGHT)/2
-	Width:250
-	Height:420
-	Visible:true
-	Logic:MainMenuButtonsLogic
+Container@MAINMENU:
+	Logic: MainMenuLogic
 	Children:
-		Label@MAINMENU_LABEL_TITLE:
-			X:0
-			Y:20
-			Width:250
-			Height:25
-			Text:OpenD2k Main Menu
-			Align:Center
-			Font:Bold
-		Button@MAINMENU_BUTTON_JOIN:
-			X:45
-			Y:70
-			Width:160
-			Height:25
-			Text:Join Game
-			Font:Bold
-		Button@MAINMENU_BUTTON_CREATE:
-			X:45
-			Y:110
-			Width:160
-			Height:25
-			Text:Create Game
-			Font:Bold
-		Button@MAINMENU_BUTTON_DIRECTCONNECT:
-			X:45
-			Y:150
-			Width:160
-			Height:25
-			Text:Direct Connect
-			Font:Bold
-		Button@MAINMENU_BUTTON_SETTINGS:
-			X:45
-			Y:190
-			Width:160
-			Height:25
-			Text:Settings
-			Font:Bold
-		Button@MAINMENU_BUTTON_MODS:
-			X:45
-			Y:230
-			Width:160
-			Height:25
-			Text:Mods
-			Font:Bold
-		Button@MAINMENU_BUTTON_MUSIC:
-			X:45
-			Y:270
-			Width:160
-			Height:25
-			Text:Music
-			Font:Bold
-		Button@MAINMENU_BUTTON_REPLAY_VIEWER:
-			X:45
-			Y:310
-			Width:160
-			Height:25
-			Text:Replay Viewer
-			Font:Bold
-		Button@MAINMENU_BUTTON_QUIT:
-			X:45
-			Y:350
-			Width:160
-			Height:25
-			Text:Quit
-			Font:Bold
-Background@PERF_BG:
-	ClickThrough:true
-	Background:dialog4
-	Logic:PerfDebugLogic
-	X:10
-	Y:WINDOW_BOTTOM - 250
-	Width: 210
-	Height: 250
-	Children:
-		PerfGraph@GRAPH:
-			X:5
-			Y:5
-			Width:200
-			Height:200
-		Label@TEXT:
-			X:20
-			Y:205
-			Width:170
-			Height:40
-Background@MUSIC_MENU:
-	Logic:MusicPlayerLogic
-	X:(WINDOW_RIGHT - WIDTH)/2
-	Y:(WINDOW_BOTTOM - HEIGHT)/2
-	Width: 450
-	Height: 250
-	Visible: true
-	Children:
-		Label@SETTINGS_LABEL_TITLE:
-			X:0
-			Y:20
-			Width:450
-			Height:25
-			Text:Music
-			Align:Center
-			Font:Bold
-		Button@BUTTON_INSTALL:
-			X:20
-			Y:PARENT_BOTTOM - 45
-			Width:160
-			Height:25
-			Text:Install Music
-			Font:Bold
-		Button@BUTTON_CLOSE:
-			X:PARENT_RIGHT - 180
-			Y:PARENT_BOTTOM - 45
-			Width:160
-			Height:25
-			Text:Close
-			Font:Bold
-			Key:escape
-		Container@BUTTONS:
-			X:PARENT_RIGHT - 150
-			Y:50
+		Label@VERSION_LABEL:
+			X: WINDOW_RIGHT - 10
+			Y: WINDOW_BOTTOM - 20
+			Align: Right
+			Font: Regular
+			Contrast: True
+		Container@MENUS:
+			X: 13 + (WINDOW_RIGHT - 522) / 4 - WIDTH / 2
+			Y: WINDOW_BOTTOM/2-HEIGHT/2
+			Width: 200
+			Height: 320
 			Children:
-				Button@BUTTON_PLAY:
-					X:35
-					Y:0
-					Width:25
-					Height:25
+				Background@MAIN_MENU:
+					Width: PARENT_RIGHT
+					Height: PARENT_BOTTOM
 					Children:
-						Image@IMAGE_PLAY:
-							X:0
-							Y:0
-							Width:25
-							Height:25
-							ImageCollection:music
-							ImageName:play
-				Button@BUTTON_PAUSE:
-					Visible:false
-					X:35
-					Y:0
-					Width:25
-					Height:25
+						Label@MAINMENU_LABEL_TITLE:
+							X: 0
+							Y: 20
+							Width: 200
+							Height: 30
+							Text: OpenRA
+							Align: Center
+							Font: Bold
+						Button@SINGLEPLAYER_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 60
+							Width: 140
+							Height: 30
+							Text: Singleplayer
+							Font: Bold
+						Button@MULTIPLAYER_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 100
+							Width: 140
+							Height: 30
+							Text: Multiplayer
+							Font: Bold
+						Button@SETTINGS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 140
+							Width: 140
+							Height: 30
+							Text: Settings
+							Font: Bold
+						Button@EXTRAS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 180
+							Width: 140
+							Height: 30
+							Text: Extras
+							Font: Bold
+						Button@MODS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 220
+							Width: 140
+							Height: 30
+							Text: Mods
+							Font: Bold
+						Button@QUIT_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 260
+							Width: 140
+							Height: 30
+							Text: Quit
+							Font: Bold
+				Background@SINGLEPLAYER_MENU:
+					Width: PARENT_RIGHT
+					Height: PARENT_BOTTOM
 					Children:
-						Image@IMAGE_PAUSE:
-							X:0
-							Y:0
-							Width:25
-							Height:25
-							ImageCollection:music
-							ImageName:pause
-				Button@BUTTON_STOP:
-					X:70
-					Y:0
-					Width:25
-					Height:25
+						Label@SINGLEPLAYER_MENU_TITLE:
+							X: 0
+							Y: 20
+							Width: 200
+							Height: 30
+							Text: Singleplayer
+							Align: Center
+							Font: Bold
+						Button@SKIRMISH_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 60
+							Width: 140
+							Height: 30
+							Text: Skirmish
+							Font: Bold
+						Button@MISSIONS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 100
+							Width: 140
+							Height: 30
+							Text: Missions
+							Font: Bold
+						Button@BACK_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Key: escape
+							Y: 260
+							Width: 140
+							Height: 30
+							Text: Back
+							Font: Bold
+				Background@EXTRAS_MENU:
+					Width: PARENT_RIGHT
+					Height: PARENT_BOTTOM
 					Children:
-						Image@IMAGE_STOP:
-							X:0
-							Y:0
-							Width:25
-							Height:25
-							ImageCollection:music
-							ImageName:stop
-				Button@BUTTON_NEXT:
-					X:105
-					Y:0
-					Width:25
-					Height:25
-					Children:
-						Image@IMAGE_NEXT:
-							X:0
-							Y:0
-							Width:25
-							Height:25
-							ImageCollection:music
-							ImageName:next
-				Button@BUTTON_PREV:
-					X:0
-					Y:0
-					Width:25
-					Height:25
-					Children:
-						Image@IMAGE_PREV:
-							X:0
-							Y:0
-							Width:25
-							Height:25
-							ImageCollection:music
-							ImageName:prev
-		Label@TIME:
-			X:PARENT_RIGHT - 150
-			Y:75
-			Width:140
-			Height:25
-			Align: Center
-		ScrollPanel@MUSIC_LIST:
-			X:10
-			Y:50
-			Width:280
-			Height:140
+						Label@EXTRAS_MENU_TITLE:
+							X: 0
+							Y: 20
+							Width: 200
+							Height: 30
+							Text: Extras
+							Align: Center
+							Font: Bold
+						Button@REPLAYS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 60
+							Width: 140
+							Height: 30
+							Text: Replays
+							Font: Bold
+						Button@MUSIC_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 100
+							Width: 140
+							Height: 30
+							Text: Music
+							Font: Bold
+						Button@ASSETBROWSER_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 140
+							Width: 140
+							Height: 30
+							Text: Asset Browser
+							Font: Bold
+						Button@CREDITS_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Y: 180
+							Width: 140
+							Height: 30
+							Text: Credits
+							Font: Bold
+						Button@BACK_BUTTON:
+							X: PARENT_RIGHT/2-WIDTH/2
+							Key: escape
+							Y: 260
+							Width: 140
+							Height: 30
+							Text: Back
+							Font: Bold
+		Background@NEWS_BG:
+			X: (WINDOW_RIGHT - WIDTH)/2
+			Y: 35
+			Width: 400
+			Height: 55
 			Children:
-				ScrollItem@MUSIC_TEMPLATE:
-					Width:PARENT_RIGHT-27
-					Height:25
-					X:2
-					Y:0
-					Visible:false
+				DropDownButton@NEWS_BUTTON:
+					X: 15
+					Y: 15
+					Width: 370
+					Height: 25
+					Text: Battlefield News
+					Font: Bold
+				Label@NEWS_STATUS:
+					X: 80
+					Y: 0
+					Width: PARENT_RIGHT - 80 - 80 - 24
+					Height: PARENT_BOTTOM
+					Align: Center
+					VAlign: Middle
+		Container@PERFORMANCE_INFO:
+			Logic: PerfDebugLogic
+			Children:
+				Label@PERF_TEXT:
+					X: 30
+					Y: WINDOW_BOTTOM - 70
+					Width: 170
+					Height: 40
+					Contrast: true
+				Background@GRAPH_BG:
+					ClickThrough: true
+					Background: dialog4
+					X: WINDOW_RIGHT - 240
+					Y: WINDOW_BOTTOM - 240
+					Width: 210
+					Height: 210
 					Children:
-						Label@TITLE:
-							X:5
-							Width:PARENT_RIGHT - 10
-							Height:PARENT_BOTTOM
-							Align: Left
-						Label@LENGTH:
-							X:5
-							Width:PARENT_RIGHT - 10
-							Height:PARENT_BOTTOM
-							Align: Right
-		Checkbox@SHUFFLE:
-			X:PARENT_RIGHT - 150
-			Y:110
-			Width:100
-			Height:20
-			Text:Shuffle
-		Checkbox@REPEAT:
-			X:PARENT_RIGHT - 150
-			Y:140
-			Width:100
-			Height:20
-			Text:Loop
+						PerfGraph@GRAPH:
+							X: 5
+							Y: 5
+							Width: 200
+							Height: 200
+

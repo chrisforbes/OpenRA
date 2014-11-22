@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,28 +8,43 @@
  */
 #endregion
 
-using System;
-using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Effects;
+using System.Drawing;
+using OpenRA.Mods.Common;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Plays an audio notification and shows a radar ping when a harvester is attacked.",
+		"Attach this to the player actor.")]
 	public class HarvesterAttackNotifierInfo : ITraitInfo
 	{
-		public readonly int NotifyInterval = 30;	// seconds
+		[Desc("Minimum duration (in seconds) between notification events.")]
+		public readonly int NotifyInterval = 30;
 
-		public object Create(ActorInitializer init) { return new HarvesterAttackNotifier(this); }
+		public readonly Color RadarPingColor = Color.Red;
+
+		[Desc("Length of time (in ticks) to display a location ping in the minimap.")]
+		public readonly int RadarPingDuration = 10 * 25;
+
+		[Desc("The audio notification type to play.")]
+		public string Notification = "HarvesterAttack";
+
+		public object Create(ActorInitializer init) { return new HarvesterAttackNotifier(init.self, this); }
 	}
 
 	public class HarvesterAttackNotifier : INotifyDamage
 	{
-		HarvesterAttackNotifierInfo info;
+		readonly RadarPings radarPings;
+		readonly HarvesterAttackNotifierInfo info;
 
-		public int lastAttackTime = -1;
-		public CPos lastAttackLocation;
+		int lastAttackTime;
 
-		public HarvesterAttackNotifier(HarvesterAttackNotifierInfo info) { this.info = info; }
+		public HarvesterAttackNotifier(Actor self, HarvesterAttackNotifierInfo info)
+		{
+			radarPings = self.World.WorldActor.TraitOrDefault<RadarPings>();
+			this.info = info;
+			lastAttackTime = -info.NotifyInterval * 25;
+		}
 
 		public void Damaged(Actor self, AttackInfo e)
 		{
@@ -41,11 +56,15 @@ namespace OpenRA.Mods.RA
 			if (e.Attacker != null && e.Attacker.Owner == self.Owner)
 				return;
 
-			if (self.World.FrameNumber - lastAttackTime > info.NotifyInterval * 25)
-				Sound.PlayNotification(self.Owner, "Speech", "HarvesterAttack", self.Owner.Country.Race);
+			if (self.World.WorldTick - lastAttackTime > info.NotifyInterval * 25)
+			{
+				Sound.PlayNotification(self.World.Map.Rules, self.Owner, "Speech", info.Notification, self.Owner.Country.Race);
 
-			lastAttackLocation = self.CenterLocation.ToCPos();
-			lastAttackTime = self.World.FrameNumber;
+				if (radarPings != null)
+					radarPings.Add(() => self.Owner == self.World.LocalPlayer, self.CenterPosition, info.RadarPingColor, info.RadarPingDuration);
+			}
+
+			lastAttackTime = self.World.WorldTick;
 		}
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.RA.Render;
+using OpenRA.Traits;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA.Widgets
@@ -20,19 +22,17 @@ namespace OpenRA.Mods.RA.Widgets
 	public class ObserverProductionIconsWidget : Widget
 	{
 		public Func<Player> GetPlayer;
-		Dictionary<string, Sprite> iconSprites;
-		World world;
-		WorldRenderer worldRenderer;
+		readonly World world;
+		readonly WorldRenderer worldRenderer;
 		Dictionary<ProductionQueue, Animation> clocks;
+
+		public int IconWidth = 32;
+		public int IconHeight = 24;
+		public int IconSpacing = 8;
 
 		[ObjectCreator.UseCtor]
 		public ObserverProductionIconsWidget(World world, WorldRenderer worldRenderer)
-			: base()
 		{
-			iconSprites = Rules.Info.Values.Where(u => u.Traits.Contains<BuildableInfo>() && u.Name[0] != '^')
-				.ToDictionary(
-				u => u.Name,
-				u => Game.modData.SpriteLoader.LoadAllSprites(u.Traits.Get<TooltipInfo>().Icon ?? (u.Name + "icon"))[0]);
 			this.world = world;
 			this.worldRenderer = worldRenderer;
 			clocks = new Dictionary<ProductionQueue, Animation>();
@@ -42,7 +42,6 @@ namespace OpenRA.Mods.RA.Widgets
 			: base(other)
 		{
 			GetPlayer = other.GetPlayer;
-			iconSprites = other.iconSprites;
 			world = other.world;
 			worldRenderer = other.worldRenderer;
 			clocks = other.clocks;
@@ -62,30 +61,35 @@ namespace OpenRA.Mods.RA.Widgets
 			{
 				if (!clocks.ContainsKey(queue.Trait))
 				{
-					clocks.Add(queue.Trait, new Animation("clock"));
+					clocks.Add(queue.Trait, new Animation(world, "clock"));
 				}
 			}
+
+			var iconSize = new float2(IconWidth, IconHeight);
 			foreach (var queue in queues)
 			{
-				var item = queue.Trait.CurrentItem();
-				if (item == null)
-				{
+				var current = queue.Trait.CurrentItem();
+				if (current == null)
 					continue;
-				}
-				var sprite = iconSprites[item.Item];
-				var size = sprite.size / new float2(2, 2);
-				var location = new float2(RenderBounds.Location) + new float2(queue.i * (int)size.Length, 0);
-				WidgetUtils.DrawSHP(sprite, location, worldRenderer, size);
+
+				var actor = queue.Trait.AllItems().FirstOrDefault(a => a.Name == current.Item);
+				if (actor == null)
+					continue;
+
+				var icon = new Animation(world, RenderSimple.GetImage(actor));
+				icon.Play(actor.Traits.Get<TooltipInfo>().Icon);
+				var location = new float2(RenderBounds.Location) + new float2(queue.i * (IconWidth + IconSpacing), 0);
+				WidgetUtils.DrawSHPCentered(icon.Image, location + 0.5f * iconSize, worldRenderer, 0.5f);
 
 				var clock = clocks[queue.Trait];
 				clock.PlayFetchIndex("idle",
-					() => item.TotalTime == 0 ? 0 : ((item.TotalTime - item.RemainingTime)
-						* (clock.CurrentSequence.Length - 1) / item.TotalTime));
+					() => current.TotalTime == 0 ? 0 : ((current.TotalTime - current.RemainingTime)
+					* (clock.CurrentSequence.Length - 1) / current.TotalTime));
 				clock.Tick();
-				WidgetUtils.DrawSHP(clock.Image, location, worldRenderer, size);
+				WidgetUtils.DrawSHPCentered(clock.Image, location + 0.5f * iconSize, worldRenderer, 0.5f);
 
 				var tiny = Game.Renderer.Fonts["Tiny"];
-				var text = GetOverlayForItem(item);
+				var text = GetOverlayForItem(current);
 				tiny.DrawTextWithContrast(text,
 					location + new float2(16, 16) - new float2(tiny.Measure(text).X / 2, 0),
 					Color.White, Color.Black, 1);

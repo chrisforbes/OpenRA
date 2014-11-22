@@ -6,17 +6,65 @@ language: c
 
 # Make sure build dependencies are installed.
 install:
- - sudo apt-get install mono-gmcs cli-common-dev libgl1-mesa-dev libsdl1.2-dev libsdl-gfx1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-net1.2-dev libsdl-ttf2.0-dev libsmpeg-dev libopenal-dev libalut-dev
+ - wget http://download.mono-project.com/repo/xamarin.gpg -O /tmp/mono.gpg
+ - sudo apt-key add /tmp/mono.gpg
+ - sudo sh -c "echo 'deb http://download.mono-project.com/repo/debian wheezy/snapshots/3.8.0 main' >> /etc/apt/sources.list.d/mono-xamarin.list"
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq mono-gmcs cli-common-dev libgl1-mesa-glx libopenal1 libfreetype6 libgdiplus=2.10-3
+cache: apt
 
-# Run the build script which will automatically call RALint.
+# Run the build script
+# call RALint to check for YAML errors
 script:
+ - make dependencies
  - make all
+ - make test
 
-# Only watch the development branch.
+# Automatically update the trait documentation and Lua API
+after_success:
+ - test $TRAVIS_PULL_REQUEST == "false" && make docs && cd packaging && ./update-wiki.sh $TRAVIS_BRANCH
+
+# Only watch the development branch and tagged release.
 branches:
  only:
+   - /^release-.*$/
+   - /^playtest-.*$/
+   - /^pkgtest-.*$/
    - bleed
 
-# Notify developers when needed.
+# Notify developers when build passed/failed.
 notifications:
-  irc: "irc.freenode.net#openra"
+  irc:
+    template:
+      - "%{repository}#%{build_number} %{commit} %{author}: %{message} %{build_url}"
+    channels:
+      - "irc.freenode.net#openra"
+    use_notice: true
+    skip_join: true
+
+before_deploy:
+ - sudo apt-get install nsis markdown dpkg rpm libarchive-dev m4 fakeroot bsdtar
+ - wget ftp://ftp.archlinux.org/other/pacman/pacman-4.0.3.tar.gz -O /tmp/pacman-4.0.3.tar.gz
+ - pushd /tmp
+ - tar -xzvf pacman-4.0.3.tar.gz
+ - cd pacman-4.0.3 && ./configure --disable-doc --prefix=/usr && make && sudo make install
+ - popd
+ - DOTVERSION=`echo ${TRAVIS_TAG} | sed "s/-/\\./g"`
+ - cd packaging
+ - mkdir build
+ - ./package-all.sh ${TRAVIS_TAG} ${PWD}/build/
+deploy:
+  provider: releases
+  api_key:
+    secure: "cMC68erxuf0jb4Pe0sOH4m1f7I2LWPUatD9BC0WeZ9PwTnWOzrm0hnjZIES4TTKVo8WIfZIiCfxpdAFeoh6bomG2MsKwSKMc8qHGhfNGqPnyzYh6zdPZaA+4Q3TDQI3DrziyDnQUFeH1h/7UZLDLxtDrOtcYcGdNg5VjvV9fJ7g="
+  file:
+    - build/OpenRA-${TRAVIS_TAG}.exe
+    - build/OpenRA-${TRAVIS_TAG}.zip
+    - build/openra_${DOTVERSION}_all.deb
+    - build/openra-${DOTVERSION}-1-any.pkg.tar.gz
+    - build/openra-${DOTVERSION}-1.noarch.rpm
+  skip_cleanup: true
+  on:
+    all_branches: true
+    tags: true
+    repo: OpenRA/OpenRA

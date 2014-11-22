@@ -1,10 +1,19 @@
+fb4:
+	idle:
+		Start: 0
+		Length: 4
+
 fire:
 	1: fire1
 		Start: 0
 		Length: *
+		Offset: 0,-3
+		ZOffset: 1023
 	2: fire2
 		Start: 0
 		Length: *
+		Offset: 0,-3
+		ZOffset: 1023
 
 120mm:
 	idle:
@@ -14,12 +23,18 @@ smoke_m:
 	idle:
 		Start: 0
 		Length: *
+		Offset: 2, -5
+		ZOffset: 512
 	loop:
 		Start: 49
 		Length: 42
+		Offset: 2, -5
+		ZOffset: 512
 	end:
 		Start: 0
 		Length: 26
+		Offset: 2, -5
+		ZOffset: 512
 
 laserfire:
 	idle:veh-hit3
@@ -52,43 +67,7 @@ patriot:
 		Facings: 32
 
 explosion:
-	1: piff
-		Start: 0
-		Length: *
-	2: piffpiff
-		Start: 0
-		Length: *
-	3: napalm2
-		Start: 0
-		Length: *
-	4: veh-hit3
-		Start: 0
-		Length: *
-	5: veh-hit2
-		Start: 0
-		Length: *
-	1w: piff
-		Start: 0
-		Length: *
-	2w: piffpiff
-		Start: 0
-		Length: *
-	3w: napalm2
-		Start: 0
-		Length: *
-	4w: veh-hit3
-		Start: 0
-		Length: *
-	5w: veh-hit2
-		Start: 0
-		Length: *
-	8: art-exp1
-		Start: 0
-		Length: *
-	6: atomsfx
-		Start: 0
-		Length: *
-	6w: atomsfx
+	nuke_explosion: atomsfx
 		Start: 0
 		Length: *
 	piff: piff
@@ -140,9 +119,30 @@ rallypoint:
 	flag:flagfly
 		Start: 0
 		Length: *
+		Offset: 10,-5
 	circles:fpls
 		Start: 0
 		Length: *
+
+beacon:
+	arrow: mouse2
+		Start: 5
+		Offset: 1,-12
+	circles: fpls
+		Start: 0
+		Length: *
+	airstrike: bombicon
+		Start: 0
+		Length: 1
+		Offset: 0,-42
+	atomic: atomicon
+		Start: 0
+		Length: 1
+		Offset: 0,-42
+	clock: beaconclock
+		Start: 0
+		Length: *
+		Offset: 0,-42
 
 select:
 	repair:
@@ -155,10 +155,44 @@ allyrepair:
 		Tick: 160
 
 crate:
-	idle: wcrate
+	idle:
 		Start: 0
-	land: wcrate
+		ZOffset: -511
+	land:
 		Start: 0
+		ZOffset: -511
+
+xcratea:
+	idle: xcrate
+		Start: 0
+		ZOffset: -511
+	land: xcrate
+		Start: 0
+		ZOffset: -511
+
+xcrateb:
+	idle: xcrate
+		Start: 1
+		ZOffset: -511
+	land: xcrate
+		Start: 1
+		ZOffset: -511
+
+xcratec:
+	idle: xcrate
+		Start: 2
+		ZOffset: -511
+	land: xcrate
+		Start: 2
+		ZOffset: -511
+
+xcrated:
+	idle: xcrate
+		Start: 3
+		ZOffset: -511
+	land: xcrate
+		Start: 3
+		ZOffset: -511
 
 crate-effects:
 	airstrike: deviator
@@ -192,12 +226,15 @@ crate-effects:
 		Start: 0
 		Length: *
 		Tick: 200
-
-miss:
-	idle:
+	firepowerup: firepowercrate
 		Start: 0
-	damaged-idle:
-		Start: 2
+		Length: *
+	armorup: armorcrate
+		Start: 0
+		Length: *
+	speedup: speedcrate
+		Start: 0
+		Length: *
 
 atomicup:
 	idle:
@@ -221,6 +258,8 @@ ionsfx:
 	idle:
 		Start: 0
 		Length: *
+		Offset: 0, -78
+		ZOffset: 1
 
 bomblet:
 	idle:
@@ -259,13 +298,148 @@ pips:
 		Length: *
 
 overlay:
-	build-valid:
+	build-valid-desert:
+		Start: 0
+	build-valid-snow:
+		Start: 2
+	build-valid-temperat:
+		Start: 0
+	build-valid-winter:
+		Start: 0
+	build-valid-jungle:
 		Start: 0
 	build-invalid:
 		Start: 1
 	target-select:
+		Start: 3
+	target-valid-desert:
+		Start: 0
+	target-valid-snow:
 		Start: 2
-	target-valid:
+	target-valid-temperat:
+		Start: 0
+	target-valid-winter:
+		Start: 0
+	target-valid-jungle:
 		Start: 0
 	target-invalid:
 		Start: 1
+
+powerdown:
+	disabled: speed
+		Start: 3
+
+poweroff:
+	offline:
+		Start: 0
+		Length: *
+		Tick: 160
+
+icon:
+	airstrike: bombicnh
+		Start: 0
+	ioncannon: ionicnh
+		Start: 0
+	abomb: atomicnh
+		Start: 0
+
+moveflsh:
+	idle:
+		Start: 0
+		Length: *
+		Tick: 80
+
+resources:
+	ti1: ti1
+		Length: *
+	ti2: ti2
+		Length: *
+	ti3: ti3
+		Length: *
+	ti4: ti4
+		Length: *
+	ti5: ti5
+		Length: *
+	ti6: ti6
+		Length: *
+	ti7: ti7
+		Length: *
+	ti8: ti8
+		Length: *
+	ti9: ti9
+		Length: *
+	ti10: ti10
+		Length: *
+	ti11: ti11
+		Length: *
+	ti12: ti12
+		Length: *
+	bti1: rtib1
+		Length: *
+	bti2: rtib2
+		Length: *
+	bti3: rtib3
+		Length: *
+	bti4: rtib4
+		Length: *
+	bti5: rtib5
+		Length: *
+	bti6: rtib6
+		Length: *
+	bti7: rtib7
+		Length: *
+	bti8: rtib8
+		Length: *
+	bti9: rtib9
+		Length: *
+	bti10: rtib10
+		Length: *
+	bti11: rtib11
+		Length: *
+	bti12: rtib12
+		Length: *
+
+shroud:
+	typea: shadow
+		Start: 0
+		Length: 12
+	typeb: shadow
+		Start: 12
+		Length: 12
+	typec: shadow
+		Start: 24
+		Length: 12
+	typed: shadow
+		Start: 36
+		Length: 12
+	full: fullshroud
+
+# Note: The order of smudges and craters determines
+# the index that is mapped to them in maps
+scorches:
+	sc1: sc1
+		Length: *
+	sc2: sc2
+		Length: *
+	sc3: sc3
+		Length: *
+	sc4: sc4
+		Length: *
+	sc5: sc5
+		Length: *
+	sc6: sc6
+		Length: *
+
+craters:
+	cr1: cr1
+		Length: *
+	cr2: cr2
+		Length: *
+	cr3: cr3
+		Length: *
+	cr4: cr4
+		Length: *
+	cr5: cr5
+		Length: *
+	cr6: cr6
+		Length: *

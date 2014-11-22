@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,26 +9,41 @@
 #endregion
 
 using System.Linq;
-using OpenRA.Mods.RA.Effects;
+using OpenRA.Mods.Common.Effects;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
 	public class CrateActionInfo : ITraitInfo
 	{
-		public int SelectionShares = 10;
-		public string Effect = null;
-		public string Notification = null;
-		[ActorReference]
-		public string[] ExcludedActorTypes = { };
+		[Desc("Chance of getting this crate, assuming the collector is compatible.")]
+		public readonly int SelectionShares = 10;
+
+		[Desc("An animation defined in sequence yaml(s) to draw.")]
+		public readonly string Effect = null;
+
+		[Desc("Palette to draw the animation in.")]
+		public readonly string Palette = "effect";
+
+		[Desc("Audio clip to play when the crate is collected.")]
+		public readonly string Notification = null;
+
+		[Desc("The earliest time (in ticks) that this crate action can occur on.")]
+		public readonly int TimeDelay = 0;
+		
+		[Desc("Only allow this crate action when the collector has these prerequisites")]
+		public readonly string[] Prerequisites = { };
+
+		[Desc("Actor types that this crate action will not occur for.")]
+		[ActorReference] public string[] ExcludedActorTypes = { };
 
 		public virtual object Create(ActorInitializer init) { return new CrateAction(init.self, this); }
 	}
 
 	public class CrateAction
 	{
-		public Actor self;
-		public CrateActionInfo info;
+		readonly Actor self;
+		readonly CrateActionInfo info;
 
 		public CrateAction(Actor self, CrateActionInfo info)
 		{
@@ -38,7 +53,13 @@ namespace OpenRA.Mods.RA
 
 		public int GetSelectionSharesOuter(Actor collector)
 		{
+			if (self.World.WorldTick < info.TimeDelay)
+				return 0;
+
 			if (info.ExcludedActorTypes.Contains(collector.Info.Name))
+				return 0;
+
+			if (info.Prerequisites.Any() && !collector.Owner.PlayerActor.Trait<TechTree>().HasPrerequisites(info.Prerequisites))
 				return 0;
 
 			return GetSelectionShares(collector);
@@ -54,8 +75,7 @@ namespace OpenRA.Mods.RA
 			Sound.PlayToPlayer(collector.Owner, info.Notification);
 
 			if (info.Effect != null)
-				collector.World.AddFrameEndTask(
-					w => w.Add(new CrateEffect(collector, info.Effect)));
+				collector.World.AddFrameEndTask(w => w.Add(new CrateEffect(collector, info.Effect, info.Palette)));
 		}
 	}
 }

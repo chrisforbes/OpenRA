@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,8 +10,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
-using OpenRA.FileFormats;
+using OpenRA.Primitives;
 
 namespace OpenRA.Support
 {
@@ -70,7 +71,7 @@ namespace OpenRA.Support
 
 		public IEnumerable<double> Samples()
 		{
-			int n = head;
+			var n = head;
 			while (n != tail)
 			{
 				--n;
@@ -81,8 +82,8 @@ namespace OpenRA.Support
 
 		public double Average(int count)
 		{
-			int i = 0;
-			int n = head;
+			var i = 0;
+			var n = head;
 			double sum = 0;
 			while (i < count && n != tail)
 			{
@@ -97,26 +98,27 @@ namespace OpenRA.Support
 		{
 			get
 			{
-				int n = head;
+				var n = head;
 				if (--n < 0) n = samples.Length - 1;
 				return samples[n];
 			}
 		}
 	}
 
-	public class PerfSample : IDisposable
+	public struct PerfSample : IDisposable
 	{
-		readonly Stopwatch sw = new Stopwatch();
-		readonly string Item;
+		readonly string item;
+		readonly long ticks;
 
 		public PerfSample(string item)
 		{
-			Item = item;
+			this.item = item;
+			ticks = Stopwatch.GetTimestamp();
 		}
 
 		public void Dispose()
 		{
-			PerfHistory.Increment(Item, sw.ElapsedTime() * 1000);
+			PerfHistory.Increment(item, 1000.0 * Math.Max(0, Stopwatch.GetTimestamp() - ticks) / Stopwatch.Frequency);
 		}
 	}
 }

@@ -2,39 +2,39 @@ DOG:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 30
-		Prerequisites: barr
-		Owner: soviet
-		Hotkey: o
+		BuildAtProductionType: Dog
+		BuildPaletteOrder: 50
+		Prerequisites: ~kenn, ~techlevel.infonly
 	Valued:
 		Cost: 200
 	Tooltip:
 		Name: Attack Dog
-		Description: Anti-infantry unit. Not fooled by the \nSpy's disguise.\n  Strong vs Infantry\n  Weak vs Vehicles
+		Description: Anti-infantry unit.\nCan detect cloaked units and spies.\n  Strong vs Infantry\n  Weak vs Vehicles
 	Selectable:
 		Voice: DogVoice
 		Bounds: 12,17,-1,-4
 	Health:
 		HP: 12
 	Mobile:
-		Speed: 7
+		Speed: 99
 	RevealsShroud:
-		Range: 5
-	AutoTarget:
+		Range: 5c0
+	Armament:
+		Weapon: DogJaw
 	AttackLeap:
-		PrimaryWeapon: DogJaw
-		CanAttackGround: no
 	RenderInfantry:
 		IdleAnimations: idle1,idle2
 	IgnoresDisguise:
+	DetectCloaked:
+		Range: 5
 
 E1:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
+		BuildAtProductionType: Soldier
 		BuildPaletteOrder: 10
-		Owner: allies,soviet
-		Hotkey: i
+		Prerequisites: ~barracks, ~techlevel.infonly
 	Valued:
 		Cost: 100
 	Tooltip:
@@ -45,22 +45,26 @@ E1:
 	Health:
 		HP: 50
 	Mobile:
-		Speed: 4
+		Speed: 56
+	Armament@PRIMARY:
+		Weapon: M1Carbine
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Vulcan
+		MuzzleSequence: garrison-muzzle
 	AttackFrontal:
-		PrimaryWeapon: M1Carbine
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E2:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 10
-		Owner: soviet
-		Prerequisites: barr
-		Hotkey: g
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 20
+		Prerequisites: ~barr, ~techlevel.infonly
 	Valued:
 		Cost: 160
 	Tooltip:
@@ -71,26 +75,31 @@ E2:
 	Health:
 		HP: 50
 	Mobile:
-		Speed: 5
-	AttackFrontal:
-		PrimaryWeapon: Grenade
-		PrimaryOffset: 0,0,0,-13
+		Speed: 71
+	Armament@PRIMARY:
+		Weapon: Grenade
+		LocalOffset: 0,0,555
 		FireDelay: 15
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Grenade
+		FireDelay: 15
+	AttackFrontal:
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 	Explodes:
 		Weapon: UnitExplodeSmall
-		Chance: 50		
+		Chance: 50
 
 E3:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 20
-		Owner: allies,soviet
-		Hotkey: r
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 30
+		Prerequisites: ~barracks, ~techlevel.infonly
 	Valued:
 		Cost: 300
 	Tooltip:
@@ -101,24 +110,29 @@ E3:
 	Health:
 		HP: 45
 	Mobile:
-		Speed: 3
+		Speed: 56
+	Armament@PRIMARY:
+		Weapon: RedEye
+		LocalOffset: 0,0,555
+	Armament@SECONDARY:
+		Weapon: Dragon
+		LocalOffset: 0,0,555
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Dragon
 	AttackFrontal:
-		PrimaryWeapon: RedEye
-		SecondaryWeapon: Dragon
-		PrimaryOffset: 0,0,0,-13
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E4:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 60
-		Prerequisites: ftur
-		Owner: soviet
-		Hotkey: t
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 70
+		Prerequisites: ~barr, ftur, ~techlevel.low
 	Valued:
 		Cost: 300
 	Tooltip:
@@ -129,23 +143,27 @@ E4:
 	Health:
 		HP: 40
 	Mobile:
-		Speed: 3
-	AttackFrontal:
-		PrimaryWeapon: Flamer
-		PrimaryOffset: 0,-10,0,-8
+		Speed: 56
+	Armament@PRIMARY:
+		Weapon: Flamer
+		LocalOffset: 427,0,341
 		FireDelay: 8
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Flamer
+	AttackFrontal:
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 E6:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 50
-		Owner: soviet,allies
-		Hotkey: e
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 60
+		Prerequisites: ~barracks, ~techlevel.infonly
 	Valued:
 		Cost: 500
 	Tooltip:
@@ -157,64 +175,64 @@ E6:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Passenger:
 		PipType: Yellow
 	EngineerRepair:
-	Captures:
+	RepairsBridges:
+	ExternalCaptures:
+		Type: building
 	TakeCover:
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 
 SPY:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 60
-		Prerequisites: dome, tent
-		Owner: allies
-		Hotkey: p
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 90
+		Prerequisites: dome, ~tent, ~techlevel.medium
 	Valued:
 		Cost: 500
-	SpyToolTip:
+	-Tooltip:
+	DisguiseToolTip:
 		Name: Spy
-		Description: Infiltrates enemy structures to gather \nintelligence. Exact effect depends on the \nbuilding infiltrated.\n  Strong vs Nothing\n  Weak vs Everything\n  Special Ability: Disguised
+		GenericName: Soldier
+		Description: Infiltrates enemy structures for intel or\nsabotage. Exact effect depends on the\nbuilding infiltrated.\n  Strong vs Nothing\n  Weak vs Everything\n  Special Ability: Disguised
 	Selectable:
 		Voice: SpyVoice
 		Bounds: 12,17,0,-9
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	Passenger:
 		PipType: Yellow
 	TakeCover:
-	Spy:
+	Disguise:
 	Infiltrates:
-		InfiltrateTypes: Cash, SupportPower, Exploration
+		Types: SpyInfiltrate
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
 	-RenderInfantry:
-	RenderSpy:
+	RenderDisguise:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
+	Armament:
+		Weapon: SilencedPPK
 	AttackFrontal:
-		PrimaryWeapon: SilencedPPK
 
 E7:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 110
-		Prerequisites: techcenter
-		Owner: allies
-		Hotkey: y
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 120
+		Prerequisites: ~tent, atek, ~techlevel.unrestricted
 		BuildLimit: 1
 	Valued:
 		Cost: 1200
@@ -227,72 +245,38 @@ E7:
 	Health:
 		HP: 100
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
-		Range: 6
+		Range: 6c0
 	C4Demolition:
 		C4Delay: 45
+		Voice: Demolish
 	Passenger:
 		PipType: Red
+	Armament@PRIMARY:
+		Weapon: Colt45
+	Armament@SECONDARY:
+		Weapon: Colt45
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Colt45
+		MuzzleSequence: garrison-muzzle
 	AttackFrontal:
-		PrimaryWeapon: Colt45
-		SecondaryWeapon: Colt45
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
-
-E8:
-	Inherits: ^Infantry
-	Buildable:
-		Queue: Infantry
-		BuildPaletteOrder: 110
-		Prerequisites: stek
-		Owner: soviet
-		Hotkey: v
-		BuildLimit: 1
-	Valued:
-		Cost: 1800
-	Tooltip:
-		Name: Volkov
-		Description: Elite commando cyborg, armed with \nmodular cannons and grenade launcher.\n  Strong vs Vehicles, Infantry\n  Weak vs Aircraft\n\nMaximum 1 can be trained
-	Selectable:
-		Voice: VolkovVoice
-		Bounds: 12,17,0,-9
-	Health:
-		HP: 200
-	Armor:
-		Type: Cybernetic
-	Mobile:
-		Speed: 5
-		Crushes: atmine, crate
-	RevealsShroud:
-		Range: 4
-	Passenger:
-		PipType: Red
-	AttackFrontal:
-		PrimaryWeapon: VolkAT
-		SecondaryWeapon: VolkNapalm
-	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
-		IdleAnimations: idle1
-	CrushableInfantry:
-		CrushSound: crunchy2.aud
-	RepairableNear:
-		Buildings: fix
-		CloseEnough: 1
+	AnnounceOnBuild:
+	AnnounceOnKill:
 
 MEDI:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 20
-		Owner: allies
-		Prerequisites: tent
-		Hotkey: m
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 40
+		Prerequisites: ~tent, ~techlevel.infonly
 	Valued:
-		Cost: 300
+		Cost: 200
 	Tooltip:
 		Name: Medic
 		Description: Heals nearby infantry.\n  Strong vs Nothing\n  Weak vs Everything
@@ -302,56 +286,59 @@ MEDI:
 	Health:
 		HP: 80
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
-		Range: 3
+		Range: 3c0
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Heal
 	AttackMedic:
-		PrimaryWeapon: Heal
+		Cursor: heal
+		OutsideRangeCursor: heal
 	TakeCover:
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		AttackAnimation: heal
 
 MECH:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 70
-		Owner: allies
-		Prerequisites: fix
-		Hotkey: c
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 100
+		Prerequisites: ~tent, fix, ~techlevel.medium
 	Valued:
-		Cost: 800
+		Cost: 500
 	Tooltip:
 		Name: Mechanic
-		Description: Repairs nearby vehicles.\n  Strong vs Nothing\n  Weak vs Everything
+		Description: Repairs nearby vehicles and restores\nhusks to working condition.\n  Strong vs Nothing\n  Weak vs Everything
 	Selectable:
 		Voice: MechanicVoice
 		Bounds: 12,17,0,-9
 	Health:
 		HP: 80
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
-		Range: 3
+		Range: 3c0
 	Passenger:
 		PipType: Yellow
 	AutoHeal:
+	Armament:
+		Weapon: Repair
 	AttackMedic:
-		PrimaryWeapon: Repair
+		Cursor: repair
+		OutsideRangeCursor: repair
+	Captures:
+		CaptureTypes: husk
 	TakeCover:
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		AttackAnimation: heal
 
 EINSTEIN:
 	Inherits: ^Infantry
@@ -365,16 +352,13 @@ EINSTEIN:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
-		Range: 2
+		Range: 2c0
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
 	ProximityCaptor:
 		Types: CivilianInfantry
-	-RenderInfantry:
-	RenderInfantryPanic:
+	RenderInfantry:
 	ScaredyCat:
 
 DELPHI:
@@ -389,16 +373,13 @@ DELPHI:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 5
+		Speed: 71
 	RevealsShroud:
-		Range: 2
+		Range: 2c0
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
 	ProximityCaptor:
 		Types: CivilianInfantry
-	-RenderInfantry:
-	RenderInfantryPanic:
+	RenderInfantry:
 	ScaredyCat:
 
 CHAN:
@@ -410,6 +391,8 @@ GNRL:
 	Inherits: ^CivInfantry
 	Tooltip:
 		Name: General
+	Selectable:
+		Voice: StavrosVoice
 
 THF:
 	Inherits: ^Infantry
@@ -424,86 +407,170 @@ THF:
 	Health:
 		HP: 25
 	Mobile:
-		Speed: 4
+		Speed: 56
 	RevealsShroud:
-		Range: 5
+		Range: 5c0
 	Passenger:
 		PipType: Yellow
 	Infiltrates:
 		InfiltrateTypes: Cash
 	TakeCover:
 	-AutoTarget:
-	AttackMove:
-		JustMove: true
+
+HIJACKER:
+	Inherits: ^Infantry
+	Buildable:
+		Queue: Infantry
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 110
+		Prerequisites: ~barr, fix, ~techlevel.medium
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: Hijacker
+		Description: Hijacks enemy vehicles. Unarmed\n  Strong vs Tanks\n  Weak vs Infantry, Aircraft
+	Selectable:
+		Voice: ThiefVoice
+		Bounds: 12,17,0,-9
+	Health:
+		HP: 50
+	Mobile:
+		Speed: 56
+	RevealsShroud:
+		Range: 5c0
+	Passenger:
+		PipType: Yellow
+	Captures:
+		CaptureTypes: vehicle
+	-AutoTarget:
 
 SHOK:
 	Inherits: ^Infantry
 	Buildable:
 		Queue: Infantry
-		Prerequisites: stek,tsla
-		Owner: soviet
-		Hotkey: l
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 130
+		Prerequisites: ~barr, stek, tsla, ~techlevel.unrestricted
 	Valued:
-		Cost: 500
+		Cost: 400
 	Tooltip:
-		Name: Tesla Trooper
+		Name: Shock Trooper
 		Description: Infantry with tesla coils\n Strong vs Infantry\n Weak vs Vehicles
 	Selectable:
 		Voice: ShokVoice
 		Bounds: 12,17,0,-9
 	Health:
-		HP: 80
+		HP: 100
 	Mobile:
-		Speed: 3
+		Speed: 56
 	RevealsShroud:
-		Range: 4
+		Range: 4c0
+	Armament@PRIMARY:
+		Weapon: PortaTesla
+		LocalOffset: 427,0,341
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: PortaTesla
 	AttackFrontal:
-		PrimaryWeapon: PortaTesla
-		PrimaryOffset: 0,-10,0,-8
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
-	-CrushableInfantry:
+		StandAnimations: stand,stand2
 
 SNIPER:
 	Inherits: ^Infantry
 	Valued:
 		Cost: 700
 	Tooltip:
-		Icon: snipericon
 		Name: Sniper
-		Description: Elite sniper infantry unit.\n  Strong vs Infantry\n  Weak vs Vehicles
+		Description: Elite sniper infantry unit.\nCan detect cloaked units.\n  Strong vs Infantry\n  Weak vs Vehicles
 	Buildable:
 		Queue: Infantry
-		BuildPaletteOrder: 50
-		Owner: soviet
-		Prerequisites: dome
-		Hotkey: n
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 80
+		Prerequisites: ~barr, dome, ~techlevel.medium
 	Selectable:
 		Bounds: 12,17,0,-6
 	Mobile:
-		Speed: 4
+		Speed: 56
 	Health:
-		HP: 200
+		HP: 80
 	Passenger:
 		PipType: Red
 	RevealsShroud:
-		Range: 6
+		Range: 6c0
 	AutoTarget:
-		InitialStance: HoldFire
+		InitialStance: ReturnFire
+	Armament@PRIMARY:
+		Weapon: Sniper
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Sniper
+		MuzzleSequence: garrison-muzzle
 	AttackFrontal:
-		PrimaryWeapon: Sniper
 	TakeCover:
-	-RenderInfantry:
-	RenderInfantryProne:
+	RenderInfantry:
 		IdleAnimations: idle1,idle2
+		StandAnimations: stand,stand2
 	Cloak:
 		InitialDelay: 250
 		CloakDelay: 120
 		CloakSound:
 		UncloakSound:
 		UncloakOnMove: yes
-	Captures:
-		CaptureTypes: civilianbuilding
-		AllowAllies: true
+	DetectCloaked:
+		Range: 6
+
+Zombie:
+	Inherits: ^Infantry
+	Valued:
+		Cost: 100
+	Tooltip:
+		Name: Zombie
+		Description: Slow undead. Attacks in close combat.
+	Buildable:
+		Queue: Infantry
+		BuildPaletteOrder: 200
+		Prerequisites: ~bio
+	Selectable:
+		Voice: AntVoice
+		Bounds: 12,17,0,-9
+	Health:
+		HP: 250
+	Mobile:
+		Speed: 42
+	AutoTarget:
+		ScanRadius: 5
+	AttackFrontal:
+	Armament:
+		Weapon: claw
+
+Ant:
+	Inherits: ^Infantry
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: Giant Ant
+		Description: Irradiated insect that grew oversize.
+	Buildable:
+		Queue: Infantry
+		BuildPaletteOrder: 1954
+		Prerequisites: ~bio
+	Selectable:
+		Voice: AntVoice
+		Bounds: 30,30,0,-2
+	Health:
+		HP: 750
+		Radius: 469
+	Mobile:
+		Speed: 99
+		ROT: 12
+		SharesCell: no
+	AutoTarget:
+		ScanRadius: 5
+	AttackFrontal:
+	Armament:
+		Weapon: mandible
+	WithDeathAnimation:
+		UseDeathTypeSuffix: false
+

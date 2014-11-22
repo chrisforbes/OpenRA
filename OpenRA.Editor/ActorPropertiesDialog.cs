@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,7 +11,6 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Editor
 {
@@ -41,7 +40,7 @@ namespace OpenRA.Editor
 		{
 			var r = new TextBox();
 			r.Text = FieldSaver.FormatValue(getter(), t);
-			r.LostFocus += (e,_) => setter(FieldLoader.GetValue("<editor internals>", t, r.Text));
+			r.LostFocus += (e, _) => setter(FieldLoader.GetValue("<editor internals>", t, r.Text));
 			r.Enabled = false;
 			return r;
 		}

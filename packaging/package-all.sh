@@ -21,20 +21,25 @@ make package
 # Remove the mdb files that are created during `make`
 find . -path "*.mdb" -delete
 
+test -e Changelog.md && rm Changelog.md
+wget https://raw.githubusercontent.com/wiki/OpenRA/OpenRA/Changelog.md
+markdown Changelog.md > CHANGELOG.html
+markdown README.md > README.html
+markdown CONTRIBUTING.md > CONTRIBUTING.html
+markdown DOCUMENTATION.md > DOCUMENTATION.html
+markdown Lua-API.md > Lua-API.html
+
 # List of files that are packaged on all platforms
-# Note that the Tao dlls are shipped on all platforms except osx and that
-# they are now installed to the game directory instead of placed in the gac
-FILES="OpenRA.Game.exe OpenRA.Editor.exe OpenRA.Utility.exe OpenRA.Renderer.SdlCommon.dll OpenRA.Renderer.Cg.dll \
-OpenRA.Renderer.Gl.dll OpenRA.Renderer.Null.dll OpenRA.FileFormats.dll FreeSans.ttf FreeSansBold.ttf titles.ttf \
-cg glsl mods/ra mods/cnc mods/d2k COPYING HACKING INSTALL CHANGELOG"
+FILES=('OpenRA.Game.exe' 'OpenRA.Editor.exe' 'OpenRA.Utility.exe' \
+'OpenRA.Renderer.Sdl2.dll' 'OpenRA.Renderer.Null.dll' \
+ 'lua' 'glsl' 'mods/common' 'mods/ra' 'mods/cnc' 'mods/d2k' 'mods/modchooser' \
+'AUTHORS' 'COPYING' 'README.html' 'CONTRIBUTING.html' 'DOCUMENTATION.html' 'CHANGELOG.html' \
+'global mix database.dat' 'GeoLite2-Country.mmdb')
 
 echo "Copying files..."
-for i in $FILES; do
-	cp -R "$i" "packaging/built/$i" || exit 3
+for i in "${FILES[@]}"; do
+	cp -R "${i}" "packaging/built/${i}" || exit 3
 done
-
-# Copy Tao
-cp thirdparty/Tao/* packaging/built
 
 # SharpZipLib for zip file support
 cp thirdparty/ICSharpCode.SharpZipLib.dll packaging/built
@@ -42,50 +47,59 @@ cp thirdparty/ICSharpCode.SharpZipLib.dll packaging/built
 # FuzzyLogicLibrary for improved AI
 cp thirdparty/FuzzyLogicLibrary.dll packaging/built
 
+# SharpFont for FreeType support
+cp thirdparty/SharpFont* packaging/built
+
+# SDL2-CS
+cp thirdparty/SDL2-CS* packaging/built
+
+# Mono.NAT for UPnP support
+cp thirdparty/Mono.Nat.dll packaging/built
+
+# Eluant (Lua integration)
+cp thirdparty/Eluant* packaging/built
+
+# GeoIP database access
+cp thirdparty/MaxMind.Db.dll packaging/built
+cp thirdparty/MaxMind.GeoIP2.dll packaging/built
+cp thirdparty/Newtonsoft.Json.dll packaging/built
+cp thirdparty/RestSharp.dll packaging/built
+
 # Copy game icon for windows package
 cp OpenRA.Game/OpenRA.ico packaging/built
 
-# Update mod versions
-sed "s/{DEV_VERSION}/$TAG/" ./mods/ra/mod.yaml > ./packaging/built/mods/ra/mod.yaml
-sed "s/{DEV_VERSION}/$TAG/" ./mods/cnc/mod.yaml > ./packaging/built/mods/cnc/mod.yaml
-sed "s/{DEV_VERSION}/$TAG/" ./mods/d2k/mod.yaml > ./packaging/built/mods/d2k/mod.yaml
+# Copy the Windows crash monitor
+cp OpenRA.exe packaging/built
 
-# Remove demo.mix from cnc
-rm ./packaging/built/mods/cnc/bits/demo.mix
-
-#
-# Change into packaging directory and run the 
-# platform-dependant packaging in parallel
-#
 cd packaging
 echo "Creating packages..."
 
-(
-    cd windows
-    makensis -DSRCDIR="$BUILTDIR" OpenRA.nsi &> package.log
-    if [ $? -eq 0 ]; then
-        mv OpenRA.exe "$OUTPUTDIR"/OpenRA-$TAG.exe
-    else
-        echo "Windows package build failed, refer to windows/package.log."  
-    fi
-) &
+pushd windows
+echo "Building Windows setup.exe"
+makensis -V2 -DSRCDIR="$BUILTDIR" -DDEPSDIR="${SRCDIR}/thirdparty/windows" OpenRA.nsi
+if [ $? -eq 0 ]; then
+    mv OpenRA.exe "$OUTPUTDIR"/OpenRA-$TAG.exe
+else
+    echo "Windows package build failed."
+fi
+popd
 
-(
-    cd osx
-    sh buildpackage.sh "$TAG" "$BUILTDIR" "$OUTPUTDIR" &> package.log
-    if [ $? -ne 0 ]; then
-        echo "OSX package build failed, refer to osx/package.log."
-    fi
-) &
+pushd osx
+echo "Zipping OS X package"
+bash buildpackage.sh "$TAG" "$BUILTDIR" "${SRCDIR}/thirdparty/osx" "$OUTPUTDIR"
+if [ $? -ne 0 ]; then
+    echo "OS X package build failed."
+fi
+popd
 
-(
-    cd linux
-    sh buildpackage.sh "$TAG" "$BUILTDIR" "$OUTPUTDIR" &> package.log
-    if [ $? -ne 0 ]; then
-        echo "linux package build failed, refer to linux/package.log."
-    fi
-) &
-wait
+pushd linux
+echo "Building Linux packages"
+bash buildpackage.sh "$TAG" "$BUILTDIR" "${SRCDIR}/thirdparty/linux" "$OUTPUTDIR"
+if [ $? -ne 0 ]; then
+    echo "Linux package build failed."
+fi
+popd
+
 echo "Package build done."
 
 rm -rf $BUILTDIR

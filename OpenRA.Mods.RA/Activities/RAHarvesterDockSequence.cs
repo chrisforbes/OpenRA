@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -43,13 +43,19 @@ namespace OpenRA.Mods.RA
 					return this;
 				case State.Turn:
 					state = State.Dock;
-					return Util.SequenceActivities(new Turn(angle), this);
+					return Util.SequenceActivities(new Turn(self, angle), this);
 				case State.Dock:
-					ru.PlayCustomAnimation(self, "dock", () => {ru.PlayCustomAnimRepeating(self, "dock-loop"); state = State.Loop;});
+					ru.PlayCustomAnimation(self, "dock", () => {
+						ru.PlayCustomAnimRepeating(self, "dock-loop");
+						if (proc.IsInWorld && !proc.IsDead())
+							foreach (var nd in proc.TraitsImplementing<INotifyDocking>())
+								nd.Docked(proc, self);
+						state = State.Loop;
+					});
 					state = State.Wait;
 					return this;
 				case State.Loop:
-					if (harv.TickUnload(self, proc))
+					if (!proc.IsInWorld || proc.IsDead() || harv.TickUnload(self, proc))
 						state = State.Undock;
 					return this;
 				case State.Undock:
@@ -59,8 +65,12 @@ namespace OpenRA.Mods.RA
 				case State.Complete:
 					harv.LastLinkedProc = harv.LinkedProc;
 					harv.LinkProc(self, null);
+					if (proc.IsInWorld && !proc.IsDead())
+						foreach (var nd in proc.TraitsImplementing<INotifyDocking>())
+							nd.Undocked(proc, self);
 					return NextActivity;
 			}
+
 			throw new InvalidOperationException("Invalid harvester dock state");
 		}
 

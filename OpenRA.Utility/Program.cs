@@ -1,6 +1,6 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,6 +11,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using OpenRA.FileSystem;
 
 namespace OpenRA.Utility
 {
@@ -18,29 +20,40 @@ namespace OpenRA.Utility
 	{
 		static void Main(string[] args)
 		{
-			var actions = new Dictionary<string, Action<string[]>>()
+			if (args.Length == 0)
 			{
-				{ "--settings-value", Command.Settings },
-				{ "--shp", Command.ConvertPngToShp },
-				{ "--png", Command.ConvertShpToPng },
-				{ "--fromd2", Command.ConvertFormat2ToFormat80 },
-				{ "--extract", Command.ExtractFiles },
-				{ "--tmp-png", Command.ConvertTmpToPng },
-				{ "--remap", Command.RemapShp },
-				{ "--r8", Command.ConvertR8ToPng },
-				{ "--transpose", Command.TransposeShp },
-			};
+				PrintUsage(null);
+				return;
+			}
 
-			if (args.Length == 0) { PrintUsage(); return; }
+			AppDomain.CurrentDomain.AssemblyResolve += GlobalFileSystem.ResolveAssembly;
 
-			Log.LogPath = Platform.SupportDir + "Logs" + Path.DirectorySeparatorChar;
+			Log.LogPath = Platform.ResolvePath("^", "Logs");
+			Log.AddChannel("perf", null);
+			Log.AddChannel("debug", null);
+
+			var modName = args[0];
+			if (!ModMetadata.AllMods.Keys.Contains(modName))
+			{
+				PrintUsage(null);
+				return;
+			}
+
+			var modData = new ModData(modName);
+			args = args.Skip(1).ToArray();
+			var actions = new Dictionary<string, Action<ModData, string[]>>();
+			foreach (var commandType in modData.ObjectCreator.GetTypesImplementing<IUtilityCommand>())
+			{
+				var command = (IUtilityCommand)Activator.CreateInstance(commandType);
+				actions.Add(command.Name, command.Run);
+			}
 
 			try
 			{
-				var action = Exts.WithDefault( _ => PrintUsage(), () => actions[args[0]]);
-				action(args);
+				var action = Exts.WithDefault((a,b) => PrintUsage(actions), () => actions[args[0]]);
+				action(modData, args);
 			}
-			catch( Exception e )
+			catch (Exception e)
 			{
 				Log.AddChannel("utility", "utility.log");
 				Log.Write("utility", "Received args: {0}", args.JoinWith(" "));
@@ -51,18 +64,27 @@ namespace OpenRA.Utility
 			}
 		}
 
-		static void PrintUsage()
+		static void PrintUsage(IDictionary<string, Action<ModData, string[]>> actions)
 		{
-			Console.WriteLine("Usage: OpenRA.Utility.exe [OPTION] [ARGS]");
+			Console.WriteLine("Run `OpenRA.Utility.exe [MOD]` to see a list of available commands.");
+			Console.WriteLine("The available mods are: " + string.Join(", ", ModMetadata.AllMods.Keys));
 			Console.WriteLine();
-			Console.WriteLine("  --settings-value KEY     Get value of KEY from settings.yaml");
-			Console.WriteLine("  --shp PNGFILE FRAMEWIDTH     Convert a single PNG with multiple frames appended after another to a SHP");
-			Console.WriteLine("  --png SHPFILE PALETTE [--noshadow]     Convert a SHP to a PNG containing all of its frames, optionally removing the shadow");
-			Console.WriteLine("  --extract MOD[,MOD]* FILES     Extract files from mod packages");
-			Console.WriteLine("  --tmp-png MOD[,MOD]* THEATER FILES      Extract terrain tiles to PNG");
-			Console.WriteLine("  --remap SRCMOD:PAL DESTMOD:PAL SRCSHP DESTSHP     Remap SHPs to another palette");
-			Console.WriteLine("  --r8 R8FILE PALETTE START END FILENAME [--noshadow] [--infrantry] [--vehicle] [--projectile] [--building] [--wall] [--tileset]     Convert Dune 2000 DATA.R8 to PNGs choosing start- and endframe as well as type for correct offset to append multiple frames to one PNG named by filename optionally removing the shadow.");
-			Console.WriteLine("  --transpose SRCSHP DESTSHP START N M [START N M ...]     Transpose the N*M block of frames starting at START.");
+
+			if (actions == null)
+				return;
+			foreach (var a in actions)
+			{
+				var descParts = a.Value.Method.GetCustomAttributes<DescAttribute>(true)
+					.SelectMany(d => d.Lines);
+
+				if (!descParts.Any())
+					continue;
+
+				var args = descParts.Take(descParts.Count() - 1).JoinWith(" ");
+				var desc = descParts.Last();
+
+				Console.WriteLine("  {0} {1}    ({2})", a.Key, args, desc);
+			}
 		}
 
 		static string GetNamedArg(string[] args, string arg)

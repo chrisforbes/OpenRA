@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,13 +9,18 @@
 #endregion
 
 using OpenRA.Graphics;
+using OpenRA.Mods.Common.Traits.Render;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA.Render
 {
-	public class WithSmokeInfo : ITraitInfo, Requires<RenderSimpleInfo>
+	[Desc("Renders an overlay when the actor is taking heavy damage.")]
+	public class WithSmokeInfo : ITraitInfo, Requires<RenderSpritesInfo>
 	{
-		public object Create(ActorInitializer init) { return new WithSmoke(init.self); }
+		[Desc("Needs to define \"idle\", \"loop\" and \"end\" sub-sequences.")]
+		public readonly string Sequence = "smoke_m";
+
+		public object Create(ActorInitializer init) { return new WithSmoke(init.self, this); }
 	}
 
 	public class WithSmoke : INotifyDamage
@@ -23,13 +28,12 @@ namespace OpenRA.Mods.RA.Render
 		bool isSmoking;
 		Animation anim;
 
-		public WithSmoke(Actor self)
+		public WithSmoke(Actor self, WithSmokeInfo info)
 		{
-			var rs = self.Trait<RenderSimple>();
+			var rs = self.Trait<RenderSprites>();
 
-			anim = new Animation("smoke_m");
-			rs.anims.Add("smoke", new AnimationWithOffset(
-				anim, null, () => !isSmoking));
+			anim = new Animation(self.World, info.Sequence);
+			rs.Add("smoke", new AnimationWithOffset(anim, null, () => !isSmoking));
 		}
 
 		public void Damaged(Actor self, AttackInfo e)
@@ -39,10 +43,10 @@ namespace OpenRA.Mods.RA.Render
 			if (e.DamageState < DamageState.Heavy) return;
 
 			isSmoking = true;
-			anim.PlayThen( "idle",
-				() => anim.PlayThen( "loop",
-					() => anim.PlayBackwardsThen( "end",
-						() => isSmoking = false ) ) );
+			anim.PlayThen("idle",
+				() => anim.PlayThen("loop",
+					() => anim.PlayBackwardsThen("end",
+						() => isSmoking = false)));
 		}
 	}
 }

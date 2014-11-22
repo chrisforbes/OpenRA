@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,6 +10,7 @@
 
 using OpenRA.Effects;
 using OpenRA.Traits;
+using OpenRA.Mods.RA.Render;
 
 namespace OpenRA.Mods.Cnc
 {
@@ -29,17 +30,17 @@ namespace OpenRA.Mods.Cnc
 		{
 			this.info = info;
 			rs = self.Trait<RenderSimple>();
-			self.Trait<Health>().RemoveOnDeath = !rs.anim.HasSequence("dead");
+			self.Trait<Health>().RemoveOnDeath = !rs.DefaultAnimation.HasSequence("dead");
 		}
 
 		public void Killed(Actor self, AttackInfo e)
 		{
-			if (!rs.anim.HasSequence("dead")) return;
+			if (!rs.DefaultAnimation.HasSequence("dead")) return;
 			
-			if (rs.anim.GetSequence("dead").Length > 1)
-				rs.anim.Play("dead");
+			if (rs.DefaultAnimation.GetSequence("dead").Length > 1)
+				rs.DefaultAnimation.Play("dead");
 			else
-				rs.anim.PlayRepeating("dead");
+				rs.DefaultAnimation.PlayRepeating("dead");
 			
 			self.World.AddFrameEndTask(
 				w => w.Add(

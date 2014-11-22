@@ -12,13 +12,13 @@ Speech:
 		LowPower: POWER
 		SilosNeeded: SILOS
 		PrimaryBuildingSelected: PRMRY
-		AbilityInsufficientPower:
 		NewOptions: NEWOP
 		Win: MWIN
 		Lose: MFAIL
 		BaseAttack: ATACK
 		HarvesterAttack: HATTK
 		Leave: ABORT
+		StartGame:
 		UnitReady: UNRDY
 		NoRoom: NROOM
 		Training: TRAIN
@@ -28,8 +28,12 @@ Speech:
 		BuildingReady: BDRDY
 		OrderPlaced: ORDER
 		Reinforce: REINF
+		UnitLost: ULOST
+		BuildingLost: BLOST
+		BuildingCaptured: CAPT
 
 Sounds:
+	DefaultVariant: .WAV
 	Notifications:
 		RadarUp: MULTI1
 		RadarDown:
@@ -44,3 +48,4 @@ Sounds:
 		TabClick: SIDEBAR1
 		ClickSound: BUTTON1
 		ClickDisabledSound: ENDLIST1
+		Beacon: CHAT1

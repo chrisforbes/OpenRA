@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,10 +8,8 @@
  */
 #endregion
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Graphics
 {
@@ -27,14 +25,11 @@ namespace OpenRA.Graphics
 		static Dictionary<string, Sheet> cachedSheets;
 		static Dictionary<string, Dictionary<string, Sprite>> cachedSprites;
 
-		public static void Initialize(params string[] chromeFiles)
+		public static void Initialize(IEnumerable<string> chromeFiles)
 		{
 			collections = new Dictionary<string, Collection>();
 			cachedSheets = new Dictionary<string, Sheet>();
 			cachedSprites = new Dictionary<string, Dictionary<string, Sprite>>();
-
-			if (chromeFiles.Length == 0)
-				return;
 
 			var chrome = chromeFiles.Select(s => MiniYaml.FromFile(s)).Aggregate(MiniYaml.MergeLiberal);
 
@@ -72,19 +67,24 @@ namespace OpenRA.Graphics
 			collections.Add(name, collection);
 		}
 
-		public static Sprite GetImage(string collection, string image)
+		public static Sprite GetImage(string collectionName, string imageName)
 		{
 			// Cached sprite
-			if (cachedSprites.ContainsKey(collection) && cachedSprites[collection].ContainsKey(image))
-				return cachedSprites[collection][image];
+			Dictionary<string, Sprite> cachedCollection;
+			Sprite sprite;
+			if (cachedSprites.TryGetValue(collectionName, out cachedCollection) && cachedCollection.TryGetValue(imageName, out sprite))
+				return sprite;
+
+			Collection collection;
+			if (!collections.TryGetValue(collectionName, out collection))
+			{
+				Log.Write("debug", "Could not find collection '{0}'", collectionName);
+				return null;
+			}
 
 			MappedImage mi;
-			try { mi = collections[collection].regions[image]; }
-			catch (KeyNotFoundException)
-			{
-				throw new InvalidOperationException(
-					"Collection `{0}` does not have an image `{1}`".F(collection, image));
-			}
+			if (!collection.regions.TryGetValue(imageName, out mi))
+				return null;
 
 			// Cached sheet
 			Sheet sheet;
@@ -97,11 +97,15 @@ namespace OpenRA.Graphics
 			}
 
 			// Cache the sprite
-			if (!cachedSprites.ContainsKey(collection))
-				cachedSprites.Add(collection, new Dictionary<string, Sprite>());
-			cachedSprites[collection].Add(image, mi.GetImage(sheet));
+			if (cachedCollection == null)
+			{
+				cachedCollection = new Dictionary<string, Sprite>();
+				cachedSprites.Add(collectionName, cachedCollection);
+			}
+			var image = mi.GetImage(sheet);
+			cachedCollection.Add(imageName, image);
 
-			return cachedSprites[collection][image];
+			return image;
 		}
 	}
 }

@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -39,6 +39,6 @@ namespace OpenRA
 				id, actors.Select(a => "#{0} {1}".F(a.ActorID, a.Info.Name)).JoinWith(",")));
 		}
 
-		/* todo: add lazy group path crap, groupleader, pruning, etc */
+		/* TODO: add lazy group path crap, groupleader, pruning, etc */
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,106 +10,66 @@
 
 using System;
 using System.Linq;
-using OpenRA.GameRules;
 
 namespace OpenRA.Traits
 {
 	public class PlayerResourcesInfo : ITraitInfo
 	{
-		public readonly int InitialCash = 10000;
-		public readonly int InitialOre = 0;
+		public readonly int[] SelectableCash = { 2500, 5000, 10000, 20000 };
+		public readonly int DefaultCash = 5000;
 		public readonly int AdviceInterval = 250;
 
 		public object Create(ActorInitializer init) { return new PlayerResources(init.self, this); }
-	}
-
-	public class DebugResourceCashInfo : ITraitInfo, Requires<PlayerResourcesInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceCash(init.self); }
-	}
-
-	public class DebugResourceCash : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceCash(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.Cash; } }
-	}
-
-	public class DebugResourceOreInfo : ITraitInfo, Requires<PlayerResourcesInfo>
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceOre(init.self); }
-	}
-
-	public class DebugResourceOre : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceOre(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.Ore; } }
-	}
-
-	public class DebugResourceOreCapacityInfo : ITraitInfo
-	{
-		public object Create(ActorInitializer init) { return new DebugResourceOreCapacity(init.self); }
-	}
-
-	public class DebugResourceOreCapacity : ISync
-	{
-		readonly PlayerResources pr;
-		public DebugResourceOreCapacity(Actor self) { pr = self.Trait<PlayerResources>(); }
-		[Sync] public int foo { get { return pr.OreCapacity; } }
 	}
 
 	public class PlayerResources : ITick, ISync
 	{
 		readonly Player Owner;
 		int AdviceInterval;
-		
-		int cashtickallowed = 0;
 
 		public PlayerResources(Actor self, PlayerResourcesInfo info)
 		{
 			Owner = self.Owner;
 
-			Cash = info.InitialCash;
-			Ore = info.InitialOre;
+			Cash = self.World.LobbyInfo.GlobalSettings.StartingCash;
 			AdviceInterval = info.AdviceInterval;
 		}
 
 		[Sync] public int Cash;
 
-		[Sync] public int Ore;
-		[Sync] public int OreCapacity;
+		[Sync] public int Resources;
+		[Sync] public int ResourceCapacity;
 
 		public int DisplayCash;
-		public int DisplayOre;
+		public int DisplayResources;
 		public bool AlertSilo;
 
 		public int Earned;
 		public int Spent;
 
-		public bool CanGiveOre(int amount)
+		public bool CanGiveResources(int amount)
 		{
-			return Ore + amount <= OreCapacity;
+			return Resources + amount <= ResourceCapacity;
 		}
 
-		public void GiveOre(int num)
+		public void GiveResources(int num)
 		{
-			Ore += num;
+			Resources += num;
 			Earned += num;
 
-			if (Ore > OreCapacity)
+			if (Resources > ResourceCapacity)
 			{
 				nextSiloAdviceTime = 0;
 
-				Earned -= Ore - OreCapacity;
-				Ore = OreCapacity;
+				Earned -= Resources - ResourceCapacity;
+				Resources = ResourceCapacity;
 			}
 		}
 
-		public bool TakeOre(int num)
+		public bool TakeResources(int num)
 		{
-			if (Ore < num) return false;
-			Ore -= num;
+			if (Resources < num) return false;
+			Resources -= num;
 			Spent += num;
 
 			return true;
@@ -123,15 +83,15 @@ namespace OpenRA.Traits
 
 		public bool TakeCash(int num)
 		{
-			if (Cash + Ore < num) return false;
+			if (Cash + Resources < num) return false;
 
 			// Spend ore before cash
-			Ore -= num;
+			Resources -= num;
 			Spent += num;
-			if (Ore < 0)
+			if (Resources < 0)
 			{
-				Cash += Ore;
-				Ore = 0;
+				Cash += Resources;
+				Resources = 0;
 			}
 
 			return true;
@@ -140,25 +100,25 @@ namespace OpenRA.Traits
 		const float displayCashFracPerFrame = .07f;
 		const int displayCashDeltaPerFrame = 37;
 		int nextSiloAdviceTime = 0;
+		int nextCashTickTime = 0;
 
 		public void Tick(Actor self)
 		{
-			if(cashtickallowed > 0) {
-				cashtickallowed = cashtickallowed - 1;
-			}
-			
-			OreCapacity = self.World.ActorsWithTrait<IStoreOre>()
+			if (nextCashTickTime > 0)
+				nextCashTickTime--;
+
+			ResourceCapacity = self.World.ActorsWithTrait<IStoreResources>()
 				.Where(a => a.Actor.Owner == Owner)
 				.Sum(a => a.Trait.Capacity);
 
-			if (Ore > OreCapacity)
-				Ore = OreCapacity;
+			if (Resources > ResourceCapacity)
+				Resources = ResourceCapacity;
 
 			if (--nextSiloAdviceTime <= 0)
 			{
-				if (Ore > 0.8 * OreCapacity)
+				if (Resources > 0.8 * ResourceCapacity)
 				{
-					Sound.PlayNotification(Owner, "Speech", "SilosNeeded", Owner.Country.Race);
+					Sound.PlayNotification(self.World.Map.Rules, Owner, "Speech", "SilosNeeded", Owner.Country.Race);
 					AlertSilo = true;
 				}
 				else
@@ -183,18 +143,18 @@ namespace OpenRA.Traits
 				playCashTickDown(self);
 			}
 
-			diff = Math.Abs(Ore - DisplayOre);
+			diff = Math.Abs(Resources - DisplayResources);
 			move = Math.Min(Math.Max((int)(diff * displayCashFracPerFrame),
 					displayCashDeltaPerFrame), diff);
 
-			if (DisplayOre < Ore)
+			if (DisplayResources < Resources)
 			{
-				DisplayOre += move;
+				DisplayResources += move;
 				playCashTickUp(self);
 			}
-			else if (DisplayOre > Ore)
+			else if (DisplayResources > Resources)
 			{
-				DisplayOre -= move;
+				DisplayResources -= move;
 				playCashTickDown(self);
 			}
 		}
@@ -202,22 +162,17 @@ namespace OpenRA.Traits
 		
 		public void playCashTickUp(Actor self)
 		{
-			if (Game.Settings.Sound.SoundCashTickType != SoundCashTicks.Disabled)
-			{
-				Sound.PlayNotification(self.Owner, "Sounds", "CashTickUp", self.Owner.Country.Race);
-			}
+			if (Game.Settings.Sound.CashTicks)
+				Sound.PlayNotification(self.World.Map.Rules, self.Owner, "Sounds", "CashTickUp", self.Owner.Country.Race);
 		}
 		
 		public void playCashTickDown(Actor self)
 		{
-			if (
-				Game.Settings.Sound.SoundCashTickType == SoundCashTicks.Extreme ||
-				(Game.Settings.Sound.SoundCashTickType == SoundCashTicks.Normal && cashtickallowed == 0)
-			) {
-				Sound.PlayNotification(self.Owner, "Sounds", "CashTickDown", self.Owner.Country.Race);
-				cashtickallowed = 3;
+			if (Game.Settings.Sound.CashTicks && nextCashTickTime == 0)
+			{
+				Sound.PlayNotification(self.World.Map.Rules, self.Owner, "Sounds", "CashTickDown", self.Owner.Country.Race);
+				nextCashTickTime = 2;
 			}
-			
 		}
 	}
 }

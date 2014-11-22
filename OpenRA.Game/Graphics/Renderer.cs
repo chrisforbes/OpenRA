@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -14,9 +14,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
-using OpenRA.FileFormats;
-using OpenRA.FileFormats.Graphics;
 using OpenRA.Support;
 
 namespace OpenRA.Graphics
@@ -28,51 +25,91 @@ namespace OpenRA.Graphics
 		internal static int TempBufferCount;
 
 		public SpriteRenderer WorldSpriteRenderer { get; private set; }
+		public SpriteRenderer WorldRgbaSpriteRenderer { get; private set; }
 		public QuadRenderer WorldQuadRenderer { get; private set; }
 		public LineRenderer WorldLineRenderer { get; private set; }
+		public VoxelRenderer WorldVoxelRenderer { get; private set; }
 		public LineRenderer LineRenderer { get; private set; }
 		public SpriteRenderer RgbaSpriteRenderer { get; private set; }
 		public SpriteRenderer SpriteRenderer { get; private set; }
 
-		public ITexture PaletteTexture;
-
 		Queue<IVertexBuffer<Vertex>> tempBuffers = new Queue<IVertexBuffer<Vertex>>();
 
 		public Dictionary<string, SpriteFont> Fonts;
+		Stack<Rectangle> scissorState;
 
 		public Renderer()
 		{
 			TempBufferSize = Game.Settings.Graphics.BatchSize;
 			TempBufferCount = Game.Settings.Graphics.NumTempBuffers;
 			SheetSize = Game.Settings.Graphics.SheetSize;
+			scissorState = new Stack<Rectangle>();
 
 			WorldSpriteRenderer = new SpriteRenderer(this, device.CreateShader("shp"));
+			WorldRgbaSpriteRenderer = new SpriteRenderer(this, device.CreateShader("rgba"));
 			WorldLineRenderer = new LineRenderer(this, device.CreateShader("line"));
+			WorldVoxelRenderer = new VoxelRenderer(this, device.CreateShader("vxl"));
 			LineRenderer = new LineRenderer(this, device.CreateShader("line"));
 			WorldQuadRenderer = new QuadRenderer(this, device.CreateShader("line"));
 			RgbaSpriteRenderer = new SpriteRenderer(this, device.CreateShader("rgba"));
 			SpriteRenderer = new SpriteRenderer(this, device.CreateShader("shp"));
 
-			for (int i = 0; i < TempBufferCount; i++)
+			for (var i = 0; i < TempBufferCount; i++)
 				tempBuffers.Enqueue(device.CreateVertexBuffer(TempBufferSize));
 		}
 
 		public void InitializeFonts(Manifest m)
 		{
-			Fonts = m.Fonts.ToDictionary(x => x.Key, x => new SpriteFont(x.Value.First, x.Value.Second));
+			using (new Support.PerfTimer("SpriteFonts"))
+				Fonts = m.Fonts.ToDictionary(x => x.Key, x => new SpriteFont(Platform.ResolvePath(x.Value.First), x.Value.Second));
 		}
 
 		internal IGraphicsDevice Device { get { return device; } }
 
-		public void BeginFrame(float2 scroll, float zoom)
+		Size? lastResolution;
+		int2? lastScroll;
+		float? lastZoom;
+
+		public void BeginFrame(int2 scroll, float zoom)
 		{
 			device.Clear();
-			WorldSpriteRenderer.SetShaderParams(PaletteTexture, Resolution, zoom, scroll);
-			WorldLineRenderer.SetShaderParams(PaletteTexture, Resolution, zoom, scroll);
-			WorldQuadRenderer.SetShaderParams(PaletteTexture, Resolution, zoom, scroll);
-			SpriteRenderer.SetShaderParams(PaletteTexture, Resolution, 1f, float2.Zero);
-			LineRenderer.SetShaderParams(PaletteTexture, Resolution, 1f, float2.Zero);
-			RgbaSpriteRenderer.SetShaderParams(PaletteTexture, Resolution, 1f, float2.Zero);
+
+			var resolutionChanged = lastResolution != Resolution;
+			if (resolutionChanged)
+			{
+				lastResolution = Resolution;
+				RgbaSpriteRenderer.SetViewportParams(Resolution, 1f, int2.Zero);
+				SpriteRenderer.SetViewportParams(Resolution, 1f, int2.Zero);
+				LineRenderer.SetViewportParams(Resolution, 1f, int2.Zero);
+			}
+
+			// If zoom evaluates as different due to floating point weirdness that's OK, setting the parameters again is harmless.
+			if (resolutionChanged || lastScroll != scroll || lastZoom != zoom)
+			{
+				lastScroll = scroll;
+				lastZoom = zoom;
+				WorldRgbaSpriteRenderer.SetViewportParams(Resolution, zoom, scroll);
+				WorldSpriteRenderer.SetViewportParams(Resolution, zoom, scroll);
+				WorldVoxelRenderer.SetViewportParams(Resolution, zoom, scroll);
+				WorldLineRenderer.SetViewportParams(Resolution, zoom, scroll);
+				WorldQuadRenderer.SetViewportParams(Resolution, zoom, scroll);
+			}
+		}
+
+		ITexture currentPaletteTexture;
+		public void SetPalette(HardwarePalette palette)
+		{
+			if (palette.Texture == currentPaletteTexture)
+				return;
+
+			Flush();
+			currentPaletteTexture = palette.Texture;
+
+			RgbaSpriteRenderer.SetPalette(currentPaletteTexture);
+			SpriteRenderer.SetPalette(currentPaletteTexture);
+			WorldSpriteRenderer.SetPalette(currentPaletteTexture);
+			WorldRgbaSpriteRenderer.SetPalette(currentPaletteTexture);
+			WorldVoxelRenderer.SetPalette(currentPaletteTexture);
 		}
 
 		public void EndFrame(IInputHandler inputHandler)
@@ -103,22 +140,15 @@ namespace OpenRA.Graphics
 
 		static IGraphicsDevice device;
 
-		public static Size Resolution { get { return device.WindowSize; } }
-
-		// Work around a bug in OSX 10.6.8 / mono 2.10.2 / SDL 1.2.14
-		// which makes the window non-interactive in Windowed/Pseudofullscreen mode.
-		static Screen FixOSX() { return Screen.PrimaryScreen; }
+		public Size Resolution { get { return device.WindowSize; } }
 
 		internal static void Initialize(WindowMode windowMode)
 		{
-			if (Platform.CurrentPlatform == PlatformType.OSX)
-				FixOSX();
-
 			var resolution = GetResolution(windowMode);
-			
-			string renderer = Game.Settings.Server.Dedicated ? "Null" : Game.Settings.Graphics.Renderer;
-			var rendererPath = Path.GetFullPath("OpenRA.Renderer.{0}.dll".F(renderer));
-			
+
+			var renderer = Game.Settings.Server.Dedicated ? "Null" : Game.Settings.Graphics.Renderer;
+			var rendererPath = Platform.ResolvePath(".", "OpenRA.Renderer." + renderer + ".dll");
+
 			device = CreateDevice(Assembly.LoadFile(rendererPath), resolution.Width, resolution.Height, windowMode);
 		}
 
@@ -163,16 +193,52 @@ namespace OpenRA.Graphics
 			}
 		}
 
-		public void EnableScissor(int left, int top, int width, int height)
+		public void EnableScissor(Rectangle rect)
 		{
+			// Must remain inside the current scissor rect
+			if (scissorState.Any())
+				rect.Intersect(scissorState.Peek());
+
 			Flush();
-			Device.EnableScissor(left, top, width, height);
+			Device.EnableScissor(rect.Left, rect.Top, rect.Width, rect.Height);
+			scissorState.Push(rect);
 		}
 
 		public void DisableScissor()
 		{
+			scissorState.Pop();
 			Flush();
-			Device.DisableScissor();
+
+			// Restore previous scissor rect
+			if (scissorState.Any())
+			{
+				var rect = scissorState.Peek();
+				Device.EnableScissor(rect.Left, rect.Top, rect.Width, rect.Height);
+			}
+			else
+				Device.DisableScissor();
+		}
+
+		public void EnableDepthBuffer()
+		{
+			Flush();
+			Device.EnableDepthBuffer();
+		}
+
+		public void DisableDepthBuffer()
+		{
+			Flush();
+			Device.DisableDepthBuffer();
+		}
+
+		public void GrabWindowMouseFocus()
+		{
+			device.GrabWindowMouseFocus();
+		}
+
+		public void ReleaseWindowMouseFocus()
+		{
+			device.ReleaseWindowMouseFocus();
 		}
 	}
 }

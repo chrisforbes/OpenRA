@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -22,8 +22,12 @@ namespace OpenRA.Server
 		public ReceiveState State = ReceiveState.Header;
 		public int ExpectLength = 8;
 		public int Frame = 0;
-
 		public int MostRecentFrame = 0;
+		public const int MaxOrderLength = 131072;
+
+		public int TimeSinceLastResponse { get { return Game.RunTime - lastReceivedTime; } }
+		public bool TimeoutMessageShown = false;
+		int lastReceivedTime = 0;
 
 		/* client data */
 		public int PlayerIndex;
@@ -35,7 +39,7 @@ namespace OpenRA.Server
 			return result.ToArray();
 		}
 
-		bool ReadDataInner( Server server )
+		bool ReadDataInner(Server server)
 		{
 			var rx = new byte[1024];
 			var len = 0;
@@ -64,14 +68,18 @@ namespace OpenRA.Server
 					if (e.SocketErrorCode == SocketError.WouldBlock) break;
 
 					server.DropClient(this);
+					Log.Write("server", "Dropping client {0} because reading the data failed: {1}", PlayerIndex, e);
 					return false;
 				}
 			}
 
+			lastReceivedTime = Game.RunTime;
+			TimeoutMessageShown = false;
+
 			return true;
 		}
 
-		public void ReadData( Server server )
+		public void ReadData(Server server)
 		{
 			if (ReadDataInner(server))
 				while (data.Count >= ExpectLength)
@@ -84,6 +92,13 @@ namespace OpenRA.Server
 								ExpectLength = BitConverter.ToInt32(bytes, 0) - 4;
 								Frame = BitConverter.ToInt32(bytes, 4);
 								State = ReceiveState.Data;
+
+								if (ExpectLength < 0 || ExpectLength > MaxOrderLength)
+								{
+									server.DropClient(this);
+									Log.Write("server", "Dropping client {0} for excessive order length = {1}", PlayerIndex, ExpectLength);
+									return;
+								}
 							} break;
 
 						case ReceiveState.Data:
@@ -93,11 +108,11 @@ namespace OpenRA.Server
 								ExpectLength = 8;
 								State = ReceiveState.Header;
 
-								server.UpdateInFlightFrames(this);
 							} break;
 					}
 				}
-		}}
+		}
+	}
 
 	public enum ReceiveState { Header, Data };
 }

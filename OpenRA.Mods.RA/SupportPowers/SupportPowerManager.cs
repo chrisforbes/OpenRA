@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,28 +8,36 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
-	public class SupportPowerManagerInfo : ITraitInfo, Requires<DeveloperModeInfo>
+	[Desc("Attach this to the player actor.")]
+	public class SupportPowerManagerInfo : ITraitInfo, Requires<DeveloperModeInfo>, Requires<TechTreeInfo>
 	{
 		public object Create(ActorInitializer init) { return new SupportPowerManager(init); }
 	}
 
-	public class SupportPowerManager : ITick, IResolveOrder
+	public class SupportPowerManager : ITick, IResolveOrder, ITechTreeElement
 	{
 		public readonly Actor self;
-		public Dictionary<string, SupportPowerInstance> Powers = new Dictionary<string, SupportPowerInstance>();
+		public readonly Dictionary<string, SupportPowerInstance> Powers = new Dictionary<string, SupportPowerInstance>();
 
-		public readonly DeveloperMode devMode;
+		public readonly DeveloperMode DevMode;
+		public readonly TechTree TechTree;
+		public readonly Lazy<RadarPings> RadarPings;
+
 		public SupportPowerManager(ActorInitializer init)
 		{
 			self = init.self;
-			devMode = init.self.Trait<DeveloperMode>();
+			DevMode = self.Trait<DeveloperMode>();
+			TechTree = self.Trait<TechTree>();
+			RadarPings = Exts.Lazy(() => init.world.WorldActor.TraitOrDefault<RadarPings>());
 
 			init.world.ActorAdded += ActorAdded;
 			init.world.ActorRemoved += ActorRemoved;
@@ -42,28 +50,30 @@ namespace OpenRA.Mods.RA
 
 		void ActorAdded(Actor a)
 		{
-			if (a.Owner != self.Owner || !a.HasTrait<SupportPower>())
+			if (a.Owner != self.Owner)
 				return;
 
 			foreach (var t in a.TraitsImplementing<SupportPower>())
 			{
 				var key = MakeKey(t);
 
-				if (Powers.ContainsKey(key))
+				if (!Powers.ContainsKey(key))
 				{
-					Powers[key].Instances.Add(t);
-				}
-				else
-				{
-					var si = new SupportPowerInstance(key, this)
+					Powers.Add(key, new SupportPowerInstance(key, this)
 					{
-						Instances = new List<SupportPower>() { t },
+						Instances = new List<SupportPower>(),
 						RemainingTime = t.Info.ChargeTime * 25,
 						TotalTime = t.Info.ChargeTime * 25,
-					};
+					});
 
-					Powers.Add(key, si);
+					if (t.Info.Prerequisites.Any())
+					{
+						TechTree.Add(key, t.Info.Prerequisites, 0, this);
+						TechTree.Update();
+					}
 				}
+
+				Powers[key].Instances.Add(t);
 			}
 		}
 
@@ -76,14 +86,19 @@ namespace OpenRA.Mods.RA
 			{
 				var key = MakeKey(t);
 				Powers[key].Instances.Remove(t);
+
 				if (Powers[key].Instances.Count == 0 && !Powers[key].Disabled)
+				{
 					Powers.Remove(key);
+					TechTree.Remove(key);
+					TechTree.Update();
+				}
 			}
 		}
 
 		public void Tick(Actor self)
 		{
-			foreach(var power in Powers.Values)
+			foreach (var power in Powers.Values)
 				power.Tick();
 		}
 
@@ -94,13 +109,14 @@ namespace OpenRA.Mods.RA
 				Powers[order.OrderString].Activate(order);
 		}
 
+		// Deprecated. Remove after SupportPowerBinWidget is removed.
 		public void Target(string key)
 		{
 			if (Powers.ContainsKey(key))
 				Powers[key].Target();
 		}
 
-		static readonly SupportPowerInstance[] NoInstances = {};
+		static readonly SupportPowerInstance[] NoInstances = { };
 
 		public IEnumerable<SupportPowerInstance> GetPowersForActor(Actor a)
 		{
@@ -111,84 +127,106 @@ namespace OpenRA.Mods.RA
 				.Select(t => Powers[MakeKey(t)]);
 		}
 
-		public class SupportPowerInstance
+		public void PrerequisitesAvailable(string key)
 		{
-			readonly SupportPowerManager Manager;
-			readonly string Key;
+			SupportPowerInstance sp;
+			if (!Powers.TryGetValue(key, out sp))
+				return;
 
-			public List<SupportPower> Instances;
-			public int RemainingTime;
-			public int TotalTime;
-			public bool Active { get; private set; }
-			public bool Disabled { get; private set; }
+			sp.Disabled = false;
+		}
 
-			public SupportPowerInfo Info { get { return Instances.First().Info; } }
-			public bool Ready { get { return Active && RemainingTime == 0; } }
+		public void PrerequisitesUnavailable(string key)
+		{
+			SupportPowerInstance sp;
+			if (!Powers.TryGetValue(key, out sp))
+				return;
 
-			public SupportPowerInstance(string key, SupportPowerManager manager)
+			sp.Disabled = true;
+			sp.RemainingTime = sp.TotalTime;
+		}
+
+		public void PrerequisitesItemHidden(string key) { }
+		public void PrerequisitesItemVisible(string key) { }
+	}
+
+	public class SupportPowerInstance
+	{
+		readonly SupportPowerManager Manager;
+		readonly string Key;
+
+		public List<SupportPower> Instances;
+		public int RemainingTime;
+		public int TotalTime;
+		public bool Active { get; private set; }
+		public bool Disabled { get; set; }
+
+		public SupportPowerInfo Info { get { return Instances.Select(i => i.Info).FirstOrDefault(); } }
+		public bool Ready { get { return Active && RemainingTime == 0; } }
+
+		public SupportPowerInstance(string key, SupportPowerManager manager)
+		{
+			Manager = manager;
+			Key = key;
+		}
+
+		static bool InstanceDisabled(SupportPower sp)
+		{
+			return sp.self.TraitsImplementing<IDisable>().Any(d => d.Disabled);
+		}
+
+		bool notifiedCharging;
+		bool notifiedReady;
+		public void Tick()
+		{
+			Active = !Disabled && Instances.Any(i => !i.self.IsDisabled());
+			if (!Active)
+				return;
+
+			if (Active)
 			{
-				Manager = manager;
-				Key = key;
-			}
+				var power = Instances.First();
+				if (Manager.DevMode.FastCharge && RemainingTime > 25)
+					RemainingTime = 25;
 
-			static bool InstanceDisabled(SupportPower sp)
-			{
-				return sp.self.TraitsImplementing<IDisable>().Any(d => d.Disabled);
-			}
-
-			bool notifiedCharging;
-			bool notifiedReady;
-			public void Tick()
-			{
-				Active = !Disabled && Instances.Any(i => !i.self.IsDisabled());
-				if (!Active)
-					return;
-
-				if (Active)
+				if (RemainingTime > 0) --RemainingTime;
+				if (!notifiedCharging)
 				{
-					var power = Instances.First();
-					if (Manager.devMode.FastCharge && RemainingTime > 25)
-						RemainingTime = 25;
+					power.Charging(power.self, Key);
+					notifiedCharging = true;
+				}
 
-					if (RemainingTime > 0) --RemainingTime;
-					if (!notifiedCharging)
-					{
-						power.Charging(power.self, Key);
-						notifiedCharging = true;
-					}
-
-					if (RemainingTime == 0
-						&& !notifiedReady)
-					{
-						power.Charged(power.self, Key);
-						notifiedReady = true;
-					}
+				if (RemainingTime == 0
+					&& !notifiedReady)
+				{
+					power.Charged(power.self, Key);
+					notifiedReady = true;
 				}
 			}
+		}
 
-			public void Target()
-			{
-				if (!Ready)
-					return;
+		public void Target()
+		{
+			if (!Ready)
+				return;
 
-				Manager.self.World.OrderGenerator = Instances.First().OrderGenerator(Key, Manager);
-			}
+			Manager.self.World.OrderGenerator = Instances.First().OrderGenerator(Key, Manager);
+		}
 
-			public void Activate(Order order)
-			{
-				if (!Ready)
-					return;
+		public void Activate(Order order)
+		{
+			if (!Ready)
+				return;
 
-				var power = Instances.First(i => !InstanceDisabled(i));
+			var power = Instances.First(i => !InstanceDisabled(i));
 
-				// Note: order.Subject is the *player* actor
-				power.Activate(power.self, order);
-				RemainingTime = TotalTime;
-				notifiedCharging = notifiedReady = false;
+			// Note: order.Subject is the *player* actor
+			power.Activate(power.self, order, Manager);
+			RemainingTime = TotalTime;
+			notifiedCharging = notifiedReady = false;
 
-				if (Info.OneShot)
-					Disabled = true;
-			}
+			if (Info.OneShot)
+				Disabled = true;
 		}
 	}
 
@@ -210,8 +248,8 @@ namespace OpenRA.Mods.RA
 		public IEnumerable<Order> Order(World world, CPos xy, MouseInput mi)
 		{
 			world.CancelInputMode();
-			if (mi.Button == expectedButton && world.Map.IsInMap(xy))
-				yield return new Order(order, manager.self, false) { TargetLocation = xy };
+			if (mi.Button == expectedButton && world.Map.Contains(xy))
+				yield return new Order(order, manager.self, false) { TargetLocation = xy, SuppressVisualFeedback = true };
 		}
 
 		public virtual void Tick(World world)
@@ -221,8 +259,8 @@ namespace OpenRA.Mods.RA
 				world.CancelInputMode();
 		}
 
-		public void RenderBeforeWorld(WorldRenderer wr, World world) { }
-		public void RenderAfterWorld(WorldRenderer wr, World world) { }
-		public string GetCursor(World world, CPos xy, MouseInput mi) { return world.Map.IsInMap(xy) ? cursor : "generic-blocked"; }
+		public IEnumerable<IRenderable> Render(WorldRenderer wr, World world) { yield break; }
+		public IEnumerable<IRenderable> RenderAfterWorld(WorldRenderer wr, World world) { yield break; }
+		public string GetCursor(World world, CPos xy, MouseInput mi) { return world.Map.Contains(xy) ? cursor : "generic-blocked"; }
 	}
 }

@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2012 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -10,7 +10,6 @@
 
 using System;
 using System.Net;
-using OpenRA.GameRules;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.RA.Widgets.Logic
@@ -20,9 +19,9 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 		Widget panel;
 		Action onCreate;
 		Action onExit;
-		Map map;
+		MapPreview preview = MapCache.UnknownMap;
 		bool advertiseOnline;
-		bool allowUPnP;
+		bool allowPortForward;
 
 		[ObjectCreator.UseCtor]
 		public ServerCreationLogic(Widget widget, Action onExit, Action openLobby)
@@ -32,10 +31,10 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			this.onExit = onExit;
 
 			var settings = Game.Settings;
+			preview = Game.modData.MapCache[WidgetUtils.ChooseInitialMap(Game.Settings.Server.Map)];
+
 			panel.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => { Ui.CloseWindow(); onExit(); };
 			panel.Get<ButtonWidget>("CREATE_BUTTON").OnClick = CreateAndJoin;
-
-			map = Game.modData.AvailableMaps[ WidgetUtils.ChooseInitialMap(Game.Settings.Server.Map) ];
 
 			var mapButton = panel.GetOrNull<ButtonWidget>("MAP_BUTTON");
 			if (mapButton != null)
@@ -44,14 +43,14 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 				{
 					Ui.OpenWindow("MAPCHOOSER_PANEL", new WidgetArgs()
 					{
-						{ "initialMap", map.Uid },
+						{ "initialMap", preview.Uid },
 						{ "onExit", () => {} },
-						{ "onSelect", (Action<Map>)(m => map = m) }
+						{ "onSelect", (Action<String>)(uid => preview = Game.modData.MapCache[uid]) }
 					});
 				};
 
-				panel.Get<MapPreviewWidget>("MAP_PREVIEW").Map = () => map;
-				panel.Get<LabelWidget>("MAP_NAME").GetText = () => map.Title;
+				panel.Get<MapPreviewWidget>("MAP_PREVIEW").Preview = () => preview;
+				panel.Get<LabelWidget>("MAP_NAME").GetText = () => preview.Title;
 			}
 
 			panel.Get<TextFieldWidget>("SERVER_NAME").Text = settings.Server.Name ?? "";
@@ -66,28 +65,38 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			advertiseCheckbox.IsChecked = () => advertiseOnline;
 			advertiseCheckbox.OnClick = () => advertiseOnline ^= true;
 
+			allowPortForward = Game.Settings.Server.AllowPortForward;
 			var UPnPCheckbox = panel.Get<CheckboxWidget>("UPNP_CHECKBOX");
-			UPnPCheckbox.IsChecked = () => allowUPnP;
-			UPnPCheckbox.OnClick = () => allowUPnP ^= true;
+			UPnPCheckbox.IsChecked = () => allowPortForward;
+			UPnPCheckbox.OnClick = () => allowPortForward ^= true;
+			UPnPCheckbox.IsDisabled = () => !Game.Settings.Server.NatDeviceAvailable;
+
+			var passwordField = panel.GetOrNull<PasswordFieldWidget>("PASSWORD");
+			if (passwordField != null)
+				passwordField.Text = Game.Settings.Server.Password;
 		}
 
 		void CreateAndJoin()
 		{
 			var name = panel.Get<TextFieldWidget>("SERVER_NAME").Text;
 			int listenPort, externalPort;
-			if (!int.TryParse(panel.Get<TextFieldWidget>("LISTEN_PORT").Text, out listenPort))
+			if (!Exts.TryParseIntegerInvariant(panel.Get<TextFieldWidget>("LISTEN_PORT").Text, out listenPort))
 				listenPort = 1234;
 
-			if (!int.TryParse(panel.Get<TextFieldWidget>("EXTERNAL_PORT").Text, out externalPort))
+			if (!Exts.TryParseIntegerInvariant(panel.Get<TextFieldWidget>("EXTERNAL_PORT").Text, out externalPort))
 				externalPort = 1234;
+
+			var passwordField = panel.GetOrNull<PasswordFieldWidget>("PASSWORD");
+			var password = passwordField != null ? passwordField.Text : "";
 
 			// Save new settings
 			Game.Settings.Server.Name = name;
 			Game.Settings.Server.ListenPort = listenPort;
 			Game.Settings.Server.ExternalPort = externalPort;
 			Game.Settings.Server.AdvertiseOnline = advertiseOnline;
-			Game.Settings.Server.AllowUPnP = allowUPnP;
-			Game.Settings.Server.Map = map.Uid;
+			Game.Settings.Server.AllowPortForward = allowPortForward;
+			Game.Settings.Server.Map = preview.Uid;
+			Game.Settings.Server.Password = password;
 			Game.Settings.Save();
 
 			// Take a copy so that subsequent changes don't affect the server
@@ -96,7 +105,7 @@ namespace OpenRA.Mods.RA.Widgets.Logic
 			// Create and join the server
 			Game.CreateServer(settings);
 			Ui.CloseWindow();
-			ConnectionLogic.Connect(IPAddress.Loopback.ToString(), Game.Settings.Server.ListenPort, onCreate, onExit);
+			ConnectionLogic.Connect(IPAddress.Loopback.ToString(), Game.Settings.Server.ListenPort, password, onCreate, onExit);
 		}
 	}
 }

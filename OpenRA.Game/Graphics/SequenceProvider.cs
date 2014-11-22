@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -12,58 +12,132 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Graphics
 {
-	public static class SequenceProvider
+	using Sequences = IReadOnlyDictionary<string, Lazy<IReadOnlyDictionary<string, Sequence>>>;
+	using UnitSequences = Lazy<IReadOnlyDictionary<string, Sequence>>;
+
+	public class SequenceProvider
 	{
-		static Dictionary<string, Dictionary<string, Sequence>> units;
+		readonly Lazy<Sequences> sequences;
+		public readonly SpriteCache SpriteCache;
 
-		public static void Initialize(string[] sequenceFiles, List<MiniYamlNode> sequenceNodes)
+		public SequenceProvider(SequenceCache cache, Map map)
 		{
-			units = new Dictionary<string, Dictionary<string, Sequence>>();
+			this.sequences = Exts.Lazy(() => cache.LoadSequences(map));
+			this.SpriteCache = cache.SpriteCache;
+		}
 
-			var sequences = sequenceFiles
+		public Sequence GetSequence(string unitName, string sequenceName)
+		{
+			UnitSequences unitSeq;
+			if (!sequences.Value.TryGetValue(unitName, out unitSeq))
+				throw new InvalidOperationException("Unit `{0}` does not have any sequences defined.".F(unitName));
+
+			Sequence seq;
+			if (!unitSeq.Value.TryGetValue(sequenceName, out seq))
+				throw new InvalidOperationException("Unit `{0}` does not have a sequence named `{1}`".F(unitName, sequenceName));
+
+			return seq;
+		}
+
+		public bool HasSequence(string unitName, string sequenceName)
+		{
+			UnitSequences unitSeq;
+			if (!sequences.Value.TryGetValue(unitName, out unitSeq))
+				throw new InvalidOperationException("Unit `{0}` does not have any sequences defined.".F(unitName));
+
+			return unitSeq.Value.ContainsKey(sequenceName);
+		}
+
+		public IEnumerable<string> Sequences(string unitName)
+		{
+			UnitSequences unitSeq;
+			if (!sequences.Value.TryGetValue(unitName, out unitSeq))
+				throw new InvalidOperationException("Unit `{0}` does not have any sequences defined.".F(unitName));
+
+			return unitSeq.Value.Keys;
+		}
+
+		public void Preload()
+		{
+			foreach (var unitSeq in sequences.Value.Values)
+				foreach (var seq in unitSeq.Value.Values) { }
+		}
+	}
+
+	public class SequenceCache
+	{
+		readonly ModData modData;
+		readonly Lazy<SpriteCache> spriteCache;
+		public SpriteCache SpriteCache { get { return spriteCache.Value; } }
+
+		readonly Dictionary<string, UnitSequences> sequenceCache = new Dictionary<string, UnitSequences>();
+
+		public SequenceCache(ModData modData, TileSet tileSet)
+		{
+			this.modData = modData;
+
+			spriteCache = Exts.Lazy(() => new SpriteCache(modData.SpriteLoaders, tileSet.Extensions, new SheetBuilder(SheetType.Indexed)));
+		}
+
+		public Sequences LoadSequences(Map map)
+		{
+			using (new Support.PerfTimer("LoadSequences"))
+				return Load(map.SequenceDefinitions);
+		}
+
+		Sequences Load(List<MiniYamlNode> sequenceNodes)
+		{
+			var sequenceFiles = modData.Manifest.Sequences;
+
+			var nodes = sequenceFiles
 				.Select(s => MiniYaml.FromFile(s))
 				.Aggregate(sequenceNodes, MiniYaml.MergeLiberal);
 
-			foreach (var s in sequences)
-				LoadSequencesForUnit(s.Key, s.Value);
-		}
-
-		static void LoadSequencesForUnit(string unit, MiniYaml sequences)
-		{
-			Game.modData.LoadScreen.Display();
-			try
+			var items = new Dictionary<string, UnitSequences>();
+			foreach (var n in nodes)
 			{
-				var seq = sequences.NodesDict.ToDictionary(x => x.Key, x => new Sequence(unit,x.Key,x.Value));
-				units.Add(unit, seq);
-			}
-			catch (FileNotFoundException) {} // Do nothing; we can crash later if we actually wanted art
-		}
+				// Work around the loop closure issue in older versions of C#
+				var node = n;
 
-		public static Sequence GetSequence(string unitName, string sequenceName)
-		{
-			try { return units[unitName][sequenceName]; }
-			catch (KeyNotFoundException)
-			{
-				if (units.ContainsKey(unitName))
-					throw new InvalidOperationException(
-						"Unit `{0}` does not have a sequence `{1}`".F(unitName, sequenceName));
+				var key = node.Value.ToLines(node.Key).JoinWith("|");
+
+				UnitSequences t;
+				if (sequenceCache.TryGetValue(key, out t))
+					items.Add(node.Key, t);
 				else
-					throw new InvalidOperationException(
-						"Unit `{0}` does not have any sequences defined.".F(unitName));
+				{
+					t = Exts.Lazy(() => CreateUnitSequences(node));
+					sequenceCache.Add(key, t);
+					items.Add(node.Key, t);
+				}
 			}
+
+			return new ReadOnlyDictionary<string, UnitSequences>(items);
 		}
 
-		public static bool HasSequence(string unit, string seq)
+		IReadOnlyDictionary<string, Sequence> CreateUnitSequences(MiniYamlNode node)
 		{
-			if (!units.ContainsKey(unit))
-				throw new InvalidOperationException(
-					"Unit `{0}` does not have any sequences defined.".F(unit));
+			var unitSequences = new Dictionary<string, Sequence>();
 
-			return units[unit].ContainsKey(seq);
+			foreach (var kvp in node.Value.ToDictionary())
+			{
+				using (new Support.PerfTimer("new Sequence(\"{0}\")".F(node.Key), 20))
+				{
+					try
+					{
+						unitSequences.Add(kvp.Key, new Sequence(spriteCache.Value, node.Key, kvp.Key, kvp.Value));
+					}
+					catch (FileNotFoundException ex)
+					{
+						Log.Write("debug", ex.Message);
+					}
+				}
+			}
+
+			return new ReadOnlyDictionary<string, Sequence>(unitSequences);
 		}
 	}
 }

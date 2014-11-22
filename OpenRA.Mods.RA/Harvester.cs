@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,27 +11,32 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using OpenRA.Mods.Common;
+using OpenRA.Mods.Common.Orders;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Move;
-using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
 	public class HarvesterInfo : ITraitInfo
 	{
+		public readonly string[] DeliveryBuildings = { };
+		[Desc("How much resources it can carry.")]
 		public readonly int Capacity = 28;
+		public readonly int LoadTicksPerBale = 4;
+		[Desc("How fast it can dump it's carryage.")]
 		public readonly int UnloadTicksPerBale = 4;
+		[Desc("How many squares to show the fill level.")]
 		public readonly int PipCount = 7;
+		public readonly int HarvestFacings = 0;
+		[Desc("Which resources it can harvest.")]
 		public readonly string[] Resources = { };
-		public readonly decimal FullyLoadedSpeed = .85m;
-		/// <summary>
-		/// Initial search radius (in cells) from the refinery (proc) that created us.
-		/// </summary>
+		[Desc("Percentage of maximum speed when fully loaded.")]
+		public readonly int FullyLoadedSpeed = 85;
+		[Desc("Initial search radius (in cells) from the refinery that created us.")]
 		public readonly int SearchFromProcRadius = 24;
-		/// <summary>
-		/// Search radius (in cells) from the last harvest order location to find more resources.
-		/// </summary>
+		[Desc("Search radius (in cells) from the last harvest order location to find more resources.")]
 		public readonly int SearchFromOrderRadius = 12;
 
 		public object Create(ActorInitializer init) { return new Harvester(init.self, this); }
@@ -99,12 +104,18 @@ namespace OpenRA.Mods.RA
 			self.QueueActivity(new FindResources());
 		}
 
+		bool IsAcceptableProcType(Actor proc)
+		{
+			return Info.DeliveryBuildings.Length == 0 ||
+				Info.DeliveryBuildings.Contains(proc.Info.Name);
+		}
+
 		Actor ClosestProc(Actor self, Actor ignore)
 		{
 			// Find all refineries and their occupancy count:
 			var refs = (
 				from r in self.World.ActorsWithTrait<IAcceptOre>()
-				where r.Actor != ignore && r.Actor.Owner == self.Owner
+				where r.Actor != ignore && r.Actor.Owner == self.Owner && IsAcceptableProcType(r.Actor)
 				let linkedHarvs = self.World.ActorsWithTrait<Harvester>().Where(a => a.Trait.LinkedProc == r.Actor).Count()
 				select new { Location = r.Actor.Location + r.Trait.DeliverOffset, Actor = r.Actor, Occupancy = linkedHarvs }
 			).ToDictionary(r => r.Location);
@@ -117,7 +128,7 @@ namespace OpenRA.Mods.RA
 					{
 						if (!refs.ContainsKey(loc)) return 0;
 
-						int occupancy = refs[loc].Occupancy;
+						var occupancy = refs[loc].Occupancy;
 						// 4 harvesters clogs up the refinery's delivery location:
 						if (occupancy >= 3) return int.MaxValue;
 
@@ -141,8 +152,8 @@ namespace OpenRA.Mods.RA
 
 		public void AcceptResource(ResourceType type)
 		{
-			if (!contents.ContainsKey(type.info)) contents[type.info] = 1;
-			else contents[type.info]++;
+			if (!contents.ContainsKey(type.Info)) contents[type.Info] = 1;
+			else contents[type.Info]++;
 		}
 
 		public void UnblockRefinery(Actor self)
@@ -160,7 +171,7 @@ namespace OpenRA.Mods.RA
 
 					var moveTo = harv.LastHarvestedCell ?? (deliveryLoc + new CVec(0, 4));
 					self.QueueActivity(mobile.MoveTo(moveTo, 1));
-					self.SetTargetLine(Target.FromCell(moveTo), Color.Gray, false);
+					self.SetTargetLine(Target.FromCell(self.World, moveTo), Color.Gray, false);
 
 					var territory = self.World.WorldActor.TraitOrDefault<ResourceClaimLayer>();
 					if (territory != null) territory.ClaimResource(self, moveTo);
@@ -174,9 +185,9 @@ namespace OpenRA.Mods.RA
 		public void OnNotifyBlockingMove(Actor self, Actor blocking)
 		{
 			// I'm blocking someone else from moving to my location:
-			Activity act = self.GetCurrentActivity();
+			var act = self.GetCurrentActivity();
 			// If I'm just waiting around then get out of the way:
-			if (act == null || act.GetType() == typeof(Wait))
+			if (act is Wait)
 			{
 				self.CancelActivity();
 				var mobile = self.Trait<Mobile>();
@@ -184,7 +195,7 @@ namespace OpenRA.Mods.RA
 				var cell = self.Location;
 				var moveTo = mobile.NearestMoveableCell(cell, 2, 5);
 				self.QueueActivity(mobile.MoveTo(moveTo, 0));
-				self.SetTargetLine(Target.FromCell(moveTo), Color.Gray, false);
+				self.SetTargetLine(Target.FromCell(self.World, moveTo), Color.Gray, false);
 
 				// Find more resources but not at this location:
 				self.QueueActivity(new FindResources(cell));
@@ -212,9 +223,6 @@ namespace OpenRA.Mods.RA
 		// Returns true when unloading is complete
 		public bool TickUnload(Actor self, Actor proc)
 		{
-			if (!proc.IsInWorld)
-				return false;	// fail to deliver if there is no proc.
-
 			// Wait until the next bale is ready
 			if (--currentUnloadTicks > 0)
 				return false;
@@ -240,7 +248,9 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new EnterOrderTargeter<IAcceptOre>("Deliver", 5, false, true, _ => true, proc => !IsEmpty && proc.Trait<IAcceptOre>().AllowDocking);
+				yield return new EnterAlliedActorTargeter<IAcceptOre>("Deliver", 5,
+					proc => IsAcceptableProcType(proc),
+					proc => !IsEmpty && proc.Trait<IAcceptOre>().AllowDocking);
 				yield return new HarvestOrderTargeter();
 			}
 		}
@@ -251,7 +261,7 @@ namespace OpenRA.Mods.RA
 				return new Order(order.OrderID, self, queued) { TargetActor = target.Actor };
 
 			if (order.OrderID == "Harvest")
-				return new Order(order.OrderID, self, queued) { TargetLocation = target.CenterLocation.ToCPos() };
+				return new Order(order.OrderID, self, queued) { TargetLocation = self.World.Map.CellContaining(target.CenterPosition) };
 
 			return null;
 		}
@@ -290,7 +300,7 @@ namespace OpenRA.Mods.RA
 					}
 
 					self.QueueActivity(mobile.MoveTo(loc, 0));
-					self.SetTargetLine(Target.FromCell(loc), Color.Red);
+					self.SetTargetLine(Target.FromCell(self.World, loc), Color.Red);
 
 					LastOrderLocation = loc;
 				}
@@ -303,7 +313,7 @@ namespace OpenRA.Mods.RA
 						return;
 
 					self.QueueActivity(mobile.MoveTo(loc.Value, 0));
-					self.SetTargetLine(Target.FromCell(loc.Value), Color.Red);
+					self.SetTargetLine(Target.FromCell(self.World, loc.Value), Color.Red);
 
 					LastOrderLocation = loc;
 				}
@@ -316,7 +326,7 @@ namespace OpenRA.Mods.RA
 			{
 				// NOTE: An explicit deliver order forces the harvester to always deliver to this refinery.
 				var iao = order.TargetActor.TraitOrDefault<IAcceptOre>();
-				if (iao == null || !iao.AllowDocking)
+				if (iao == null || !iao.AllowDocking || !IsAcceptableProcType(order.TargetActor))
 					return;
 
 				if (order.TargetActor != OwnerLinkedProc)
@@ -327,7 +337,7 @@ namespace OpenRA.Mods.RA
 
 				idleSmart = true;
 
-				self.SetTargetLine(Target.FromOrder(order), Color.Green);
+				self.SetTargetLine(Target.FromOrder(self.World, order), Color.Green);
 
 				self.CancelActivity();
 				self.QueueActivity(new DeliverResources());
@@ -339,7 +349,7 @@ namespace OpenRA.Mods.RA
 			}
 		}
 
-		CPos? FindNextResourceForBot(Actor self)
+		static CPos? FindNextResourceForBot(Actor self)
 		{
 			// NOTE: This is only used for the AI to find the next available resource to harvest.
 			var harvInfo = self.Info.Traits.Get<HarvesterInfo>();
@@ -357,7 +367,7 @@ namespace OpenRA.Mods.RA
 
 						if (resType == null) return 1;
 						// Can the harvester collect this kind of resource?
-						if (!harvInfo.Resources.Contains(resType.info.Name)) return 1;
+						if (!harvInfo.Resources.Contains(resType.Info.Name)) return 1;
 
 						// Another harvester has claimed this resource:
 						if (territory != null)
@@ -401,17 +411,17 @@ namespace OpenRA.Mods.RA
 
 		public IEnumerable<PipType> GetPips(Actor self)
 		{
-			int numPips = Info.PipCount;
+			var numPips = Info.PipCount;
 
-			for (int i = 0; i < numPips; i++)
+			for (var i = 0; i < numPips; i++)
 				yield return GetPipAt(i);
 		}
 
 		public bool ShouldExplode(Actor self) { return !IsEmpty; }
 
-		public decimal GetSpeedModifier()
+		public int GetSpeedModifier()
 		{
-			return 1m - (1m - Info.FullyLoadedSpeed) * contents.Values.Sum() / Info.Capacity;
+			return 100 - (100 - Info.FullyLoadedSpeed) * contents.Values.Sum() / Info.Capacity;
 		}
 
 		class HarvestOrderTargeter : IOrderTargeter
@@ -420,23 +430,27 @@ namespace OpenRA.Mods.RA
 			public int OrderPriority { get { return 10; } }
 			public bool IsQueued { get; protected set; }
 
-			public bool CanTargetActor(Actor self, Actor target, bool forceAttack, bool forceQueued, ref string cursor)
+			public bool CanTarget(Actor self, Target target, List<Actor> othersAtTarget, TargetModifiers modifiers, ref string cursor)
 			{
-				return false;
-			}
+				if (target.Type != TargetType.Terrain)
+					return false;
 
-			public bool CanTargetLocation(Actor self, CPos location, List<Actor> actorsAtLocation, bool forceAttack, bool forceQueued, ref string cursor)
-			{
+				if (modifiers.HasModifier(TargetModifiers.ForceMove))
+					return false;
+
+				var location = self.World.Map.CellContaining(target.CenterPosition);
 				// Don't leak info about resources under the shroud
-				if (!self.Owner.Shroud.IsExplored(location)) return false;
+				if (!self.Owner.Shroud.IsExplored(location))
+					return false;
 
-				var res = self.World.WorldActor.Trait<ResourceLayer>().GetResource(location);
+				var res = self.World.WorldActor.Trait<ResourceLayer>().GetRenderedResource(location);
 				var info = self.Info.Traits.Get<HarvesterInfo>();
 
-				if (res == null) return false;
-				if (!info.Resources.Contains(res.info.Name)) return false;
+				if (res == null || !info.Resources.Contains(res.Info.Name))
+					return false;
+
 				cursor = "harvest";
-				IsQueued = forceQueued;
+				IsQueued = modifiers.HasModifier(TargetModifiers.ForceQueue);
 
 				return true;
 			}

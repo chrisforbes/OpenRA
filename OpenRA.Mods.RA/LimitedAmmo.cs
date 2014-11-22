@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -13,11 +13,19 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("Actor has a limited amount of ammo, after using it all the actor must reload in some way.")]
 	public class LimitedAmmoInfo : ITraitInfo
 	{
 		public readonly int Ammo = 0;
+
+		[Desc("Defaults to value in Ammo.")]
 		public readonly int PipCount = 0;
-		public readonly int ReloadTicks = 25 * 2; // This is measured in ticks
+
+		public readonly PipType PipType = PipType.Green;
+		public readonly PipType PipTypeEmpty = PipType.Transparent;
+
+		[Desc("Time to reload measured in ticks.")]
+		public readonly int ReloadTicks = 25 * 2;
 
 		public object Create(ActorInitializer init) { return new LimitedAmmo(this); }
 	}
@@ -41,6 +49,7 @@ namespace OpenRA.Mods.RA
 			++ammo;
 			return true;
 		}
+
 		public bool TakeAmmo()
 		{
 			if (ammo <= 0) return false;
@@ -50,13 +59,15 @@ namespace OpenRA.Mods.RA
 
 		public int ReloadTimePerAmmo() { return Info.ReloadTicks; }
 
-		public void Attacking(Actor self, Target target) { TakeAmmo(); }
+		public void Attacking(Actor self, Target target, Armament a, Barrel barrel) { TakeAmmo(); }
+
+		public int GetAmmoCount() { return ammo; }
 
 		public IEnumerable<PipType> GetPips(Actor self)
 		{
 			var pips = Info.PipCount != 0 ? Info.PipCount : Info.Ammo;
 			return Exts.MakeArray(pips,
-				i => (ammo * pips) / Info.Ammo > i ? PipType.Green : PipType.Transparent);
+				i => (ammo * pips) / Info.Ammo > i ? Info.PipType : Info.PipTypeEmpty);
 		}
 	}
 }

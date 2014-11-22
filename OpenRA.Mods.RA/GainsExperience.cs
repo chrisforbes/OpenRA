@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,112 +8,118 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenRA.GameRules;
-using OpenRA.Graphics;
+using OpenRA.Mods.Common;
+using OpenRA.Mods.Common.Effects;
 using OpenRA.Mods.RA.Effects;
+using OpenRA.Primitives;
 using OpenRA.Traits;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Mods.RA
 {
+	[Desc("This actor's experience increases when it has killed a GivesExperience actor.")]
 	public class GainsExperienceInfo : ITraitInfo, Requires<ValuedInfo>
 	{
-		public readonly float[] CostThreshold = { 2, 4, 8, 16 };
-		public readonly float[] FirepowerModifier = { 1.1f, 1.15f, 1.2f, 1.5f };
-		public readonly float[] ArmorModifier = { 1.1f, 1.2f, 1.3f, 1.5f };
-		public readonly decimal[] SpeedModifier = { 1.1m, 1.15m, 1.2m, 1.5m };
+		[FieldLoader.LoadUsing("LoadUpgrades")]
+		[Desc("Upgrades to grant at each level",
+			"Key is the XP requirements for each level as a percentage of our own value.",
+			"Value is a list of the upgrade types to grant")]
+		public readonly Dictionary<int, string[]> Upgrades = null;
+
+		[Desc("Palette for the chevron glyph rendered in the selection box.")]
+		public readonly string ChevronPalette = "effect";
+
+		[Desc("Palette for the level up sprite.")]
+		public readonly string LevelUpPalette = "effect";
+
 		public object Create(ActorInitializer init) { return new GainsExperience(init, this); }
+
+		static object LoadUpgrades(MiniYaml y)
+		{
+			MiniYaml upgrades;
+
+			if (!y.ToDictionary().TryGetValue("Upgrades", out upgrades))
+			{
+				return new Dictionary<int, string[]>()
+				{
+					{ 200, new[] { "firepower", "damage", "speed", "reload", "inaccuracy" } },
+					{ 400, new[] { "firepower", "damage", "speed", "reload", "inaccuracy" } },
+					{ 800, new[] { "firepower", "damage", "speed", "reload", "inaccuracy" } },
+					{ 1600, new[] { "firepower", "damage", "speed", "reload", "inaccuracy", "selfheal" } }
+				};
+			}
+
+			return upgrades.Nodes.ToDictionary(
+				kv => FieldLoader.GetValue<int>("(key)", kv.Key),
+				kv => FieldLoader.GetValue<string[]>("(value)", kv.Value.Value));
+		}
 	}
 
-	public class GainsExperience : IFirepowerModifier, ISpeedModifier, IDamageModifier, IRenderModifier, ISync
+	public class GainsExperience : ISync
 	{
 		readonly Actor self;
-		readonly int[] Levels;
-		readonly GainsExperienceInfo Info;
-		readonly Animation RankAnim;
+		readonly GainsExperienceInfo info;
+
+		readonly List<Pair<int, string[]>> nextLevel = new List<Pair<int, string[]>>();
+
+		// Stored as a percentage of our value
+		[Sync] int experience = 0;
+
+		[Sync] public int Level { get; private set; }
+		public readonly int MaxLevel;
 
 		public GainsExperience(ActorInitializer init, GainsExperienceInfo info)
 		{
 			self = init.self;
-			this.Info = info;
+			this.info = info;
+
+			MaxLevel = info.Upgrades.Count;
+
 			var cost = self.Info.Traits.Get<ValuedInfo>().Cost;
-			Levels = Info.CostThreshold.Select(t => (int)(t * cost)).ToArray();
-			RankAnim = new Animation("rank");
-			RankAnim.PlayFetchIndex("rank", () => Level - 1);
+			foreach (var kv in info.Upgrades)
+				nextLevel.Add(Pair.New(kv.Key * cost, kv.Value));
 
 			if (init.Contains<ExperienceInit>())
-			{
-				Experience = init.Get<ExperienceInit, int>();
-
-				while (Level < Levels.Length && Experience >= Levels[Level])
-					Level++;
-			}
+				GiveExperience(init.Get<ExperienceInit, int>());
 		}
 
-		[Sync] int Experience = 0;
-		[Sync] public int Level { get; private set; }
-
-		int MaxLevel { get { return Levels.Length; } }
 		public bool CanGainLevel { get { return Level < MaxLevel; } }
-
-		public void GiveOneLevel()
-		{
-			if (Level < MaxLevel)
-				GiveExperience(Levels[Level] - Experience);
-		}
 
 		public void GiveLevels(int numLevels)
 		{
-			for( var i = 0; i < numLevels; i++ )
-				GiveOneLevel();
+			var newLevel = Math.Min(Level + numLevels, MaxLevel);
+			GiveExperience(nextLevel[newLevel - 1].First - experience);
 		}
 
 		public void GiveExperience(int amount)
 		{
-			Experience += amount;
+			experience += amount;
 
-			while (Level < MaxLevel && Experience >= Levels[Level])
+			while (Level < MaxLevel && experience >= nextLevel[Level].First)
 			{
+				var upgrades = nextLevel[Level].Second;
+
 				Level++;
-				Sound.PlayNotification(self.Owner, "Sounds", "LevelUp", self.Owner.Country.Race);
-				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup", new int2(0,-24))));
+
+				var um = self.TraitOrDefault<UpgradeManager>();
+				if (um != null)
+					foreach (var u in upgrades)
+						um.GrantUpgrade(self, u, this);
+
+				Sound.PlayNotification(self.World.Map.Rules, self.Owner, "Sounds", "LevelUp", self.Owner.Country.Race);
+				self.World.AddFrameEndTask(w => w.Add(new CrateEffect(self, "levelup", info.LevelUpPalette)));
+
+				if (Level == 1)
+				{
+					self.World.AddFrameEndTask(w =>
+					{
+						if (!self.IsDead())
+							w.Add(new Rank(self, info.ChevronPalette));
+					});
+				}
 			}
-		}
-
-		public float GetDamageModifier(Actor attacker, WarheadInfo warhead)
-		{
-			return Level > 0 ? 1 / Info.ArmorModifier[Level - 1] : 1;
-		}
-
-		public float GetFirepowerModifier()
-		{
-			return Level > 0 ? Info.FirepowerModifier[Level - 1] : 1;
-		}
-
-		public decimal GetSpeedModifier()
-		{
-			return Level > 0 ? Info.SpeedModifier[Level - 1] : 1m;
-		}
-
-		public IEnumerable<Renderable> ModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
-		{
-			if ((self.Owner == self.World.LocalPlayer || self.World.LocalPlayer == null) && Level > 0)
-				return InnerModifyRender(self, wr, r);
-			else
-				return r;
-		}
-
-		IEnumerable<Renderable> InnerModifyRender(Actor self, WorldRenderer wr, IEnumerable<Renderable> r)
-		{
-			foreach (var rs in r)
-				yield return rs;
-
-			RankAnim.Tick();	// HACK
-			var bounds = self.Bounds.Value;
-			yield return new Renderable(RankAnim.Image, new float2(bounds.Right - 6, bounds.Bottom - 8),
-				wr.Palette("effect"), self.CenterLocation.Y);
 		}
 	}
 

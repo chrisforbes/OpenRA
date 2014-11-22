@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -8,18 +8,20 @@
  */
 #endregion
 
+using System.Linq;
+
 namespace OpenRA.Traits
 {
 	public class RevealsShroudInfo : ITraitInfo
 	{
-		public readonly int Range = 0;
+		public readonly WRange Range = WRange.Zero;
 		public object Create(ActorInitializer init) { return new RevealsShroud(this); }
 	}
 
 	public class RevealsShroud : ITick, ISync
 	{
 		RevealsShroudInfo Info;
-		[Sync] CPos previousLocation;
+		[Sync] CPos cachedLocation;
 
 		public RevealsShroud(RevealsShroudInfo info)
 		{
@@ -28,26 +30,15 @@ namespace OpenRA.Traits
 
 		public void Tick(Actor self)
 		{
-			// todo: don't tick all the time.
-			World w = self.World;
-			if(self.Owner == null) return;
-			
-			if (previousLocation != self.Location)
+			if (cachedLocation != self.Location)
 			{
-				previousLocation = self.Location;
-				var actors = w.ActorsWithTrait<Shroud>();
+				cachedLocation = self.Location;
 
-				foreach( var s in actors )
-					s.Actor.Owner.Shroud.RemoveActor(self);
-					
-				self.UpdateSight();
-					
-				foreach( var s in actors )
-					s.Actor.Owner.Shroud.AddActor(self);
-				
+				foreach (var s in self.World.Players.Select(p => p.Shroud))
+					s.UpdateVisibility(self);
 			}
 		}
 
-		public int RevealRange { get { return Info.Range; } }
+		public WRange Range { get { return Info.Range; } }
 	}
 }

@@ -1,6 +1,6 @@
 ﻿#region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -11,10 +11,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using OpenRA.Mods.Common.Orders;
 using OpenRA.Mods.RA.Activities;
 using OpenRA.Mods.RA.Buildings;
-using OpenRA.Mods.RA.Move;
-using OpenRA.Mods.RA.Orders;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA
@@ -38,8 +37,8 @@ namespace OpenRA.Mods.RA
 		{
 			get
 			{
-				yield return new EnterOrderTargeter<Building>( "RepairNear", 5, false, true,
-					target => CanRepairAt( target ), _ => ShouldRepair() );
+				yield return new EnterAlliedActorTargeter<Building>("RepairNear", 5,
+					target => CanRepairAt(target), _ => ShouldRepair());
 			}
 		}
 
@@ -65,11 +64,11 @@ namespace OpenRA.Mods.RA
 		{
 			if (order.OrderString == "RepairNear" && CanRepairAt(order.TargetActor) && ShouldRepair())
 			{
-				var mobile = self.Trait<Mobile>();
-				var target = Target.FromOrder(order);
+				var movement = self.Trait<IMove>();
+				var target = Target.FromOrder(self.World, order);
 
 				self.CancelActivity();
-				self.QueueActivity(mobile.MoveWithinRange(target, info.CloseEnough));
+				self.QueueActivity(movement.MoveWithinRange(target, new WRange(1024*info.CloseEnough)));
 				self.QueueActivity(new Repair(order.TargetActor));
 
 				self.SetTargetLine(target, Color.Green, false);

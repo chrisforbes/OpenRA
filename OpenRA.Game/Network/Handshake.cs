@@ -1,6 +1,6 @@
 #region Copyright & License Information
 /*
- * Copyright 2007-2011 The OpenRA Developers (see AUTHORS)
+ * Copyright 2007-2014 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
  * available to you under the terms of the GNU General Public License
  * as published by the Free Software Foundation. For more information,
@@ -9,23 +9,15 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using OpenRA.FileFormats;
 
 namespace OpenRA.Network
 {
 	public class HandshakeRequest
 	{
-		public string[] Mods;
+		public string Mod;
+		public string Version;
 		public string Map;
-
-		public string Serialize()
-		{
-			var data = new List<MiniYamlNode>();
-			data.Add(new MiniYamlNode("Handshake", FieldSaver.Save(this)));
-			return data.WriteToString();
-		}
 
 		public static HandshakeRequest Deserialize(string data)
 		{
@@ -33,23 +25,21 @@ namespace OpenRA.Network
 			FieldLoader.Load(handshake, MiniYaml.FromString(data).First().Value);
 			return handshake;
 		}
-	}
-
-	public class HandshakeResponse
-	{
-		public string[] Mods;
-		public string Password;
-		[FieldLoader.Ignore] public Session.Client Client;
 
 		public string Serialize()
 		{
 			var data = new List<MiniYamlNode>();
-			data.Add( new MiniYamlNode( "Handshake", null,
-				new string[]{ "Mods", "Password" }.Select( p => FieldSaver.SaveField(this, p) ).ToList() ) );
-			data.Add(new MiniYamlNode("Client", FieldSaver.Save(Client)));
-
+			data.Add(new MiniYamlNode("Handshake", FieldSaver.Save(this)));
 			return data.WriteToString();
 		}
+	}
+
+	public class HandshakeResponse
+	{
+		public string Mod;
+		public string Version;
+		public string Password;
+		[FieldLoader.Ignore] public Session.Client Client;
 
 		public static HandshakeResponse Deserialize(string data)
 		{
@@ -58,6 +48,7 @@ namespace OpenRA.Network
 
 			var ys = MiniYaml.FromString(data);
 			foreach (var y in ys)
+			{
 				switch (y.Key)
 				{
 					case "Handshake":
@@ -67,7 +58,19 @@ namespace OpenRA.Network
 						FieldLoader.Load(handshake.Client, y.Value);
 					break;
 				}
+			}
+
 			return handshake;
+		}
+
+		public string Serialize()
+		{
+			var data = new List<MiniYamlNode>();
+			data.Add(new MiniYamlNode("Handshake", null,
+				new string[] { "Mod", "Version", "Password" }.Select(p => FieldSaver.SaveField(this, p)).ToList()));
+			data.Add(new MiniYamlNode("Client", FieldSaver.Save(Client)));
+
+			return data.WriteToString();
 		}
 	}
 }
